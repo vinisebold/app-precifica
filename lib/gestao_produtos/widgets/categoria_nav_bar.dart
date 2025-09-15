@@ -20,7 +20,8 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
   void initState() {
     super.initState();
     _scrollController.addListener(_updateArrowVisibility);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _updateArrowVisibility());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _updateArrowVisibility());
   }
 
   @override
@@ -31,7 +32,8 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
   }
 
   void _updateArrowVisibility() {
-    if (!_scrollController.hasClients || !_scrollController.position.hasContentDimensions) return;
+    if (!_scrollController.hasClients ||
+        !_scrollController.position.hasContentDimensions) return;
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
 
@@ -56,7 +58,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
     return Container(
       height: 80,
       color: colorScheme.surfaceContainer,
-      // A NOVA ESTRUTURA: UMA ROW SIMPLES
       child: Row(
         children: [
           _buildArrow(isLeft: true),
@@ -64,15 +65,20 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
             child: SingleChildScrollView(
               controller: _scrollController,
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(), // Efeito "esticar" nas bordas
+              physics: const BouncingScrollPhysics(),
+              // Efeito "esticar" nas bordas
               child: Row(
                 children: categorias.map((categoria) {
-                  final isSelected = state.categoriaSelecionadaId == categoria.id;
+                  final isSelected =
+                      state.categoriaSelecionadaId == categoria.id;
                   return _CategoriaItem(
                     categoria: categoria,
                     isSelected: isSelected,
-                    onTap: () => ref.read(gestaoControllerProvider.notifier).selecionarCategoria(categoria.id),
-                    onLongPress: () => _mostrarDialogoDeletar(context, ref, categoria.id, categoria.nome),
+                    onTap: () => ref
+                        .read(gestaoControllerProvider.notifier)
+                        .selecionarCategoria(categoria.id),
+                    onLongPress: () => _mostrarDialogoDeletar(
+                        context, ref, categoria.id, categoria.nome),
                   );
                 }).toList(),
               ),
@@ -109,7 +115,8 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
               begin: isLeft ? Alignment.centerLeft : Alignment.centerRight,
               end: isLeft ? Alignment.centerRight : Alignment.centerLeft,
             ),
-            borderRadius: BorderRadius.circular(100), // Bordas totalmente arredondadas
+            borderRadius:
+                BorderRadius.circular(100), // Bordas totalmente arredondadas
           ),
           child: IconButton(
             icon: Icon(isLeft ? Icons.chevron_left : Icons.chevron_right),
@@ -117,10 +124,13 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
               final screenWidth = MediaQuery.of(context).size.width;
               final scrollAmount = screenWidth * 0.7;
               final newOffset = (isLeft
-                  ? max(0.0, _scrollController.offset - scrollAmount)
-                  : min(_scrollController.position.maxScrollExtent, _scrollController.offset + scrollAmount))
+                      ? max(0.0, _scrollController.offset - scrollAmount)
+                      : min(_scrollController.position.maxScrollExtent,
+                          _scrollController.offset + scrollAmount))
                   .toDouble();
-              _scrollController.animateTo(newOffset, duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
+              _scrollController.animateTo(newOffset,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut);
             },
           ),
         ),
@@ -128,8 +138,11 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
     );
   }
 
-  void _mostrarDialogoDeletar(BuildContext context, WidgetRef ref, String categoriaId, String nomeCategoria) {
-    showDialog(context: context, builder: (context) => AlertDialog(/*...*/)); // Sem alterações aqui
+  void _mostrarDialogoDeletar(BuildContext context, WidgetRef ref,
+      String categoriaId, String nomeCategoria) {
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(/*...*/)); // Sem alterações aqui
   }
 }
 

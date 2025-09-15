@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
-class CurrencyPtBrInputFormatter extends TextInputFormatter {
+class MoedaFormatter extends TextInputFormatter {
   // Define o formato de moeda para o padrão pt_BR (ex: 1.234,56)
   // O símbolo é opcional, então o removemos para um visual mais limpo no TextField.
   final NumberFormat _formatter = NumberFormat.currency(locale: 'pt_BR', symbol: '');

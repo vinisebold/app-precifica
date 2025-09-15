@@ -1,12 +1,7 @@
 import 'package:flutter/widgets.dart';
 
-/// Um [TextEditingController] customizado que garante que o cursor de seleção
-/// esteja sempre posicionado no final do texto.
-///
-/// Isso é útil para campos de entrada formatados, como moeda, onde a edição
-/// no meio do texto não é desejada.
-class AlwaysEndCursorTextEditingController extends TextEditingController {
-  AlwaysEndCursorTextEditingController({super.text});
+class InputCursorFinalController extends TextEditingController {
+  InputCursorFinalController({super.text});
 
   // Sobrescrevemos o 'setter' do valor do controlador.
   @override

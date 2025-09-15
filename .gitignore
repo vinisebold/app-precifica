@@ -1,0 +1,54 @@
+# ----------------------------
+# Flutter / Dart
+# ----------------------------
+
+# Build outputs
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.dart_tool/
+.packages
+
+# Obsolete directories
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+
+# Generated plugin registrants
+ios/Runner/GeneratedPluginRegistrant.*
+
+# ----------------------------
+# Android
+# ----------------------------
+
+# Gradle
+.gradle/
+**/build/
+**/captures/
+.cxx/
+
+# Local configuration (sdk path, etc)
+local.properties
+
+# Android Studio
+*.iml
+.idea/
+*.ipr
+*.iws
+
+# Signing keys
+*.jks
+*.keystore
+
+# ----------------------------
+# VS Code
+# ----------------------------
+.vscode/
+
+# ----------------------------
+# Mac / Linux
+# ----------------------------
+*.DS_Store
+*.log
+*.swp
+*.lock

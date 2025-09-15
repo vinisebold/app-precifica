@@ -1,37 +1,41 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:organiza_ae/data/repositories/hive_gestao_repository.dart';
 import 'package:organiza_ae/data/models/categoria.dart';
 import 'package:organiza_ae/data/models/produto.dart';
+import 'package:organiza_ae/data/repositories/hive_gestao_repository.dart';
 import 'package:organiza_ae/gestao_produtos/domain/i_gestao_repository.dart';
 
 class GestaoState {
   final List<Categoria> categorias;
   final List<Produto> produtos;
   final String? categoriaSelecionadaId;
+  final String? errorMessage;
 
   GestaoState({
     this.categorias = const [],
     this.produtos = const [],
     this.categoriaSelecionadaId,
+    this.errorMessage,
   });
 
   GestaoState copyWith({
     List<Categoria>? categorias,
     List<Produto>? produtos,
     String? categoriaSelecionadaId,
+    String? errorMessage,
+    bool clearErrorMessage = false,
   }) {
     return GestaoState(
       categorias: categorias ?? this.categorias,
       produtos: produtos ?? this.produtos,
       categoriaSelecionadaId:
           categoriaSelecionadaId ?? this.categoriaSelecionadaId,
+      errorMessage:
+          clearErrorMessage ? null : errorMessage ?? this.errorMessage,
     );
   }
 }
 
-// Este provider decide qual implementação do nosso contrato será usada.
-// No nosso caso, é o HiveGestaoRepository.
 final gestaoRepositoryProvider = Provider<IGestaoRepository>((ref) {
   return HiveGestaoRepository();
 });
@@ -41,65 +45,82 @@ class GestaoController extends Notifier<GestaoState> {
 
   @override
   GestaoState build() {
-    // Pega a instância do repositório fornecida pelo Provider
     _repository = ref.watch(gestaoRepositoryProvider);
-
-    // O resto da lógica de inicialização usa `_repository`
-    final categorias = _repository.getCategorias();
-    if (categorias.isNotEmpty) {
-      final primeiraCategoriaId = categorias.first.id;
-      final produtos = _repository.getProdutosPorCategoria(primeiraCategoriaId);
-      return GestaoState(
-        categorias: categorias,
-        produtos: produtos,
-        categoriaSelecionadaId: primeiraCategoriaId,
-      );
+    try {
+      final categorias = _repository.getCategorias();
+      if (categorias.isNotEmpty) {
+        final primeiraCategoriaId = categorias.first.id;
+        final produtos =
+            _repository.getProdutosPorCategoria(primeiraCategoriaId);
+        return GestaoState(
+          categorias: categorias,
+          produtos: produtos,
+          categoriaSelecionadaId: primeiraCategoriaId,
+        );
+      }
+    } catch (e) {
+      print("Erro ao inicializar o estado: $e");
+      return GestaoState(errorMessage: "Falha ao carregar dados.");
     }
     return GestaoState();
   }
 
-  // --- Funções de Categoria ---
+  void clearError() {
+    state = state.copyWith(clearErrorMessage: true);
+  }
+
   Future<void> criarCategoria(String nome) async {
-    await _repository.criarCategoria(nome);
-    state = state.copyWith(categorias: _repository.getCategorias());
+    try {
+      await _repository.criarCategoria(nome);
+      state = state.copyWith(categorias: _repository.getCategorias());
+    } catch (e) {
+      state = state.copyWith(errorMessage: 'Falha ao criar categoria.');
+    }
   }
 
   Future<void> deletarCategoria(String categoriaId) async {
-    await _repository.deletarCategoria(categoriaId);
+    try {
+      await _repository.deletarCategoria(categoriaId);
+      final categoriasAtualizadas = _repository.getCategorias();
 
-    // Rebusca a lista de categorias que sobraram.
-    final categoriasAtualizadas = _repository.getCategorias();
-
-    if (categoriasAtualizadas.isNotEmpty) {
-      final novaCategoriaId = categoriasAtualizadas.first.id;
-      final novosProdutos =
-          _repository.getProdutosPorCategoria(novaCategoriaId);
-      state = state.copyWith(
-        categorias: categoriasAtualizadas,
-        categoriaSelecionadaId: novaCategoriaId,
-        produtos: novosProdutos,
-      );
-    } else {
-      state = GestaoState(
-          categorias: [], produtos: [], categoriaSelecionadaId: null);
+      if (categoriasAtualizadas.isNotEmpty) {
+        final novaCategoriaId = categoriasAtualizadas.first.id;
+        final novosProdutos =
+            _repository.getProdutosPorCategoria(novaCategoriaId);
+        state = state.copyWith(
+          categorias: categoriasAtualizadas,
+          categoriaSelecionadaId: novaCategoriaId,
+          produtos: novosProdutos,
+        );
+      } else {
+        state = GestaoState(
+            categorias: [], produtos: [], categoriaSelecionadaId: null);
+      }
+    } catch (e) {
+      state = state.copyWith(errorMessage: 'Falha ao apagar categoria.');
     }
   }
 
   void selecionarCategoria(String categoriaId) {
-    final produtos = _repository.getProdutosPorCategoria(categoriaId);
-    state = state.copyWith(
-      categoriaSelecionadaId: categoriaId,
-      produtos: produtos,
-    );
+    try {
+      final produtos = _repository.getProdutosPorCategoria(categoriaId);
+      state = state.copyWith(
+        categoriaSelecionadaId: categoriaId,
+        produtos: produtos,
+      );
+    } catch (e) {
+      state = state.copyWith(errorMessage: 'Falha ao carregar produtos.');
+    }
   }
 
-  // --- Funções de Produto ---
   Future<void> criarProduto(String nome) async {
-    // Só podemos criar um produto se uma categoria estiver selecionada.
     if (state.categoriaSelecionadaId != null) {
-      await _repository.criarProduto(nome, state.categoriaSelecionadaId!);
-      // Após criar, atualiza a lista de produtos da categoria atual.
-      selecionarCategoria(state.categoriaSelecionadaId!);
+      try {
+        await _repository.criarProduto(nome, state.categoriaSelecionadaId!);
+        selecionarCategoria(state.categoriaSelecionadaId!);
+      } catch (e) {
+        state = state.copyWith(errorMessage: 'Falha ao criar produto.');
+      }
     }
   }
 
@@ -107,24 +128,24 @@ class GestaoController extends Notifier<GestaoState> {
       String produtoId, String precoStringFormatado) async {
     final stringSemMilhar = precoStringFormatado.replaceAll('.', '');
     final stringParaParse = stringSemMilhar.replaceAll(',', '.');
-
-    // 3. Tenta converter para double.
     final novoPreco = double.tryParse(stringParaParse);
 
     if (novoPreco != null) {
-      // 4. Envia o número puro (double) para o serviço de armazenamento.
-      await _repository.atualizarPrecoProduto(produtoId, novoPreco);
+      try {
+        await _repository.atualizarPrecoProduto(produtoId, novoPreco);
+      } catch (e) {
+        // A atualização de preço é uma ação contínua (com debounce),
+        // então um erro aqui pode não precisar de um SnackBar para não poluir a UI.
+        // Um log de erro é suficiente.
+        print("ERRO AO ATUALIZAR PREÇO: $e");
+      }
     }
   }
 
   String gerarTextoRelatorio() {
-    // 1. Pega a data e hora de agora.
     final hoje = DateTime.now();
-    // 2. Define o formato que queremos (dia/mês/ano).
     final formatoData = DateFormat('dd/MM/yyyy');
-    // 3. Formata a data.
     final dataFormatada = formatoData.format(hoje);
-
     final todosProdutos = _repository.getAllProdutos();
 
     if (todosProdutos.isEmpty) {
@@ -132,11 +153,9 @@ class GestaoController extends Notifier<GestaoState> {
     }
 
     final buffer = StringBuffer();
-    // 4. Monta o título com a data formatada.
     buffer.writeln('Lista de Preços - $dataFormatada');
-    buffer.writeln(); // Adiciona uma linha em branco para espaçamento
+    buffer.writeln();
 
-    // 5. Itera por TODOS os produtos, sem separar por categoria.
     for (var produto in todosProdutos) {
       final precoFormatado =
           produto.preco.toStringAsFixed(2).replaceAll('.', ',');

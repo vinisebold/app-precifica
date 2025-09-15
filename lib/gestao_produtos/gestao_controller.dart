@@ -1,16 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:organiza_ae/data/local_storage_service.dart';
+import 'package:organiza_ae/data/repositories/hive_gestao_repository.dart';
 import 'package:organiza_ae/data/models/categoria.dart';
 import 'package:organiza_ae/data/models/produto.dart';
+import 'package:organiza_ae/gestao_produtos/domain/i_gestao_repository.dart';
 
-// PARTE 1: O ESTADO ficou mais completo.
 class GestaoState {
   final List<Categoria> categorias;
-  final List<Produto>
-      produtos; // <- Novo! Lista de produtos da categoria selecionada.
-  final String?
-      categoriaSelecionadaId; // <- Novo! ID da categoria que está ativa.
+  final List<Produto> produtos;
+  final String? categoriaSelecionadaId;
 
   GestaoState({
     this.categorias = const [],
@@ -32,81 +30,74 @@ class GestaoState {
   }
 }
 
-// PARTE 2: O CONTROLLER ficou mais inteligente.
+// Este provider decide qual implementação do nosso contrato será usada.
+// No nosso caso, é o HiveGestaoRepository.
+final gestaoRepositoryProvider = Provider<IGestaoRepository>((ref) {
+  return HiveGestaoRepository();
+});
+
 class GestaoController extends Notifier<GestaoState> {
-  final LocalStorageService _storageService = LocalStorageService();
+  late final IGestaoRepository _repository;
 
   @override
   GestaoState build() {
-    // A inicialização agora é mais robusta.
-    final categorias = _storageService.getCategorias();
+    // Pega a instância do repositório fornecida pelo Provider
+    _repository = ref.watch(gestaoRepositoryProvider);
+
+    // O resto da lógica de inicialização usa `_repository`
+    final categorias = _repository.getCategorias();
     if (categorias.isNotEmpty) {
-      // Se existem categorias, seleciona a primeira por padrão...
       final primeiraCategoriaId = categorias.first.id;
-      // ...e já busca os produtos dela.
-      final produtos =
-          _storageService.getProdutosPorCategoria(primeiraCategoriaId);
+      final produtos = _repository.getProdutosPorCategoria(primeiraCategoriaId);
       return GestaoState(
         categorias: categorias,
         produtos: produtos,
         categoriaSelecionadaId: primeiraCategoriaId,
       );
     }
-    // Se não há categorias, retorna o estado vazio.
     return GestaoState();
   }
 
   // --- Funções de Categoria ---
-
   Future<void> criarCategoria(String nome) async {
-    await _storageService.criarCategoria(nome);
-    // Após criar, atualiza a lista de categorias no estado.
-    state = state.copyWith(categorias: _storageService.getCategorias());
+    await _repository.criarCategoria(nome);
+    state = state.copyWith(categorias: _repository.getCategorias());
   }
 
-  // Substitua a versão anterior desta função no GestaoController
   Future<void> deletarCategoria(String categoriaId) async {
-    await _storageService.deletarCategoria(categoriaId);
+    await _repository.deletarCategoria(categoriaId);
 
     // Rebusca a lista de categorias que sobraram.
-    final categoriasAtualizadas = _storageService.getCategorias();
+    final categoriasAtualizadas = _repository.getCategorias();
 
     if (categoriasAtualizadas.isNotEmpty) {
-      // Se ainda existem categorias, seleciona a primeira da nova lista...
       final novaCategoriaId = categoriasAtualizadas.first.id;
       final novosProdutos =
-          _storageService.getProdutosPorCategoria(novaCategoriaId);
-
-      // ...e atualiza o estado com TODAS as informações novas de uma vez.
+          _repository.getProdutosPorCategoria(novaCategoriaId);
       state = state.copyWith(
-        categorias: categoriasAtualizadas, // <- A correção principal está aqui!
+        categorias: categoriasAtualizadas,
         categoriaSelecionadaId: novaCategoriaId,
         produtos: novosProdutos,
       );
     } else {
-      // Se não sobrou nenhuma, limpa completamente o estado.
       state = GestaoState(
           categorias: [], produtos: [], categoriaSelecionadaId: null);
     }
   }
 
-  // --- Novas Funções de Produto ---
-
   void selecionarCategoria(String categoriaId) {
-    // Quando o usuário selecionar uma nova categoria...
-    // 1. Busca os produtos dessa nova categoria.
-    final produtos = _storageService.getProdutosPorCategoria(categoriaId);
-    // 2. Atualiza o estado com o novo ID selecionado e a nova lista de produtos.
+    final produtos = _repository.getProdutosPorCategoria(categoriaId);
     state = state.copyWith(
       categoriaSelecionadaId: categoriaId,
       produtos: produtos,
     );
   }
 
+  // --- Funções de Produto ---
   Future<void> criarProduto(String nome) async {
     // Só podemos criar um produto se uma categoria estiver selecionada.
     if (state.categoriaSelecionadaId != null) {
-      await _storageService.criarProduto(nome, state.categoriaSelecionadaId!);
+      await _repository.criarProduto(nome, state.categoriaSelecionadaId!);
       // Após criar, atualiza a lista de produtos da categoria atual.
       selecionarCategoria(state.categoriaSelecionadaId!);
     }
@@ -114,9 +105,7 @@ class GestaoController extends Notifier<GestaoState> {
 
   Future<void> atualizarPreco(
       String produtoId, String precoStringFormatado) async {
-    // 1. Remove os separadores de milhar (ponto). Ex: "1.234,56" -> "1234,56"
     final stringSemMilhar = precoStringFormatado.replaceAll('.', '');
-    // 2. Substitui a vírgula decimal por um ponto decimal. Ex: "1234,56" -> "1234.56"
     final stringParaParse = stringSemMilhar.replaceAll(',', '.');
 
     // 3. Tenta converter para double.
@@ -124,7 +113,7 @@ class GestaoController extends Notifier<GestaoState> {
 
     if (novoPreco != null) {
       // 4. Envia o número puro (double) para o serviço de armazenamento.
-      await _storageService.atualizarPrecoProduto(produtoId, novoPreco);
+      await _repository.atualizarPrecoProduto(produtoId, novoPreco);
     }
   }
 
@@ -136,7 +125,7 @@ class GestaoController extends Notifier<GestaoState> {
     // 3. Formata a data.
     final dataFormatada = formatoData.format(hoje);
 
-    final todosProdutos = _storageService.getAllProdutos();
+    final todosProdutos = _repository.getAllProdutos();
 
     if (todosProdutos.isEmpty) {
       return 'Nenhum produto cadastrado para gerar relatório.';
@@ -158,7 +147,6 @@ class GestaoController extends Notifier<GestaoState> {
   }
 }
 
-// PARTE 3: O PROVIDER continua o mesmo.
 final gestaoControllerProvider =
     NotifierProvider<GestaoController, GestaoState>(
   () => GestaoController(),

@@ -74,7 +74,8 @@ class GestaoController extends Notifier<GestaoState> {
     if (categoriasAtualizadas.isNotEmpty) {
       // Se ainda existem categorias, seleciona a primeira da nova lista...
       final novaCategoriaId = categoriasAtualizadas.first.id;
-      final novosProdutos = _storageService.getProdutosPorCategoria(novaCategoriaId);
+      final novosProdutos =
+          _storageService.getProdutosPorCategoria(novaCategoriaId);
 
       // ...e atualiza o estado com TODAS as informações novas de uma vez.
       state = state.copyWith(
@@ -84,7 +85,8 @@ class GestaoController extends Notifier<GestaoState> {
       );
     } else {
       // Se não sobrou nenhuma, limpa completamente o estado.
-      state = GestaoState(categorias: [], produtos: [], categoriaSelecionadaId: null);
+      state = GestaoState(
+          categorias: [], produtos: [], categoriaSelecionadaId: null);
     }
   }
 
@@ -110,7 +112,8 @@ class GestaoController extends Notifier<GestaoState> {
     }
   }
 
-  Future<void> atualizarPreco(String produtoId, String precoStringFormatado) async {
+  Future<void> atualizarPreco(
+      String produtoId, String precoStringFormatado) async {
     // 1. Remove os separadores de milhar (ponto). Ex: "1.234,56" -> "1234,56"
     final stringSemMilhar = precoStringFormatado.replaceAll('.', '');
     // 2. Substitui a vírgula decimal por um ponto decimal. Ex: "1234,56" -> "1234.56"
@@ -124,6 +127,7 @@ class GestaoController extends Notifier<GestaoState> {
       await _storageService.atualizarPrecoProduto(produtoId, novoPreco);
     }
   }
+
   String gerarTextoRelatorio() {
     // 1. Pega a data e hora de agora.
     final hoje = DateTime.now();
@@ -145,7 +149,8 @@ class GestaoController extends Notifier<GestaoState> {
 
     // 5. Itera por TODOS os produtos, sem separar por categoria.
     for (var produto in todosProdutos) {
-      final precoFormatado = produto.preco.toStringAsFixed(2).replaceAll('.', ',');
+      final precoFormatado =
+          produto.preco.toStringAsFixed(2).replaceAll('.', ',');
       buffer.writeln('${produto.nome} – R\$ $precoFormatado');
     }
 

@@ -3,7 +3,9 @@ import 'package:organiza_ae/data/models/categoria.dart';
 import 'package:organiza_ae/data/models/produto.dart';
 import 'package:uuid/uuid.dart';
 
-class LocalStorageService {
+import '../../gestao_produtos/domain/i_gestao_repository.dart';
+
+class HiveGestaoRepository implements IGestaoRepository {
   // Nomes das "caixas" (tabelas) do nosso banco de dados.
   static const _categoriasBox = 'categorias_box';
   static const _produtosBox = 'produtos_box';
@@ -12,6 +14,7 @@ class LocalStorageService {
   final _uuid = Uuid();
 
   // Métod para inicializar o Hive e registrar os adaptadores
+  @override
   Future<void> init() async {
     Hive.registerAdapter(CategoriaAdapter());
     Hive.registerAdapter(ProdutoAdapter());
@@ -21,6 +24,7 @@ class LocalStorageService {
   }
 
   // Criar categoria
+  @override
   Future<void> criarCategoria(String nome) async {
     final box = Hive.box<Categoria>(_categoriasBox);
     final novoId = _uuid.v4();
@@ -29,12 +33,14 @@ class LocalStorageService {
   }
 
   // Listar categorias
+  @override
   List<Categoria> getCategorias() {
     final box = Hive.box<Categoria>(_categoriasBox);
     return box.values.toList();
   }
 
   // Criar produto
+  @override
   Future<void> criarProduto(String nome, String categoriaId) async {
     final box = Hive.box<Produto>(_produtosBox);
     final novoId = _uuid.v4();
@@ -51,21 +57,26 @@ class LocalStorageService {
   }
 
   // Listar produto
+  @override
   List<Produto> getProdutosPorCategoria(String categoriaId) {
     final box = Hive.box<Produto>(_produtosBox);
 
     // Pega todos os produtos e usa o ".where" para filtrar
     // apenas aqueles cujo categoriaId seja igual ao que foi passado.
-    return box.values.where((produto) => produto.categoriaId == categoriaId).toList();
+    return box.values
+        .where((produto) => produto.categoriaId == categoriaId)
+        .toList();
   }
 
   // Listar todos os produtos
+  @override
   List<Produto> getAllProdutos() {
     final box = Hive.box<Produto>(_produtosBox);
     return box.values.toList();
   }
 
   // Atualizar preco do produto
+  @override
   Future<void> atualizarPrecoProduto(String produtoId, double novoPreco) async {
     final box = Hive.box<Produto>(_produtosBox);
 
@@ -82,12 +93,14 @@ class LocalStorageService {
   }
 
   // Adicione esta função na seção de "FUNÇÕES PARA CATEGORIAS"
+  @override
   Future<void> deletarCategoria(String categoriaId) async {
     final boxCategorias = Hive.box<Categoria>(_categoriasBox);
     final boxProdutos = Hive.box<Produto>(_produtosBox);
 
     // 1. Encontra todos os produtos que pertencem a esta categoria.
-    final produtosParaDeletar = boxProdutos.values.where((p) => p.categoriaId == categoriaId).toList();
+    final produtosParaDeletar =
+        boxProdutos.values.where((p) => p.categoriaId == categoriaId).toList();
 
     // 2. Pega as chaves (IDs) desses produtos.
     final chavesDosProdutos = produtosParaDeletar.map((p) => p.id).toList();

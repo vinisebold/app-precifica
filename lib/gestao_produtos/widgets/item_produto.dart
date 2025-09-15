@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:organiza_ae/data/models/produto.dart';
 import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
 // 1. Importar nossos dois widgets customizados
-import 'package:organiza_ae/gestao_produtos/widgets/currency_input_formatter.dart';
-import 'package:organiza_ae/gestao_produtos/widgets/always_end_cursor_text_editing_controller.dart';
+import 'package:organiza_ae/gestao_produtos/widgets/moeda_formatter.dart';
+import 'package:organiza_ae/gestao_produtos/widgets/texto_cursor_final_controller.dart';
 
 class ItemProduto extends ConsumerStatefulWidget {
   final Produto produto;

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +22,7 @@ class ItemProduto extends ConsumerStatefulWidget {
 
 class _ItemProdutoState extends ConsumerState<ItemProduto> {
   late final InputCursorFinalController _precoController;
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -42,6 +44,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
   @override
   void dispose() {
     _precoController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
@@ -56,9 +59,14 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
           textAlign: TextAlign.right,
           // Cada alteração no texto, chama o métod* `atualizarPreco` no controller principal.
           onChanged: (novoPrecoFormatado) {
-            ref
-                .read(gestaoControllerProvider.notifier)
-                .atualizarPreco(widget.produto.id, novoPrecoFormatado);
+            if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+            _debounce = Timer(const Duration(milliseconds: 500), () {
+              // Esta chamada só acontecerá se o usuário parar de digitar.
+              ref
+                  .read(gestaoControllerProvider.notifier)
+                  .atualizarPreco(widget.produto.id, novoPrecoFormatado);
+            });
           },
           decoration: const InputDecoration(
             prefixText: 'R\$ ',

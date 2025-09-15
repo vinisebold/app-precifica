@@ -5,7 +5,7 @@ import 'package:organiza_ae/data/models/produto.dart';
 import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
 // 1. Importar nossos dois widgets customizados
 import 'package:organiza_ae/gestao_produtos/widgets/moeda_formatter.dart';
-import 'package:organiza_ae/gestao_produtos/widgets/texto_cursor_final_controller.dart';
+import 'package:organiza_ae/gestao_produtos/widgets/input_cursor_final_controller.dart';
 
 class ItemProduto extends ConsumerStatefulWidget {
   final Produto produto;
@@ -17,15 +17,15 @@ class ItemProduto extends ConsumerStatefulWidget {
 
 class _ItemProdutoState extends ConsumerState<ItemProduto> {
   // 2. Trocamos o controlador padrão pelo nosso controlador customizado.
-  late final AlwaysEndCursorTextEditingController _precoController;
+  late final InputCursorFinalController _precoController;
 
   @override
   void initState() {
     super.initState();
-    final formatter = CurrencyPtBrInputFormatter();
+    final formatter = MoedaFormatter();
 
     // 3. Instanciamos nosso novo controlador.
-    _precoController = AlwaysEndCursorTextEditingController(
+    _precoController = InputCursorFinalController(
       text: formatter.formatEditUpdate(
         TextEditingValue.empty,
         TextEditingValue(text: (widget.produto.preco * 100).toInt().toString()),
@@ -57,7 +57,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
           keyboardType: TextInputType.number,
           inputFormatters: [
             FilteringTextInputFormatter.digitsOnly,
-            CurrencyPtBrInputFormatter(),
+            MoedaFormatter(),
           ],
         ),
       ),

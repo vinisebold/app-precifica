@@ -5,14 +5,31 @@ import 'package:organiza_ae/gestao_produtos/widgets/categoria_nav_bar.dart';
 import 'package:organiza_ae/gestao_produtos/widgets/item_produto.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// A tela principal do aplicativo, responsável por exibir a lista de produtos
-///
-/// e fornecer os controles para gerenciar categorias e produtos.
 class GestaoPage extends ConsumerWidget {
   const GestaoPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Adicionamos este "ouvinte" para reagir a erros.
+    ref.listen(
+      gestaoControllerProvider,
+      (previousState, newState) {
+        final errorMessage = (newState).errorMessage;
+        if (errorMessage != null) {
+          // Se uma nova mensagem de erro apareceu no estado, mostramos a SnackBar.
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+          // E imediatamente limpamos o erro do estado para não mostrá-lo novamente.
+          ref.read(gestaoControllerProvider.notifier).clearError();
+        }
+      },
+    );
+
+    // Este watch continua responsável por reconstruir a UI quando os dados mudam.
     final gestaoState = ref.watch(gestaoControllerProvider);
 
     return Scaffold(
@@ -20,7 +37,6 @@ class GestaoPage extends ConsumerWidget {
         title: const Text('Gestão de Preços'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
-          // Botão para compartilhar o relatório de preços.
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: () {
@@ -30,7 +46,6 @@ class GestaoPage extends ConsumerWidget {
               Share.share(textoRelatorio);
             },
           ),
-          // Botão para adicionar novas categorias.
           IconButton(
             icon: const Icon(Icons.add_box_outlined),
             onPressed: () => _mostrarDialogoNovaCategoria(context, ref),
@@ -44,18 +59,16 @@ class GestaoPage extends ConsumerWidget {
           return ItemProduto(produto: produto);
         },
       ),
-      // Barra de navegação inferior para trocar entre as categorias.
       bottomNavigationBar: const CategoriaNavBar(),
       floatingActionButton: FloatingActionButton(
         onPressed: gestaoState.categoriaSelecionadaId != null
             ? () => _mostrarDialogoNovoProduto(context, ref)
-            : null, // Desabilita o botão se nenhuma categoria existe
+            : null,
         child: const Icon(Icons.add_shopping_cart),
       ),
     );
   }
 
-  /// Exibe um diálogo para o usuário inserir o nome de um novo produto.
   void _mostrarDialogoNovoProduto(BuildContext context, WidgetRef ref) {
     final controller = TextEditingController();
     showDialog(
@@ -89,7 +102,6 @@ class GestaoPage extends ConsumerWidget {
     );
   }
 
-  /// Exibe um diálogo para o usuário inserir o nome de uma nova categoria.
   void _mostrarDialogoNovaCategoria(BuildContext context, WidgetRef ref) {
     final controller = TextEditingController();
     showDialog(

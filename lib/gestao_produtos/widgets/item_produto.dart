@@ -7,10 +7,6 @@ import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
 import 'package:organiza_ae/gestao_produtos/widgets/moeda_formatter.dart';
 import 'package:organiza_ae/gestao_produtos/widgets/input_cursor_final_controller.dart';
 
-/// Um widget que representa um único item na lista de produtos.
-///
-/// É um `ConsumerStatefulWidget` porque precisa gerenciar o estado do
-/// `TextEditingController` do campo de preço.
 class ItemProduto extends ConsumerStatefulWidget {
   final Produto produto;
 
@@ -29,7 +25,6 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     super.initState();
     final formatter = MoedaFormatter();
 
-    // Instancia o controlador.
     _precoController = InputCursorFinalController(
       text: formatter
           .formatEditUpdate(
@@ -50,32 +45,65 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(widget.produto.nome),
-      trailing: SizedBox(
-        width: 100,
-        child: TextField(
-          controller: _precoController,
-          textAlign: TextAlign.right,
-          // Cada alteração no texto, chama o métod* `atualizarPreco` no controller principal.
-          onChanged: (novoPrecoFormatado) {
-            if (_debounce?.isActive ?? false) _debounce!.cancel();
+    final colorScheme = Theme.of(context).colorScheme;
 
-            _debounce = Timer(const Duration(milliseconds: 500), () {
-              // Esta chamada só acontecerá se o usuário parar de digitar.
-              ref
-                  .read(gestaoControllerProvider.notifier)
-                  .atualizarPreco(widget.produto.id, novoPrecoFormatado);
-            });
-          },
-          decoration: const InputDecoration(
-            prefixText: 'R\$ ',
+    return Dismissible(
+      key: ValueKey(widget.produto.id),
+      direction: DismissDirection.endToStart, // Swipe from right to left
+      onDismissed: (direction) {
+        ref
+            .read(gestaoControllerProvider.notifier)
+            .deletarProduto(widget.produto.id);
+        // Remove any existing SnackBars to prevent them from overlapping
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${widget.produto.nome} deletado'),
+            backgroundColor: colorScheme.secondary,
+            action: SnackBarAction(
+              label: 'DESFAZER',
+              textColor: colorScheme.onSecondary,
+              onPressed: () {
+                ref.read(gestaoControllerProvider.notifier).desfazerDeletarProduto();
+              },
+            ),
           ),
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            MoedaFormatter(),
-          ],
+        );
+      },
+      background: Container(
+        color: colorScheme.errorContainer,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        alignment: Alignment.centerRight,
+        child: Icon(
+          Icons.delete,
+          color: colorScheme.onErrorContainer,
+        ),
+      ),
+      child: ListTile(
+        title: Text(widget.produto.nome),
+        trailing: SizedBox(
+          width: 100,
+          child: TextField(
+            controller: _precoController,
+            textAlign: TextAlign.right,
+            onChanged: (novoPrecoFormatado) {
+              if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+              _debounce = Timer(const Duration(milliseconds: 500), () {
+                ref
+                    .read(gestaoControllerProvider.notifier)
+                    .atualizarPreco(widget.produto.id, novoPrecoFormatado);
+              });
+            },
+            decoration: const InputDecoration(
+              prefixText: 'R\$ ',
+            ),
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              MoedaFormatter(),
+            ],
+          ),
         ),
       ),
     );

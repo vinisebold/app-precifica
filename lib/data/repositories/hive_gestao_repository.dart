@@ -27,8 +27,9 @@ class HiveGestaoRepository implements IGestaoRepository {
   @override
   Future<void> criarCategoria(String nome) async {
     final box = Hive.box<Categoria>(_categoriasBox);
+    final novaOrdem = box.values.length; // A nova categoria será a última
     final novoId = _uuid.v4();
-    final novaCategoria = Categoria(id: novoId, nome: nome);
+    final novaCategoria = Categoria(id: novoId, nome: nome, ordem: novaOrdem);
     await box.put(novoId, novaCategoria);
   }
 
@@ -36,7 +37,21 @@ class HiveGestaoRepository implements IGestaoRepository {
   @override
   List<Categoria> getCategorias() {
     final box = Hive.box<Categoria>(_categoriasBox);
-    return box.values.toList();
+    final categorias = box.values.toList();
+    categorias.sort((a, b) => a.ordem.compareTo(b.ordem));
+    return categorias;
+  }
+
+  @override
+  Future<void> atualizarOrdemCategorias(List<Categoria> categorias) async {
+    final box = Hive.box<Categoria>(_categoriasBox);
+    final Map<String, Categoria> updates = {};
+    for (int i = 0; i < categorias.length; i++) {
+      final categoria = categorias[i];
+      categoria.ordem = i;
+      updates[categoria.id] = categoria;
+    }
+    await box.putAll(updates);
   }
 
   // Criar produto

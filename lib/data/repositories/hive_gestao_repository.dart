@@ -53,77 +53,69 @@ class HiveGestaoRepository implements IGestaoRepository {
     }
     await box.putAll(updates);
   }
+  
+  @override
+  Future<void> deletarCategoria(String categoriaId) async {
+    final boxCategorias = Hive.box<Categoria>(_categoriasBox);
+    final boxProdutos = Hive.box<Produto>(_produtosBox);
 
-  // Criar produto
+    final produtosParaDeletar =
+        boxProdutos.values.where((p) => p.categoriaId == categoriaId).toList();
+
+    final chavesDosProdutos = produtosParaDeletar.map((p) => p.id).toList();
+
+    await boxProdutos.deleteAll(chavesDosProdutos);
+    await boxCategorias.delete(categoriaId);
+  }
+
+  // --- Métodos para Produto ---
   @override
   Future<void> criarProduto(String nome, String categoriaId) async {
     final box = Hive.box<Produto>(_produtosBox);
     final novoId = _uuid.v4();
 
-    // Cria um novo produto, associando-o à categoria pelo ID.
     final novoProduto = Produto(
       id: novoId,
       nome: nome,
       categoriaId: categoriaId,
-      // O preço inicial será 0.0, conforme definido no nosso modelo.
     );
-
     await box.put(novoId, novoProduto);
   }
 
-  // Listar produto
   @override
   List<Produto> getProdutosPorCategoria(String categoriaId) {
     final box = Hive.box<Produto>(_produtosBox);
-
-    // Pega todos os produtos e usa o ".where" para filtrar
-    // apenas aqueles cujo categoriaId seja igual ao que foi passado.
     return box.values
         .where((produto) => produto.categoriaId == categoriaId)
         .toList();
   }
 
-  // Listar todos os produtos
   @override
   List<Produto> getAllProdutos() {
     final box = Hive.box<Produto>(_produtosBox);
     return box.values.toList();
   }
 
-  // Atualizar preco do produto
   @override
   Future<void> atualizarPrecoProduto(String produtoId, double novoPreco) async {
     final box = Hive.box<Produto>(_produtosBox);
-
-    // Pega o produto existente na caixa usando seu ID (que é a chave).
     final produto = box.get(produtoId);
 
     if (produto != null) {
-      // Atualiza o preço do objeto.
       produto.preco = novoPreco;
-
-      // Salva o objeto de volta na caixa com a mesma chave para persistir a alteração.
       await box.put(produtoId, produto);
     }
   }
 
-  // Adicione esta função na seção de "FUNÇÕES PARA CATEGORIAS"
   @override
-  Future<void> deletarCategoria(String categoriaId) async {
-    final boxCategorias = Hive.box<Categoria>(_categoriasBox);
-    final boxProdutos = Hive.box<Produto>(_produtosBox);
+  Future<void> deletarProduto(String produtoId, String categoriaId) async {
+    final box = Hive.box<Produto>(_produtosBox);
+    await box.delete(produtoId);
+  }
 
-    // 1. Encontra todos os produtos que pertencem a esta categoria.
-    final produtosParaDeletar =
-        boxProdutos.values.where((p) => p.categoriaId == categoriaId).toList();
-
-    // 2. Pega as chaves (IDs) desses produtos.
-    final chavesDosProdutos = produtosParaDeletar.map((p) => p.id).toList();
-
-    // 3. Deleta todos os produtos associados de uma só vez.
-    await boxProdutos.deleteAll(chavesDosProdutos);
-
-    // 4. Finalmente, deleta a própria categoria.
-    await boxCategorias.delete(categoriaId);
+  @override
+  Future<void> adicionarProdutoObjeto(Produto produto) async {
+    final box = Hive.box<Produto>(_produtosBox);
+    await box.put(produto.id, produto); // Add the product back using its ID
   }
 }

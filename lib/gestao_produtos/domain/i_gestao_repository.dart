@@ -19,4 +19,6 @@ abstract class IGestaoRepository {
   List<Produto> getProdutosPorCategoria(String categoriaId);
   List<Produto> getAllProdutos();
   Future<void> atualizarPrecoProduto(String produtoId, double novoPreco);
+  Future<void> deletarProduto(String produtoId, String categoriaId);
+  Future<void> adicionarProdutoObjeto(Produto produto); // Added for UNDO
 }

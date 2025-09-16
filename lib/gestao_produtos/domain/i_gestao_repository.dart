@@ -13,6 +13,7 @@ abstract class IGestaoRepository {
   List<Categoria> getCategorias();
   Future<void> deletarCategoria(String categoriaId);
   Future<void> atualizarOrdemCategorias(List<Categoria> categorias);
+  Future<void> atualizarNomeCategoria(String categoriaId, String novoNome);
 
   // --- Métodos para Produto ---
   Future<void> criarProduto(String nome, String categoriaId);
@@ -20,5 +21,6 @@ abstract class IGestaoRepository {
   List<Produto> getAllProdutos();
   Future<void> atualizarPrecoProduto(String produtoId, double novoPreco);
   Future<void> deletarProduto(String produtoId, String categoriaId);
-  Future<void> adicionarProdutoObjeto(Produto produto); // Added for UNDO
+  Future<void> adicionarProdutoObjeto(Produto produto);
+  Future<void> atualizarNomeProduto(String produtoId, String novoNome);
 }

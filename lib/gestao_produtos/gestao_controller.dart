@@ -294,6 +294,26 @@ class GestaoController extends Notifier<GestaoState> {
 
     return buffer.toString();
   }
+
+  Future<void> atualizarNomeCategoria(String id, String novoNome) async {
+    try {
+      await _repository.atualizarNomeCategoria(id, novoNome);
+      state = state.copyWith(categorias: _repository.getCategorias());
+    } catch (e) {
+      state =
+          state.copyWith(errorMessage: 'Falha ao atualizar nome da categoria.');
+    }
+  }
+
+  Future<void> atualizarNomeProduto(String id, String novoNome) async {
+    try {
+      await _repository.atualizarNomeProduto(id, novoNome);
+      selecionarCategoria(state.categoriaSelecionadaId!);
+    } catch (e) {
+      state =
+          state.copyWith(errorMessage: 'Falha ao atualizar nome do produto.');
+    }
+  }
 }
 
 final gestaoControllerProvider =

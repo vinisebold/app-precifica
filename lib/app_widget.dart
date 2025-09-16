@@ -16,7 +16,7 @@ class AppWidget extends StatelessWidget {
 
         // Configuração do tema com base no Material 3
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
         ),
 

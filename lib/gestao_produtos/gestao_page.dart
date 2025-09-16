@@ -12,15 +12,18 @@ class GestaoPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    ref.listen(
+
+    // Listener para exibir SnackBars de forma segura
+    ref.listen<GestaoState>(
       gestaoControllerProvider,
       (previousState, newState) {
-        final errorMessage = (newState).errorMessage;
-        if (errorMessage != null) {
+        // Se houver uma mensagem de erro, exibe na SnackBar
+        if (newState.errorMessage != null &&
+            newState.errorMessage != previousState?.errorMessage) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                errorMessage,
+                newState.errorMessage!,
                 style: TextStyle(color: colorScheme.onErrorContainer),
               ),
               backgroundColor: colorScheme.errorContainer,
@@ -28,11 +31,33 @@ class GestaoPage extends ConsumerWidget {
           );
           ref.read(gestaoControllerProvider.notifier).clearError();
         }
+
+        // Se um produto foi deletado, exibe a SnackBar de "DESFAZER"
+        if (newState.ultimoProdutoDeletado != null &&
+            newState.ultimoProdutoDeletado !=
+                previousState?.ultimoProdutoDeletado) {
+          final produtoDeletado = newState.ultimoProdutoDeletado!;
+          ScaffoldMessenger.of(context).removeCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${produtoDeletado.nome} deletado'),
+              backgroundColor: colorScheme.secondary,
+              action: SnackBarAction(
+                label: 'DESFAZER',
+                textColor: colorScheme.onSecondary,
+                onPressed: () {
+                  ref
+                      .read(gestaoControllerProvider.notifier)
+                      .desfazerDeletarProduto();
+                },
+              ),
+            ),
+          );
+        }
       },
     );
 
     final gestaoState = ref.watch(gestaoControllerProvider);
-    // Removed diagnostic print from here
 
     return Scaffold(
       appBar: AppBar(
@@ -66,7 +91,6 @@ class GestaoPage extends ConsumerWidget {
               return ItemProduto(produto: produto);
             },
           ),
-          // Área de lixo que aparece condicionalmente
           if (gestaoState.isReordering) _buildDeleteArea(context, ref),
         ],
       ),
@@ -80,7 +104,6 @@ class GestaoPage extends ConsumerWidget {
     );
   }
 
-  // Widget para a área de apagar
   Widget _buildDeleteArea(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -105,11 +128,13 @@ class GestaoPage extends ConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.delete_outline, color: colorScheme.onErrorContainer, size: 32),
+                Icon(Icons.delete_outline,
+                    color: colorScheme.onErrorContainer, size: 32),
                 const SizedBox(height: 8),
                 Text(
                   'Arraste aqui para apagar',
-                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onErrorContainer),
+                  style: textTheme.bodyMedium
+                      ?.copyWith(color: colorScheme.onErrorContainer),
                 ),
               ],
             ),
@@ -125,12 +150,11 @@ class GestaoPage extends ConsumerWidget {
   }
 
   void _mostrarDialogoNovoProduto(BuildContext pageContext, WidgetRef ref) {
-    print("Attempting to show Novo Produto dialog"); // KEEPING THIS FOR NOW
     final controller = TextEditingController();
     final textTheme = Theme.of(pageContext).textTheme;
 
     showDialog(
-      context: pageContext, 
+      context: pageContext,
       builder: (dialogContext) => AlertDialog(
         title: Text('Novo Produto', style: textTheme.headlineSmall),
         content: TextField(
@@ -140,7 +164,7 @@ class GestaoPage extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(), 
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: Text('Cancelar', style: textTheme.labelLarge),
           ),
           TextButton(
@@ -150,7 +174,7 @@ class GestaoPage extends ConsumerWidget {
                 ref
                     .read(gestaoControllerProvider.notifier)
                     .criarProduto(nomeProduto);
-                Navigator.of(dialogContext).pop(); 
+                Navigator.of(dialogContext).pop();
               }
             },
             child: Text('Salvar', style: textTheme.labelLarge),
@@ -165,7 +189,7 @@ class GestaoPage extends ConsumerWidget {
     final textTheme = Theme.of(pageContext).textTheme;
 
     showDialog(
-      context: pageContext, 
+      context: pageContext,
       builder: (dialogContext) => AlertDialog(
         title: Text('Nova Categoria', style: textTheme.headlineSmall),
         content: TextField(
@@ -176,7 +200,7 @@ class GestaoPage extends ConsumerWidget {
         actions: [
           TextButton(
             child: Text('Cancelar', style: textTheme.labelLarge),
-            onPressed: () => Navigator.of(dialogContext).pop(), 
+            onPressed: () => Navigator.of(dialogContext).pop(),
           ),
           TextButton(
             child: Text('Salvar', style: textTheme.labelLarge),
@@ -186,7 +210,7 @@ class GestaoPage extends ConsumerWidget {
                 ref
                     .read(gestaoControllerProvider.notifier)
                     .criarCategoria(nomeCategoria);
-                Navigator.of(dialogContext).pop(); 
+                Navigator.of(dialogContext).pop();
               }
             },
           ),
@@ -196,7 +220,6 @@ class GestaoPage extends ConsumerWidget {
   }
 }
 
-// Stateful FAB for hover and press effects
 class _StatefulFab extends StatefulWidget {
   final VoidCallback? onPressed;
   final Widget icon;
@@ -219,7 +242,7 @@ class _StatefulFabState extends State<_StatefulFab> {
     final bool showSquircle = isEnabled && (_isHovered || _isPressed);
     final ShapeBorder currentShape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(showSquircle ? 16.0 : 28.0),
-      side: BorderSide.none, 
+      side: BorderSide.none,
     );
 
     Color fabBackgroundColor;
@@ -229,8 +252,10 @@ class _StatefulFabState extends State<_StatefulFab> {
       fabBackgroundColor = colorScheme.primaryContainer;
       fabForegroundColor = colorScheme.onPrimaryContainer;
     } else {
-      fabBackgroundColor = colorScheme.onSurface.withAlpha((255 * 0.12).round());
-      fabForegroundColor = colorScheme.onSurface.withAlpha((255 * 0.38).round());
+      fabBackgroundColor =
+          colorScheme.onSurface.withAlpha((255 * 0.12).round());
+      fabForegroundColor =
+          colorScheme.onSurface.withAlpha((255 * 0.38).round());
     }
 
     const double currentElevation = 0.0;
@@ -247,25 +272,22 @@ class _StatefulFabState extends State<_StatefulFab> {
           if (mounted && isEnabled) setState(() => _isPressed = true);
         },
         onTapUp: (_) {
-          // The main action is now directly on FloatingActionButton's onPressed
-          // This GestureDetector's onTapUp only handles the visual press state change
           if (mounted && isEnabled) {
             setState(() => _isPressed = false);
-            // widget.onPressed?.call(); // No longer called here
           }
         },
         onTapCancel: () {
           if (mounted && isEnabled) setState(() => _isPressed = false);
         },
         child: FloatingActionButton(
-          onPressed: widget.onPressed, // Directly use the passed onPressed callback
+          onPressed: widget.onPressed,
           backgroundColor: fabBackgroundColor,
           foregroundColor: fabForegroundColor,
           shape: currentShape,
           elevation: currentElevation,
-          hoverElevation: currentElevation, 
-          focusElevation: currentElevation,   
-          highlightElevation: currentElevation, 
+          hoverElevation: currentElevation,
+          focusElevation: currentElevation,
+          highlightElevation: currentElevation,
           child: widget.icon,
         ),
       ),

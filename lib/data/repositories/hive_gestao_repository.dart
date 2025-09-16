@@ -27,7 +27,7 @@ class HiveGestaoRepository implements IGestaoRepository {
   @override
   Future<void> criarCategoria(String nome) async {
     final box = Hive.box<Categoria>(_categoriasBox);
-    final novaOrdem = box.values.length; // A nova categoria será a última
+    final novaOrdem = box.values.length;
     final novoId = _uuid.v4();
     final novaCategoria = Categoria(id: novoId, nome: nome, ordem: novaOrdem);
     await box.put(novoId, novaCategoria);
@@ -53,7 +53,7 @@ class HiveGestaoRepository implements IGestaoRepository {
     }
     await box.putAll(updates);
   }
-  
+
   @override
   Future<void> deletarCategoria(String categoriaId) async {
     final boxCategorias = Hive.box<Categoria>(_categoriasBox);
@@ -66,6 +66,17 @@ class HiveGestaoRepository implements IGestaoRepository {
 
     await boxProdutos.deleteAll(chavesDosProdutos);
     await boxCategorias.delete(categoriaId);
+  }
+
+  @override
+  Future<void> atualizarNomeCategoria(
+      String categoriaId, String novoNome) async {
+    final box = Hive.box<Categoria>(_categoriasBox);
+    final categoria = box.get(categoriaId);
+    if (categoria != null) {
+      categoria.nome = novoNome;
+      await box.put(categoriaId, categoria);
+    }
   }
 
   // --- Métodos para Produto ---
@@ -117,5 +128,15 @@ class HiveGestaoRepository implements IGestaoRepository {
   Future<void> adicionarProdutoObjeto(Produto produto) async {
     final box = Hive.box<Produto>(_produtosBox);
     await box.put(produto.id, produto); // Add the product back using its ID
+  }
+
+  @override
+  Future<void> atualizarNomeProduto(String produtoId, String novoNome) async {
+    final box = Hive.box<Produto>(_produtosBox);
+    final produto = box.get(produtoId);
+    if (produto != null) {
+      produto.nome = novoNome;
+      await box.put(produtoId, produto);
+    }
   }
 }

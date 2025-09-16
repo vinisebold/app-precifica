@@ -7,7 +7,9 @@ import 'package:organiza_ae/data/models/categoria.dart';
 import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
 
 class CategoriaNavBar extends ConsumerStatefulWidget {
-  const CategoriaNavBar({super.key});
+  final Function(Categoria) onCategoriaDoubleTap;
+
+  const CategoriaNavBar({required this.onCategoriaDoubleTap, super.key});
 
   @override
   ConsumerState<CategoriaNavBar> createState() => _CategoriaNavBarState();
@@ -199,9 +201,10 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                                   scale: 1.0,
                                   child: _CategoriaItem(
                                     categoria: categoriaToRevert,
-                                    isSelected:
-                                        true, // Simulate selection for feedback
+                                    isSelected: true,
+                                    // Simulate selection for feedback
                                     onTap: () {},
+                                    onDoubleTap: () {},
                                     isDragFeedback: true,
                                   ),
                                 ),
@@ -253,6 +256,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                               categoria: categoria,
                               isSelected: true,
                               onTap: () {},
+                              onDoubleTap: () {},
                               isDragFeedback: true,
                             ),
                           ),
@@ -264,6 +268,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                               isSelected:
                                   state.categoriaSelecionadaId == categoria.id,
                               onTap: () {},
+                              onDoubleTap: () {},
                             ),
                           ),
                           child: Opacity(
@@ -282,6 +287,13 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                                   ref
                                       .read(gestaoControllerProvider.notifier)
                                       .selecionarCategoria(categoria.id);
+                                }
+                              },
+                              onDoubleTap: () {
+                                if (!ref
+                                    .read(gestaoControllerProvider)
+                                    .isReordering) {
+                                  widget.onCategoriaDoubleTap(categoria);
                                 }
                               },
                             ),
@@ -407,6 +419,7 @@ class _CategoriaItem extends StatefulWidget {
   final Categoria categoria;
   final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback onDoubleTap;
   final bool isDragFeedback;
 
   const _CategoriaItem({
@@ -414,6 +427,7 @@ class _CategoriaItem extends StatefulWidget {
     required this.categoria,
     required this.isSelected,
     required this.onTap,
+    required this.onDoubleTap,
     this.isDragFeedback = false,
   });
 
@@ -485,42 +499,47 @@ class _CategoriaItemState extends State<_CategoriaItem> {
         child: MouseRegion(
           onEnter: (_) => setState(() => _isHovering = true),
           onExit: (_) => setState(() => _isHovering = false),
-          child: InkWell(
-            onTap: widget.onTap,
-            onHighlightChanged: (isHighlighted) {
-              if (mounted) {
-                setState(() {
-                  _isPressed = isHighlighted;
-                });
-              }
-            },
-            borderRadius: borderRadius,
-            hoverColor: Colors.transparent,
-            splashColor: colorScheme.onSurface.withAlpha((255 * 0.12).round()),
-            highlightColor: Colors.transparent,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-              decoration: BoxDecoration(
-                color: pillColor,
-                borderRadius: borderRadius,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(widget.isSelected ? Icons.label : Icons.label_outline,
-                      color: contentColor, size: 20),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.categoria.nome,
-                    style: textTheme.labelLarge?.copyWith(color: contentColor),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                ],
+          child: GestureDetector(
+            onDoubleTap: widget.onDoubleTap,
+            child: InkWell(
+              onTap: widget.onTap,
+              onHighlightChanged: (isHighlighted) {
+                if (mounted) {
+                  setState(() {
+                    _isPressed = isHighlighted;
+                  });
+                }
+              },
+              borderRadius: borderRadius,
+              hoverColor: Colors.transparent,
+              splashColor:
+                  colorScheme.onSurface.withAlpha((255 * 0.12).round()),
+              highlightColor: Colors.transparent,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 10.0),
+                decoration: BoxDecoration(
+                  color: pillColor,
+                  borderRadius: borderRadius,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(widget.isSelected ? Icons.label : Icons.label_outline,
+                        color: contentColor, size: 20),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.categoria.nome,
+                      style:
+                          textTheme.labelLarge?.copyWith(color: contentColor),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

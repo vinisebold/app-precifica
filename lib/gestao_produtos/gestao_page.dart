@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:organiza_ae/data/models/categoria.dart';
+import 'package:organiza_ae/data/models/produto.dart';
 import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
 import 'package:organiza_ae/gestao_produtos/widgets/categoria_nav_bar.dart';
 import 'package:organiza_ae/gestao_produtos/widgets/item_produto.dart';
@@ -75,16 +77,53 @@ class GestaoPage extends ConsumerWidget {
     });
   }
 
+  void _mostrarDialogoEditarNome(
+    BuildContext context,
+    WidgetRef ref, {
+    required String titulo,
+    required String valorAtual,
+    required Function(String) onSalvar,
+  }) {
+    final controller = TextEditingController(text: valorAtual);
+    final textTheme = Theme.of(context).textTheme;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(titulo, style: textTheme.headlineSmall),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(hintText: "Novo nome"),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text('Cancelar', style: textTheme.labelLarge),
+          ),
+          TextButton(
+            onPressed: () {
+              final novoNome = controller.text;
+              if (novoNome.isNotEmpty) {
+                onSalvar(novoNome);
+                Navigator.of(dialogContext).pop();
+              }
+            },
+            child: Text('Salvar', style: textTheme.labelLarge),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    // Listener para exibir Toasts customizados
     ref.listen<GestaoState>(
       gestaoControllerProvider,
       (previousState, newState) {
-        // Se houver uma mensagem de erro, exibe no toast
         if (newState.errorMessage != null &&
             newState.errorMessage != previousState?.errorMessage) {
           _showCustomToast(
@@ -96,12 +135,10 @@ class GestaoPage extends ConsumerWidget {
           ref.read(gestaoControllerProvider.notifier).clearError();
         }
 
-        // Se um produto foi deletado, exibe o toast de "DESFAZER"
         if (newState.ultimoProdutoDeletado != null &&
             newState.ultimoProdutoDeletado !=
                 previousState?.ultimoProdutoDeletado) {
           final produtoDeletado = newState.ultimoProdutoDeletado!;
-
           _showCustomToast(
             context,
             '${produtoDeletado.nome} deletado',
@@ -127,22 +164,18 @@ class GestaoPage extends ConsumerWidget {
     );
 
     final gestaoState = ref.watch(gestaoControllerProvider);
+    final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Gestão de Preços',
-          style: textTheme.titleLarge,
-        ),
+        title: Text('Gestão de Preços', style: textTheme.titleLarge),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: () {
               HapticFeedback.lightImpact();
-              final textoRelatorio = ref
-                  .read(gestaoControllerProvider.notifier)
-                  .gerarTextoRelatorio();
+              final textoRelatorio = gestaoNotifier.gerarTextoRelatorio();
               Share.share(textoRelatorio);
             },
           ),
@@ -161,17 +194,40 @@ class GestaoPage extends ConsumerWidget {
             itemCount: gestaoState.produtos.length,
             itemBuilder: (context, index) {
               final produto = gestaoState.produtos[index];
-              return ItemProduto(produto: produto);
+              return ItemProduto(
+                produto: produto,
+                onDoubleTap: () {
+                  _mostrarDialogoEditarNome(
+                    context,
+                    ref,
+                    titulo: "Editar Produto",
+                    valorAtual: produto.nome,
+                    onSalvar: (novoNome) {
+                      gestaoNotifier.atualizarNomeProduto(produto.id, novoNome);
+                    },
+                  );
+                },
+              );
             },
           ),
           if (gestaoState.isReordering) _buildDeleteArea(context, ref),
           if (gestaoState.isLoading)
-            const Center(
-              child: CircularProgressIndicator(),
-            ),
+            const Center(child: CircularProgressIndicator()),
         ],
       ),
-      bottomNavigationBar: const CategoriaNavBar(),
+      bottomNavigationBar: CategoriaNavBar(
+        onCategoriaDoubleTap: (categoria) {
+          _mostrarDialogoEditarNome(
+            context,
+            ref,
+            titulo: "Editar Categoria",
+            valorAtual: categoria.nome,
+            onSalvar: (novoNome) {
+              gestaoNotifier.atualizarNomeCategoria(categoria.id, novoNome);
+            },
+          );
+        },
+      ),
       floatingActionButton: _StatefulFab(
         onPressed: gestaoState.categoriaSelecionadaId != null
             ? () {
@@ -201,9 +257,8 @@ class GestaoPage extends ConsumerWidget {
               color: isHovering
                   ? colorScheme.errorContainer.withAlpha((255 * 0.9).round())
                   : colorScheme.errorContainer.withAlpha((255 * 0.7).round()),
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(60),
-              ),
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(60)),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -211,11 +266,9 @@ class GestaoPage extends ConsumerWidget {
                 Icon(Icons.delete_outline,
                     color: colorScheme.onErrorContainer, size: 32),
                 const SizedBox(height: 8),
-                Text(
-                  'Arraste aqui para apagar',
-                  style: textTheme.bodyMedium
-                      ?.copyWith(color: colorScheme.onErrorContainer),
-                ),
+                Text('Arraste aqui para apagar',
+                    style: textTheme.bodyMedium
+                        ?.copyWith(color: colorScheme.onErrorContainer)),
               ],
             ),
           );

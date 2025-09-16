@@ -9,8 +9,13 @@ import 'package:organiza_ae/gestao_produtos/widgets/input_cursor_final_controlle
 
 class ItemProduto extends ConsumerStatefulWidget {
   final Produto produto;
+  final VoidCallback onDoubleTap;
 
-  const ItemProduto({required this.produto, super.key});
+  const ItemProduto({
+    required this.produto,
+    required this.onDoubleTap,
+    super.key,
+  });
 
   @override
   ConsumerState<ItemProduto> createState() => _ItemProdutoState();
@@ -52,8 +57,6 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
       key: ValueKey(widget.produto.id),
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
-        // Ação simplificada: Apenas notifica o controller.
-        // A página (GestaoPage) cuidará de mostrar a SnackBar.
         gestaoNotifier.deletarProduto(widget.produto.id);
       },
       background: Container(
@@ -65,29 +68,32 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
           color: colorScheme.onErrorContainer,
         ),
       ),
-      child: ListTile(
-        title: Text(widget.produto.nome),
-        trailing: SizedBox(
-          width: 100,
-          child: TextField(
-            controller: _precoController,
-            textAlign: TextAlign.right,
-            onChanged: (novoPrecoFormatado) {
-              if (_debounce?.isActive ?? false) _debounce!.cancel();
+      child: GestureDetector(
+        onDoubleTap: widget.onDoubleTap,
+        child: ListTile(
+          title: Text(widget.produto.nome),
+          trailing: SizedBox(
+            width: 100,
+            child: TextField(
+              controller: _precoController,
+              textAlign: TextAlign.right,
+              onChanged: (novoPrecoFormatado) {
+                if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-              _debounce = Timer(const Duration(milliseconds: 500), () {
-                gestaoNotifier.atualizarPreco(
-                    widget.produto.id, novoPrecoFormatado);
-              });
-            },
-            decoration: const InputDecoration(
-              prefixText: 'R\$ ',
+                _debounce = Timer(const Duration(milliseconds: 500), () {
+                  gestaoNotifier.atualizarPreco(
+                      widget.produto.id, novoPrecoFormatado);
+                });
+              },
+              decoration: const InputDecoration(
+                prefixText: 'R\$ ',
+              ),
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                MoedaFormatter(),
+              ],
             ),
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              MoedaFormatter(),
-            ],
           ),
         ),
       ),

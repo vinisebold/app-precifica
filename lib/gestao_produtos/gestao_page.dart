@@ -16,7 +16,7 @@ class GestaoPage extends ConsumerWidget {
     // Listener para exibir SnackBars de forma segura
     ref.listen<GestaoState>(
       gestaoControllerProvider,
-      (previousState, newState) {
+          (previousState, newState) {
         // Se houver uma mensagem de erro, exibe na SnackBar
         if (newState.errorMessage != null &&
             newState.errorMessage != previousState?.errorMessage) {
@@ -27,6 +27,10 @@ class GestaoPage extends ConsumerWidget {
                 style: TextStyle(color: colorScheme.onErrorContainer),
               ),
               backgroundColor: colorScheme.errorContainer,
+              // Removido 'behavior' e 'margin' para usar o comportamento padrão do Scaffold
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
             ),
           );
           ref.read(gestaoControllerProvider.notifier).clearError();
@@ -42,6 +46,10 @@ class GestaoPage extends ConsumerWidget {
             SnackBar(
               content: Text('${produtoDeletado.nome} deletado'),
               backgroundColor: colorScheme.secondary,
+              // Removido 'behavior' e 'margin' para usar o comportamento padrão do Scaffold
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
               action: SnackBarAction(
                 label: 'DESFAZER',
                 textColor: colorScheme.onSecondary,

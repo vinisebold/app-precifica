@@ -7,6 +7,10 @@ on:
 
 jobs:
   build:
+    # SEÇÃO DE PERMISSÕES
+    permissions:
+      contents: write
+
     runs-on: ubuntu-latest
 
     steps:

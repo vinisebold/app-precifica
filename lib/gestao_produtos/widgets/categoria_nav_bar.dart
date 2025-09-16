@@ -20,7 +20,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
   OverlayEntry? _revertingOverlayEntry;
   AnimationController? _revertAnimationController;
   Animation<Offset>? _revertAnimation;
-  Categoria? _revertingCategoria; // The category currently in the revert animation
+  Categoria? _revertingCategoria; 
 
   final Map<String, GlobalKey> _itemKeys = {};
 
@@ -72,7 +72,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
         _revertingCategoria = null;
       });
     }
-    // Unconditionally set reordering to false on animation completion
     ref.read(gestaoControllerProvider.notifier).setReordering(false);
   }
 
@@ -81,7 +80,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
     final state = ref.watch(gestaoControllerProvider);
     final categorias = state.categorias;
     final colorScheme = Theme.of(context).colorScheme;
-    // textTheme removed as it was unused here
 
     for (var cat in categorias) {
       _itemKeys.putIfAbsent(cat.id, () => GlobalKey());
@@ -94,174 +92,236 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
     return Container(
       height: 80,
       color: colorScheme.surfaceContainer,
-      child: Row(
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          _buildArrow(isLeft: true),
-          Expanded(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: Row(
-                  children: categorias.map((categoria) {
-                    final itemKey = _itemKeys[categoria.id]!;
-                    return DragTarget<String>(
-                      builder: (context, candidateData, rejectedData) {
-                        final isBeingDraggedOver = candidateData.isNotEmpty;
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          curve: Curves.easeOut,
-                          transform: isBeingDraggedOver
-                              ? Matrix4.translationValues(0, -5, 0)
-                              : Matrix4.identity(),
-                          child: LongPressDraggable<String>(
-                            key: ValueKey(categoria.id),
-                            data: categoria.id,
-                            onDragStarted: () {
-                              _revertingOverlayEntry?.remove();
-                              _revertingOverlayEntry = null;
-                              _revertAnimationController?.stop();
-                              ref.read(gestaoControllerProvider.notifier).setReordering(true);
-                              if (mounted) {
-                                setState(() {
-                                  _revertingCategoria = null;
-                                });
-                              }
-                            },
-                            onDragEnd: (details) {
-                              if (details.wasAccepted) {
-                                ref.read(gestaoControllerProvider.notifier).setReordering(false);
-                              }
-                            },
-                            onDraggableCanceled: (velocity, dragOffset) {
-                              final Categoria categoriaToRevert = categoria;
-                              final GlobalKey keyOfRevertingItem = itemKey;
+          // 1. SingleChildScrollView for categories
+          SingleChildScrollView(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0), // Padding for first/last items
+              child: Row(
+                children: categorias.map((categoria) {
+                  final itemKey = _itemKeys[categoria.id]!;
+                  return DragTarget<String>(
+                    builder: (context, candidateData, rejectedData) {
+                      final isBeingDraggedOver = candidateData.isNotEmpty;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOut,
+                        transform: isBeingDraggedOver
+                            ? Matrix4.translationValues(0, -5, 0)
+                            : Matrix4.identity(),
+                        child: LongPressDraggable<String>(
+                          key: ValueKey(categoria.id),
+                          data: categoria.id,
+                          onDragStarted: () {
+                            _revertingOverlayEntry?.remove();
+                            _revertingOverlayEntry = null;
+                            _revertAnimationController?.stop();
+                            ref.read(gestaoControllerProvider.notifier).setReordering(true);
+                            if (mounted) {
+                              setState(() {
+                                _revertingCategoria = null;
+                              });
+                            }
+                          },
+                          onDragEnd: (details) {
+                            if (details.wasAccepted) {
+                              ref.read(gestaoControllerProvider.notifier).setReordering(false);
+                            }
+                          },
+                          onDraggableCanceled: (velocity, dragOffset) {
+                            final Categoria categoriaToRevert = categoria;
+                            final GlobalKey keyOfRevertingItem = itemKey;
 
-                              if (!mounted) {
-                                _completeRevertAnimation();
+                            if (!mounted) {
+                              _completeRevertAnimation();
+                              return;
+                            }
+                            
+                            setState(() {
+                              _revertingCategoria = categoriaToRevert;
+                            });
+
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (!mounted || _revertingCategoria != categoriaToRevert) {
+                                if (_revertingCategoria == null || _revertingCategoria == categoriaToRevert) {
+                                   _completeRevertAnimation();
+                                }
                                 return;
                               }
-                              
-                              setState(() {
-                                _revertingCategoria = categoriaToRevert;
-                              });
 
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (!mounted || _revertingCategoria != categoriaToRevert) {
-                                  if (_revertingCategoria == null || _revertingCategoria == categoriaToRevert) {
-                                     _completeRevertAnimation();
-                                  }
-                                  return;
-                                }
+                              final RenderBox? itemRenderBoxForTarget =
+                                  keyOfRevertingItem.currentContext?.findRenderObject() as RenderBox?;
 
-                                final RenderBox? itemRenderBoxForTarget =
-                                    keyOfRevertingItem.currentContext?.findRenderObject() as RenderBox?;
+                              if (itemRenderBoxForTarget == null || !itemRenderBoxForTarget.attached) {
+                                 _completeRevertAnimation();
+                                return;
+                              }
+                              final Offset targetPosition = itemRenderBoxForTarget.localToGlobal(Offset.zero);
 
-                                if (itemRenderBoxForTarget == null || !itemRenderBoxForTarget.attached) {
-                                   _completeRevertAnimation();
-                                  return;
-                                }
-                                final Offset targetPosition = itemRenderBoxForTarget.localToGlobal(Offset.zero);
-
-                                final Widget animationFeedbackWidget = Material(
-                                  color: Colors.transparent,
-                                  shadowColor: Colors.black.withAlpha((255 * 0.075).round()), // Consistent shadow for animation
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28.0)),
-                                  child: Transform.scale(
-                                    scale: 1.0,
-                                    child: _CategoriaItem(
-                                      categoria: categoriaToRevert,
-                                      isSelected: true, 
-                                      onTap: () {},
-                                      isDragFeedback: true,
-                                    ),
+                              final Widget animationFeedbackWidget = Material(
+                                color: Colors.transparent,
+                                shadowColor: Colors.black.withAlpha((255 * 0.075).round()),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28.0)),
+                                child: Transform.scale(
+                                  scale: 1.0,
+                                  child: _CategoriaItem(
+                                    categoria: categoriaToRevert,
+                                    isSelected: true, 
+                                    onTap: () {},
+                                    isDragFeedback: true,
                                   ),
+                                ),
+                              );
+
+                              _revertAnimationController?.stop();
+                              _revertAnimation = Tween<Offset>(begin: dragOffset, end: targetPosition)
+                                  .animate(CurvedAnimation(
+                                    parent: _revertAnimationController!,
+                                    curve: Curves.easeOutCubic,
+                                  ));
+
+                              _revertingOverlayEntry?.remove();
+                              _revertingOverlayEntry = OverlayEntry(builder: (context) {
+                                return AnimatedBuilder(
+                                  animation: _revertAnimation!,
+                                  builder: (context, child) {
+                                    return Positioned(
+                                      left: _revertAnimation!.value.dx,
+                                      top: _revertAnimation!.value.dy,
+                                      child: child!,
+                                    );
+                                  },
+                                  child: animationFeedbackWidget,
                                 );
-
-                                _revertAnimationController?.stop();
-                                _revertAnimation = Tween<Offset>(begin: dragOffset, end: targetPosition)
-                                    .animate(CurvedAnimation(
-                                      parent: _revertAnimationController!,
-                                      curve: Curves.easeOutCubic,
-                                    ));
-
-                                _revertingOverlayEntry?.remove();
-                                _revertingOverlayEntry = OverlayEntry(builder: (context) {
-                                  return AnimatedBuilder(
-                                    animation: _revertAnimation!,
-                                    builder: (context, child) {
-                                      return Positioned(
-                                        left: _revertAnimation!.value.dx,
-                                        top: _revertAnimation!.value.dy,
-                                        child: child!,
-                                      );
-                                    },
-                                    child: animationFeedbackWidget,
-                                  );
-                                });
-                                
-                                // Removed 'Overlay.of(context) != null' check as per lint
-                                if(mounted){
-                                   Overlay.of(context).insert(_revertingOverlayEntry!);
-                                   _revertAnimationController!.forward(from: 0.0);
-                                } else {
-                                  _completeRevertAnimation();
-                                }
                               });
-                            },
-                            feedback: Material(
-                              color: Colors.transparent,
-                              elevation: 2.0, 
-                              shadowColor: Colors.black.withAlpha((255 * 0.075).round()), // Reduced shadow opacity
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28.0), 
-                              ),
-                              child: _CategoriaItem(
-                                categoria: categoria,
-                                isSelected: true, 
-                                onTap: () {},
-                                isDragFeedback: true,
-                              ),
+                              
+                              if(mounted){
+                                 Overlay.of(context).insert(_revertingOverlayEntry!);
+                                 _revertAnimationController!.forward(from: 0.0);
+                              } else {
+                                _completeRevertAnimation();
+                              }
+                            });
+                          },
+                          feedback: Material(
+                            color: Colors.transparent,
+                            elevation: 2.0, 
+                            shadowColor: Colors.black.withAlpha((255 * 0.075).round()),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28.0), 
                             ),
-                            childWhenDragging: Opacity(
-                              opacity: 0.0,
-                              child: _CategoriaItem(
-                                key: itemKey,
-                                categoria: categoria,
-                                isSelected: state.categoriaSelecionadaId == categoria.id,
-                                onTap: () {},
-                              ),
-                            ),
-                            child: Opacity(
-                              opacity: (_revertingCategoria?.id == categoria.id) ? 0.0 : 1.0,
-                              child: _CategoriaItem(
-                                key: itemKey,
-                                categoria: categoria,
-                                isSelected: state.categoriaSelecionadaId == categoria.id,
-                                onTap: () {
-                                  // Check !state.isReordering before selecting to prevent selection during animation
-                                  if (!ref.read(gestaoControllerProvider).isReordering) {
-                                    ref.read(gestaoControllerProvider.notifier).selecionarCategoria(categoria.id);
-                                  }
-                                },
-                              ),
+                            child: _CategoriaItem(
+                              categoria: categoria,
+                              isSelected: true, 
+                              onTap: () {},
+                              isDragFeedback: true,
                             ),
                           ),
-                        );
-                      },
-                      onWillAcceptWithDetails: (details) => details.data != categoria.id,
-                      onAcceptWithDetails: (details) {
-                        ref.read(gestaoControllerProvider.notifier).reordenarCategoria(details.data, categoria.id);
-                      },
-                    );
-                  }).toList(),
+                          childWhenDragging: Opacity(
+                            opacity: 0.0,
+                            child: _CategoriaItem(
+                              key: itemKey,
+                              categoria: categoria,
+                              isSelected: state.categoriaSelecionadaId == categoria.id,
+                              onTap: () {},
+                            ),
+                          ),
+                          child: Opacity(
+                            opacity: (_revertingCategoria?.id == categoria.id) ? 0.0 : 1.0,
+                            child: _CategoriaItem(
+                              key: itemKey,
+                              categoria: categoria,
+                              isSelected: state.categoriaSelecionadaId == categoria.id,
+                              onTap: () {
+                                if (!ref.read(gestaoControllerProvider).isReordering) {
+                                  ref.read(gestaoControllerProvider.notifier).selecionarCategoria(categoria.id);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    onWillAcceptWithDetails: (details) => details.data != categoria.id,
+                    onAcceptWithDetails: (details) {
+                      ref.read(gestaoControllerProvider.notifier).reordenarCategoria(details.data, categoria.id);
+                    },
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+
+          // 2. Left Fade Gradient
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: AnimatedOpacity(
+              opacity: _showLeftArrow ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 200),
+              child: IgnorePointer(
+                child: Container(
+                  width: 48.0, // Width of the fade effect
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        colorScheme.surfaceContainer, 
+                        colorScheme.surfaceContainer.withAlpha(0), 
+                      ],
+                      stops: const [0.0, 1.0],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-          _buildArrow(isLeft: false),
+
+          // 3. Right Fade Gradient
+          Positioned(
+            right: 0,
+            top: 0,
+            bottom: 0,
+            child: AnimatedOpacity(
+              opacity: _showRightArrow ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 200),
+              child: IgnorePointer(
+                child: Container(
+                  width: 48.0, // Width of the fade effect
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerRight,
+                      end: Alignment.centerLeft,
+                      colors: [
+                        colorScheme.surfaceContainer, 
+                        colorScheme.surfaceContainer.withAlpha(0), 
+                      ],
+                      stops: const [0.0, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // 4. Left Arrow (on top)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _buildArrow(isLeft: true), 
+          ),
+
+          // 5. Right Arrow (on top)
+          Align(
+            alignment: Alignment.centerRight,
+            child: _buildArrow(isLeft: false), 
+          ),
         ],
       ),
     );
@@ -319,7 +379,7 @@ class _CategoriaItemState extends State<_CategoriaItem> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme; // textTheme is used here
+    final textTheme = Theme.of(context).textTheme; 
 
     if (widget.isDragFeedback) {
       final pillColor = colorScheme.secondaryContainer;

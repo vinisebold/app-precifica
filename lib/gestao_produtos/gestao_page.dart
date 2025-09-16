@@ -10,6 +10,8 @@ class GestaoPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     ref.listen(
       gestaoControllerProvider,
       (previousState, newState) {
@@ -17,8 +19,11 @@ class GestaoPage extends ConsumerWidget {
         if (errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(errorMessage),
-              backgroundColor: Colors.redAccent,
+              content: Text(
+                errorMessage,
+                style: TextStyle(color: colorScheme.onErrorContainer),
+              ),
+              backgroundColor: colorScheme.errorContainer,
             ),
           );
           ref.read(gestaoControllerProvider.notifier).clearError();
@@ -30,7 +35,10 @@ class GestaoPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gestão de Preços'),
+        title: Text(
+          'Gestão de Preços',
+          style: textTheme.titleLarge,
+        ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
@@ -73,6 +81,8 @@ class GestaoPage extends ConsumerWidget {
 
   // Widget para a área de apagar
   Widget _buildDeleteArea(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Positioned(
       top: 0,
       left: 0,
@@ -85,20 +95,20 @@ class GestaoPage extends ConsumerWidget {
             height: isHovering ? 120 : 100,
             decoration: BoxDecoration(
               color: isHovering
-                  ? Colors.red.withOpacity(0.9)
-                  : Colors.red.withOpacity(0.7),
+                  ? colorScheme.errorContainer.withOpacity(0.9)
+                  : colorScheme.errorContainer.withOpacity(0.7),
               borderRadius: const BorderRadius.vertical(
                 bottom: Radius.circular(60),
               ),
             ),
-            child: const Column(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.delete_outline, color: Colors.white, size: 32),
-                SizedBox(height: 8),
+                Icon(Icons.delete_outline, color: colorScheme.onErrorContainer, size: 32),
+                const SizedBox(height: 8),
                 Text(
                   'Arraste aqui para apagar',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onErrorContainer),
                 ),
               ],
             ),
@@ -115,10 +125,12 @@ class GestaoPage extends ConsumerWidget {
 
   void _mostrarDialogoNovoProduto(BuildContext context, WidgetRef ref) {
     final controller = TextEditingController();
+    final textTheme = Theme.of(context).textTheme;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Novo Produto'),
+        title: Text('Novo Produto', style: textTheme.headlineSmall),
         content: TextField(
           controller: controller,
           decoration: const InputDecoration(hintText: "Nome do produto"),
@@ -127,7 +139,7 @@ class GestaoPage extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
+            child: Text('Cancelar', style: textTheme.labelLarge),
           ),
           TextButton(
             onPressed: () {
@@ -139,7 +151,7 @@ class GestaoPage extends ConsumerWidget {
                 Navigator.of(context).pop();
               }
             },
-            child: const Text('Salvar'),
+            child: Text('Salvar', style: textTheme.labelLarge),
           ),
         ],
       ),
@@ -148,10 +160,12 @@ class GestaoPage extends ConsumerWidget {
 
   void _mostrarDialogoNovaCategoria(BuildContext context, WidgetRef ref) {
     final controller = TextEditingController();
+    final textTheme = Theme.of(context).textTheme;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Nova Categoria'),
+        title: Text('Nova Categoria', style: textTheme.headlineSmall),
         content: TextField(
           controller: controller,
           decoration: const InputDecoration(hintText: "Nome da categoria"),
@@ -159,11 +173,11 @@ class GestaoPage extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            child: const Text('Cancelar'),
+            child: Text('Cancelar', style: textTheme.labelLarge),
             onPressed: () => Navigator.of(context).pop(),
           ),
           TextButton(
-            child: const Text('Salvar'),
+            child: Text('Salvar', style: textTheme.labelLarge),
             onPressed: () {
               final nomeCategoria = controller.text;
               if (nomeCategoria.isNotEmpty) {

@@ -18,6 +18,19 @@ class AppWidget extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
+          // Adicione esta parte:
+          inputDecorationTheme: const InputDecorationTheme(
+            filled: true,
+            border: UnderlineInputBorder(
+              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
+                bottomRight: Radius.circular(12),
+              ),
+            ),
+          ),
         ),
 
         // A tela inicial do nosso aplicativo

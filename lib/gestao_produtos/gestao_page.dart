@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:organiza_ae/data/models/categoria.dart';
-import 'package:organiza_ae/data/models/produto.dart';
 import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
 import 'package:organiza_ae/gestao_produtos/widgets/categoria_nav_bar.dart';
 import 'package:organiza_ae/gestao_produtos/widgets/item_produto.dart';
@@ -39,7 +37,7 @@ class GestaoPage extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(50),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -190,7 +188,7 @@ class GestaoPage extends ConsumerWidget {
       ),
       body: Stack(
         children: [
-          ListView.builder(
+          ListView.separated(
             itemCount: gestaoState.produtos.length,
             itemBuilder: (context, index) {
               final produto = gestaoState.produtos[index];
@@ -209,6 +207,12 @@ class GestaoPage extends ConsumerWidget {
                 },
               );
             },
+            separatorBuilder: (context, index) => const Divider(
+              height: 1, // Altura do divisor
+              thickness: 1, // Espessura da linha do divisor
+              indent: 16, // Recuo à esquerda
+              endIndent: 16, // Recuo à direita
+            ),
           ),
           if (gestaoState.isReordering) _buildDeleteArea(context, ref),
           if (gestaoState.isLoading)

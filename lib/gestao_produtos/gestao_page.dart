@@ -32,6 +32,7 @@ class GestaoPage extends ConsumerWidget {
     );
 
     final gestaoState = ref.watch(gestaoControllerProvider);
+    // Removed diagnostic print from here
 
     return Scaffold(
       appBar: AppBar(

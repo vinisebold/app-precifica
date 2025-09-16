@@ -46,15 +46,14 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
     return Dismissible(
-      key: ValueKey(widget.produto.id),
-      direction: DismissDirection.endToStart, // Swipe from right to left
+      key: ObjectKey(widget.produto), // Changed to ObjectKey
+      direction: DismissDirection.endToStart, 
       onDismissed: (direction) {
-        ref
-            .read(gestaoControllerProvider.notifier)
-            .deletarProduto(widget.produto.id);
-        // Remove any existing SnackBars to prevent them from overlapping
+        gestaoNotifier.deletarProduto(widget.produto.id);
+        
         ScaffoldMessenger.of(context).removeCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -64,7 +63,8 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
               label: 'DESFAZER',
               textColor: colorScheme.onSecondary,
               onPressed: () {
-                ref.read(gestaoControllerProvider.notifier).desfazerDeletarProduto();
+                ScaffoldMessenger.of(context).removeCurrentSnackBar(); 
+                gestaoNotifier.desfazerDeletarProduto();
               },
             ),
           ),
@@ -90,9 +90,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
               if (_debounce?.isActive ?? false) _debounce!.cancel();
 
               _debounce = Timer(const Duration(milliseconds: 500), () {
-                ref
-                    .read(gestaoControllerProvider.notifier)
-                    .atualizarPreco(widget.produto.id, novoPrecoFormatado);
+                gestaoNotifier.atualizarPreco(widget.produto.id, novoPrecoFormatado);
               });
             },
             decoration: const InputDecoration(

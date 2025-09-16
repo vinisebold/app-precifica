@@ -49,26 +49,12 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
     return Dismissible(
-      key: ObjectKey(widget.produto), // Changed to ObjectKey
-      direction: DismissDirection.endToStart, 
+      key: ObjectKey(widget.produto),
+      direction: DismissDirection.endToStart,
       onDismissed: (direction) {
+        // Ação simplificada: Apenas notifica o controller.
+        // A página (GestaoPage) cuidará de mostrar a SnackBar.
         gestaoNotifier.deletarProduto(widget.produto.id);
-        
-        ScaffoldMessenger.of(context).removeCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${widget.produto.nome} deletado'),
-            backgroundColor: colorScheme.secondary,
-            action: SnackBarAction(
-              label: 'DESFAZER',
-              textColor: colorScheme.onSecondary,
-              onPressed: () {
-                ScaffoldMessenger.of(context).removeCurrentSnackBar(); 
-                gestaoNotifier.desfazerDeletarProduto();
-              },
-            ),
-          ),
-        );
       },
       background: Container(
         color: colorScheme.errorContainer,
@@ -90,7 +76,8 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
               if (_debounce?.isActive ?? false) _debounce!.cancel();
 
               _debounce = Timer(const Duration(milliseconds: 500), () {
-                gestaoNotifier.atualizarPreco(widget.produto.id, novoPrecoFormatado);
+                gestaoNotifier.atualizarPreco(
+                    widget.produto.id, novoPrecoFormatado);
               });
             },
             decoration: const InputDecoration(

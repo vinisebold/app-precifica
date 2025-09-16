@@ -11,18 +11,18 @@ class GestaoState {
   final String? categoriaSelecionadaId;
   final String? errorMessage;
   final bool isReordering;
-  final Produto? ultimoProdutoDeletado; // For UNDO
-  final String? idCategoriaProdutoDeletado; // For UNDO
+  final Produto? ultimoProdutoDeletado;
+  final String? idCategoriaProdutoDeletado;
 
   GestaoState({
     this.categorias = const [],
-    List<Produto> produtosParam = const [], 
+    this.produtos = const [],
     this.categoriaSelecionadaId,
     this.errorMessage,
     this.isReordering = false,
     this.ultimoProdutoDeletado,
     this.idCategoriaProdutoDeletado,
-  }) : this.produtos = produtosParam;
+  });
 
   GestaoState copyWith({
     List<Categoria>? categorias,
@@ -34,11 +34,10 @@ class GestaoState {
     String? idCategoriaProdutoDeletado,
     bool clearErrorMessage = false,
     bool clearUltimoProdutoDeletado = false,
-    bool clearIdCategoriaProdutoDeletado = false,
   }) {
     return GestaoState(
       categorias: categorias ?? this.categorias,
-      produtosParam: produtos ?? this.produtos, 
+      produtos: produtos ?? this.produtos,
       categoriaSelecionadaId:
           categoriaSelecionadaId ?? this.categoriaSelecionadaId,
       errorMessage:
@@ -47,7 +46,7 @@ class GestaoState {
       ultimoProdutoDeletado: clearUltimoProdutoDeletado
           ? null
           : ultimoProdutoDeletado ?? this.ultimoProdutoDeletado,
-      idCategoriaProdutoDeletado: clearIdCategoriaProdutoDeletado
+      idCategoriaProdutoDeletado: clearUltimoProdutoDeletado
           ? null
           : idCategoriaProdutoDeletado ?? this.idCategoriaProdutoDeletado,
     );
@@ -72,22 +71,18 @@ class GestaoController extends Notifier<GestaoState> {
             _repository.getProdutosPorCategoria(primeiraCategoriaId);
         return GestaoState(
           categorias: categorias,
-          produtosParam: produtos, 
+          produtos: produtos,
           categoriaSelecionadaId: primeiraCategoriaId,
         );
       }
     } catch (e) {
-      // Consider logging to a crash reporting service in production
       return GestaoState(errorMessage: "Falha ao carregar dados.");
     }
-    return GestaoState(); 
+    return GestaoState();
   }
 
   void clearError() {
-    state = state.copyWith(
-      produtos: state.produtos, 
-      clearErrorMessage: true
-    );
+    state = state.copyWith(clearErrorMessage: true);
   }
 
   void setReordering(bool value) {
@@ -140,7 +135,7 @@ class GestaoController extends Notifier<GestaoState> {
         );
       } else {
         state = GestaoState(
-            categorias: [], produtosParam: [], categoriaSelecionadaId: null); 
+            categorias: [], produtos: [], categoriaSelecionadaId: null);
       }
     } catch (e) {
       state = state.copyWith(errorMessage: 'Falha ao apagar categoria.');
@@ -154,7 +149,6 @@ class GestaoController extends Notifier<GestaoState> {
         categoriaSelecionadaId: categoriaId,
         produtos: produtos,
         clearUltimoProdutoDeletado: true,
-        clearIdCategoriaProdutoDeletado: true,
       );
     } catch (e) {
       state = state.copyWith(errorMessage: 'Falha ao carregar produtos.');
@@ -174,7 +168,7 @@ class GestaoController extends Notifier<GestaoState> {
 
   Future<void> deletarProduto(String produtoId) async {
     if (state.categoriaSelecionadaId == null) {
-      state = state.copyWith(errorMessage: 'Nenhuma categoria selecionada para deletar o produto.');
+      state = state.copyWith(errorMessage: 'Nenhuma categoria selecionada.');
       return;
     }
 
@@ -182,15 +176,16 @@ class GestaoController extends Notifier<GestaoState> {
     try {
       produtoParaDeletar = state.produtos.firstWhere((p) => p.id == produtoId);
     } catch (e) {
-      state = state.copyWith(errorMessage: 'Produto não encontrado para deletar.');
+      state = state.copyWith(errorMessage: 'Produto não encontrado.');
       return;
     }
-    
+
     final categoriaDoProdutoDeletado = state.categoriaSelecionadaId!;
 
     try {
       await _repository.deletarProduto(produtoId, categoriaDoProdutoDeletado);
-      final produtosAtualizados = _repository.getProdutosPorCategoria(categoriaDoProdutoDeletado);
+      final produtosAtualizados =
+          _repository.getProdutosPorCategoria(categoriaDoProdutoDeletado);
       state = state.copyWith(
         produtos: produtosAtualizados,
         ultimoProdutoDeletado: produtoParaDeletar,
@@ -202,37 +197,31 @@ class GestaoController extends Notifier<GestaoState> {
   }
 
   Future<void> desfazerDeletarProduto() async {
-    if (state.ultimoProdutoDeletado != null && state.idCategoriaProdutoDeletado != null) {
-      final Produto produtoParaRestaurar = state.ultimoProdutoDeletado!;
-      final String categoriaOriginalDoProduto = state.idCategoriaProdutoDeletado!;
-      
+    if (state.ultimoProdutoDeletado != null &&
+        state.idCategoriaProdutoDeletado != null) {
+      final produtoParaRestaurar = state.ultimoProdutoDeletado!;
+      final categoriaOriginalId = state.idCategoriaProdutoDeletado!;
+
       try {
         await _repository.adicionarProdutoObjeto(produtoParaRestaurar);
-        
-        if (state.categoriaSelecionadaId == categoriaOriginalDoProduto) {
-          List<Produto> produtosRecarregados = _repository.getProdutosPorCategoria(categoriaOriginalDoProduto);
-          
-          state = GestaoState(
-            categorias: state.categorias, 
-            produtosParam: produtosRecarregados, 
-            categoriaSelecionadaId: categoriaOriginalDoProduto,
-            ultimoProdutoDeletado: null, 
-            idCategoriaProdutoDeletado: null, 
-            errorMessage: null, 
-            isReordering: state.isReordering 
+
+        // Apenas atualiza a lista de produtos se a categoria atual
+        // for a mesma do item deletado.
+        if (state.categoriaSelecionadaId == categoriaOriginalId) {
+          final produtosRecarregados =
+              _repository.getProdutosPorCategoria(categoriaOriginalId);
+          state = state.copyWith(
+            produtos: produtosRecarregados,
+            clearUltimoProdutoDeletado: true,
           );
         } else {
-          state = state.copyWith(
-            clearUltimoProdutoDeletado: true,
-            clearIdCategoriaProdutoDeletado: true,
-          );
+          // Se o usuário mudou de categoria, apenas limpa o estado de "desfazer"
+          state = state.copyWith(clearUltimoProdutoDeletado: true);
         }
-
       } catch (e) {
         state = state.copyWith(
-          errorMessage: 'Falha ao desfazer a exclusão do produto.',
+          errorMessage: 'Falha ao desfazer a exclusão.',
           clearUltimoProdutoDeletado: true,
-          clearIdCategoriaProdutoDeletado: true,
         );
       }
     }
@@ -248,7 +237,7 @@ class GestaoController extends Notifier<GestaoState> {
       try {
         await _repository.atualizarPrecoProduto(produtoId, novoPreco);
       } catch (e) {
-        // Considerar um feedback de erro para o usuário
+        // Opcional: Adicionar feedback de erro
       }
     }
   }

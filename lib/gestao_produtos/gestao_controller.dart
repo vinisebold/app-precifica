@@ -11,6 +11,7 @@ class GestaoState {
   final String? categoriaSelecionadaId;
   final String? errorMessage;
   final bool isReordering;
+  final bool isLoading;
   final Produto? ultimoProdutoDeletado;
   final String? idCategoriaProdutoDeletado;
 
@@ -20,6 +21,7 @@ class GestaoState {
     this.categoriaSelecionadaId,
     this.errorMessage,
     this.isReordering = false,
+    this.isLoading = false,
     this.ultimoProdutoDeletado,
     this.idCategoriaProdutoDeletado,
   });
@@ -30,6 +32,7 @@ class GestaoState {
     String? categoriaSelecionadaId,
     String? errorMessage,
     bool? isReordering,
+    bool? isLoading,
     Produto? ultimoProdutoDeletado,
     String? idCategoriaProdutoDeletado,
     bool clearErrorMessage = false,
@@ -43,6 +46,7 @@ class GestaoState {
       errorMessage:
           clearErrorMessage ? null : errorMessage ?? this.errorMessage,
       isReordering: isReordering ?? this.isReordering,
+      isLoading: isLoading ?? this.isLoading,
       ultimoProdutoDeletado: clearUltimoProdutoDeletado
           ? null
           : ultimoProdutoDeletado ?? this.ultimoProdutoDeletado,
@@ -103,24 +107,30 @@ class GestaoController extends Notifier<GestaoState> {
     categorias.insert(targetIndex, item);
 
     try {
+      state = state.copyWith(isLoading: true);
       await _repository.atualizarOrdemCategorias(categorias);
-      state = state.copyWith(categorias: categorias);
+      state = state.copyWith(categorias: categorias, isLoading: false);
     } catch (e) {
-      state = state.copyWith(errorMessage: 'Falha ao reordenar categorias.');
+      state = state.copyWith(
+          errorMessage: 'Falha ao reordenar categorias.', isLoading: false);
     }
   }
 
   Future<void> criarCategoria(String nome) async {
     try {
+      state = state.copyWith(isLoading: true);
       await _repository.criarCategoria(nome);
-      state = state.copyWith(categorias: _repository.getCategorias());
+      state = state.copyWith(
+          categorias: _repository.getCategorias(), isLoading: false);
     } catch (e) {
-      state = state.copyWith(errorMessage: 'Falha ao criar categoria.');
+      state = state.copyWith(
+          errorMessage: 'Falha ao criar categoria.', isLoading: false);
     }
   }
 
   Future<void> deletarCategoria(String categoriaId) async {
     try {
+      state = state.copyWith(isLoading: true);
       await _repository.deletarCategoria(categoriaId);
       final categoriasAtualizadas = _repository.getCategorias();
 
@@ -132,13 +142,18 @@ class GestaoController extends Notifier<GestaoState> {
           categorias: categoriasAtualizadas,
           categoriaSelecionadaId: novaCategoriaId,
           produtos: novosProdutos,
+          isLoading: false,
         );
       } else {
         state = GestaoState(
-            categorias: [], produtos: [], categoriaSelecionadaId: null);
+            categorias: [],
+            produtos: [],
+            categoriaSelecionadaId: null,
+            isLoading: false);
       }
     } catch (e) {
-      state = state.copyWith(errorMessage: 'Falha ao apagar categoria.');
+      state = state.copyWith(
+          errorMessage: 'Falha ao apagar categoria.', isLoading: false);
     }
   }
 
@@ -158,10 +173,13 @@ class GestaoController extends Notifier<GestaoState> {
   Future<void> criarProduto(String nome) async {
     if (state.categoriaSelecionadaId != null) {
       try {
+        state = state.copyWith(isLoading: true);
         await _repository.criarProduto(nome, state.categoriaSelecionadaId!);
         selecionarCategoria(state.categoriaSelecionadaId!);
+        state = state.copyWith(isLoading: false);
       } catch (e) {
-        state = state.copyWith(errorMessage: 'Falha ao criar produto.');
+        state = state.copyWith(
+            errorMessage: 'Falha ao criar produto.', isLoading: false);
       }
     }
   }
@@ -182,17 +200,28 @@ class GestaoController extends Notifier<GestaoState> {
 
     final categoriaDoProdutoDeletado = state.categoriaSelecionadaId!;
 
+    // Remove o produto da lista na UI imediatamente
+    final produtosAtuais = List<Produto>.from(state.produtos);
+    produtosAtuais.removeWhere((p) => p.id == produtoId);
+
+    state = state.copyWith(
+      produtos: produtosAtuais,
+      ultimoProdutoDeletado: produtoParaDeletar,
+      idCategoriaProdutoDeletado: categoriaDoProdutoDeletado,
+    );
+
     try {
+      // Deleta do banco de dados em segundo plano
       await _repository.deletarProduto(produtoId, categoriaDoProdutoDeletado);
-      final produtosAtualizados =
+    } catch (e) {
+      // Se a exclusão falhar, restaura a lista e mostra o erro
+      final produtosRecarregados =
           _repository.getProdutosPorCategoria(categoriaDoProdutoDeletado);
       state = state.copyWith(
-        produtos: produtosAtualizados,
-        ultimoProdutoDeletado: produtoParaDeletar,
-        idCategoriaProdutoDeletado: categoriaDoProdutoDeletado,
+        produtos: produtosRecarregados,
+        errorMessage: 'Falha ao deletar produto.',
+        clearUltimoProdutoDeletado: true,
       );
-    } catch (e) {
-      state = state.copyWith(errorMessage: 'Falha ao deletar produto.');
     }
   }
 
@@ -203,25 +232,26 @@ class GestaoController extends Notifier<GestaoState> {
       final categoriaOriginalId = state.idCategoriaProdutoDeletado!;
 
       try {
+        state = state.copyWith(isLoading: true);
         await _repository.adicionarProdutoObjeto(produtoParaRestaurar);
 
-        // Apenas atualiza a lista de produtos se a categoria atual
-        // for a mesma do item deletado.
         if (state.categoriaSelecionadaId == categoriaOriginalId) {
           final produtosRecarregados =
               _repository.getProdutosPorCategoria(categoriaOriginalId);
           state = state.copyWith(
             produtos: produtosRecarregados,
             clearUltimoProdutoDeletado: true,
+            isLoading: false,
           );
         } else {
-          // Se o usuário mudou de categoria, apenas limpa o estado de "desfazer"
-          state = state.copyWith(clearUltimoProdutoDeletado: true);
+          state = state.copyWith(
+              clearUltimoProdutoDeletado: true, isLoading: false);
         }
       } catch (e) {
         state = state.copyWith(
           errorMessage: 'Falha ao desfazer a exclusão.',
           clearUltimoProdutoDeletado: true,
+          isLoading: false,
         );
       }
     }

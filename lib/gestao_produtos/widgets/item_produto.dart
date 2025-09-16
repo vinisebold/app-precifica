@@ -49,7 +49,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
     return Dismissible(
-      key: ObjectKey(widget.produto),
+      key: ValueKey(widget.produto.id),
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
         // Ação simplificada: Apenas notifica o controller.

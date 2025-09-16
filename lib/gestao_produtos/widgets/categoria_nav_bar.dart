@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:organiza_ae/data/models/categoria.dart';
 import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
@@ -20,9 +22,10 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
   OverlayEntry? _revertingOverlayEntry;
   AnimationController? _revertAnimationController;
   Animation<Offset>? _revertAnimation;
-  Categoria? _revertingCategoria; 
+  Categoria? _revertingCategoria;
 
   final Map<String, GlobalKey> _itemKeys = {};
+  Timer? _scrollDebounce;
 
   @override
   void initState() {
@@ -46,21 +49,27 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
     _scrollController.dispose();
     _revertAnimationController?.dispose();
     _revertingOverlayEntry?.remove();
+    _revertingOverlayEntry = null;
+    _scrollDebounce?.cancel();
     super.dispose();
   }
 
   void _updateArrowVisibility() {
-    if (!_scrollController.hasClients ||
-        !_scrollController.position.hasContentDimensions) { 
-      return;
-    }
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    final currentScroll = _scrollController.position.pixels;
-    const tolerance = 1.0;
-    if (!mounted) return;
-    setState(() {
-      _showLeftArrow = currentScroll > tolerance;
-      _showRightArrow = currentScroll < maxScroll - tolerance;
+    _scrollDebounce?.cancel();
+    _scrollDebounce = Timer(const Duration(milliseconds: 100), () {
+      if (!mounted ||
+          !_scrollController.hasClients ||
+          !_scrollController.position.hasContentDimensions) {
+        return;
+      }
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+      const tolerance = 1.0;
+      if (!mounted) return;
+      setState(() {
+        _showLeftArrow = currentScroll > tolerance;
+        _showRightArrow = currentScroll < maxScroll - tolerance;
+      });
     });
   }
 
@@ -81,9 +90,13 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
     final categorias = state.categorias;
     final colorScheme = Theme.of(context).colorScheme;
 
+    // Adiciona chaves para novas categorias
     for (var cat in categorias) {
       _itemKeys.putIfAbsent(cat.id, () => GlobalKey());
     }
+    // Limpa chaves de categorias removidas (correção do memory leak)
+    _itemKeys
+        .removeWhere((key, value) => !categorias.any((cat) => cat.id == key));
 
     if (categorias.isEmpty) {
       return const SizedBox.shrink();
@@ -101,7 +114,8 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0), // Padding for first/last items
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0), // Padding for first/last items
               child: Row(
                 children: categorias.map((categoria) {
                   final itemKey = _itemKeys[categoria.id]!;
@@ -118,10 +132,13 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                           key: ValueKey(categoria.id),
                           data: categoria.id,
                           onDragStarted: () {
+                            HapticFeedback.lightImpact();
                             _revertingOverlayEntry?.remove();
                             _revertingOverlayEntry = null;
                             _revertAnimationController?.stop();
-                            ref.read(gestaoControllerProvider.notifier).setReordering(true);
+                            ref
+                                .read(gestaoControllerProvider.notifier)
+                                .setReordering(true);
                             if (mounted) {
                               setState(() {
                                 _revertingCategoria = null;
@@ -130,7 +147,10 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                           },
                           onDragEnd: (details) {
                             if (details.wasAccepted) {
-                              ref.read(gestaoControllerProvider.notifier).setReordering(false);
+                              HapticFeedback.lightImpact();
+                              ref
+                                  .read(gestaoControllerProvider.notifier)
+                                  .setReordering(false);
                             }
                           },
                           onDraggableCanceled: (velocity, dragOffset) {
@@ -141,37 +161,46 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                               _completeRevertAnimation();
                               return;
                             }
-                            
+
                             setState(() {
                               _revertingCategoria = categoriaToRevert;
                             });
 
                             WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (!mounted || _revertingCategoria != categoriaToRevert) {
-                                if (_revertingCategoria == null || _revertingCategoria == categoriaToRevert) {
-                                   _completeRevertAnimation();
+                              if (!mounted ||
+                                  _revertingCategoria != categoriaToRevert) {
+                                if (_revertingCategoria == null ||
+                                    _revertingCategoria == categoriaToRevert) {
+                                  _completeRevertAnimation();
                                 }
                                 return;
                               }
 
                               final RenderBox? itemRenderBoxForTarget =
-                                  keyOfRevertingItem.currentContext?.findRenderObject() as RenderBox?;
+                                  keyOfRevertingItem.currentContext
+                                      ?.findRenderObject() as RenderBox?;
 
-                              if (itemRenderBoxForTarget == null || !itemRenderBoxForTarget.attached) {
-                                 _completeRevertAnimation();
+                              if (itemRenderBoxForTarget == null ||
+                                  !itemRenderBoxForTarget.attached) {
+                                _completeRevertAnimation();
                                 return;
                               }
-                              final Offset targetPosition = itemRenderBoxForTarget.localToGlobal(Offset.zero);
+                              final Offset targetPosition =
+                                  itemRenderBoxForTarget
+                                      .localToGlobal(Offset.zero);
 
                               final Widget animationFeedbackWidget = Material(
                                 color: Colors.transparent,
-                                shadowColor: Colors.black.withAlpha((255 * 0.075).round()),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28.0)),
+                                shadowColor: Colors.black
+                                    .withAlpha((255 * 0.075).round()),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(28.0)),
                                 child: Transform.scale(
                                   scale: 1.0,
                                   child: _CategoriaItem(
                                     categoria: categoriaToRevert,
-                                    isSelected: true, 
+                                    isSelected:
+                                        true, // Simulate selection for feedback
                                     onTap: () {},
                                     isDragFeedback: true,
                                   ),
@@ -179,14 +208,16 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                               );
 
                               _revertAnimationController?.stop();
-                              _revertAnimation = Tween<Offset>(begin: dragOffset, end: targetPosition)
+                              _revertAnimation = Tween<Offset>(
+                                      begin: dragOffset, end: targetPosition)
                                   .animate(CurvedAnimation(
-                                    parent: _revertAnimationController!,
-                                    curve: Curves.easeOutCubic,
-                                  ));
+                                parent: _revertAnimationController!,
+                                curve: Curves.easeOutCubic,
+                              ));
 
                               _revertingOverlayEntry?.remove();
-                              _revertingOverlayEntry = OverlayEntry(builder: (context) {
+                              _revertingOverlayEntry =
+                                  OverlayEntry(builder: (context) {
                                 return AnimatedBuilder(
                                   animation: _revertAnimation!,
                                   builder: (context, child) {
@@ -199,10 +230,11 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                                   child: animationFeedbackWidget,
                                 );
                               });
-                              
-                              if(mounted){
-                                 Overlay.of(context).insert(_revertingOverlayEntry!);
-                                 _revertAnimationController!.forward(from: 0.0);
+
+                              if (mounted) {
+                                Overlay.of(context)
+                                    .insert(_revertingOverlayEntry!);
+                                _revertAnimationController!.forward(from: 0.0);
                               } else {
                                 _completeRevertAnimation();
                               }
@@ -210,14 +242,16 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                           },
                           feedback: Material(
                             color: Colors.transparent,
-                            elevation: 2.0, 
-                            shadowColor: Colors.black.withAlpha((255 * 0.075).round()),
+                            elevation: 2.0,
+                            shadowColor:
+                                Colors.black.withAlpha((255 * 0.075).round()),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28.0), 
+                              borderRadius: BorderRadius.circular(
+                                  28.0), // Rounded corners for the feedback
                             ),
                             child: _CategoriaItem(
                               categoria: categoria,
-                              isSelected: true, 
+                              isSelected: true,
                               onTap: () {},
                               isDragFeedback: true,
                             ),
@@ -227,19 +261,27 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                             child: _CategoriaItem(
                               key: itemKey,
                               categoria: categoria,
-                              isSelected: state.categoriaSelecionadaId == categoria.id,
+                              isSelected:
+                                  state.categoriaSelecionadaId == categoria.id,
                               onTap: () {},
                             ),
                           ),
                           child: Opacity(
-                            opacity: (_revertingCategoria?.id == categoria.id) ? 0.0 : 1.0,
+                            opacity: (_revertingCategoria?.id == categoria.id)
+                                ? 0.0
+                                : 1.0,
                             child: _CategoriaItem(
                               key: itemKey,
                               categoria: categoria,
-                              isSelected: state.categoriaSelecionadaId == categoria.id,
+                              isSelected:
+                                  state.categoriaSelecionadaId == categoria.id,
                               onTap: () {
-                                if (!ref.read(gestaoControllerProvider).isReordering) {
-                                  ref.read(gestaoControllerProvider.notifier).selecionarCategoria(categoria.id);
+                                if (!ref
+                                    .read(gestaoControllerProvider)
+                                    .isReordering) {
+                                  ref
+                                      .read(gestaoControllerProvider.notifier)
+                                      .selecionarCategoria(categoria.id);
                                 }
                               },
                             ),
@@ -247,9 +289,12 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                         ),
                       );
                     },
-                    onWillAcceptWithDetails: (details) => details.data != categoria.id,
+                    onWillAcceptWithDetails: (details) =>
+                        details.data != categoria.id,
                     onAcceptWithDetails: (details) {
-                      ref.read(gestaoControllerProvider.notifier).reordenarCategoria(details.data, categoria.id);
+                      ref
+                          .read(gestaoControllerProvider.notifier)
+                          .reordenarCategoria(details.data, categoria.id);
                     },
                   );
                 }).toList(),
@@ -273,8 +318,8 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        colorScheme.surfaceContainer, 
-                        colorScheme.surfaceContainer.withAlpha(0), 
+                        colorScheme.surfaceContainer,
+                        colorScheme.surfaceContainer.withAlpha(0),
                       ],
                       stops: const [0.0, 1.0],
                     ),
@@ -300,8 +345,8 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                       begin: Alignment.centerRight,
                       end: Alignment.centerLeft,
                       colors: [
-                        colorScheme.surfaceContainer, 
-                        colorScheme.surfaceContainer.withAlpha(0), 
+                        colorScheme.surfaceContainer,
+                        colorScheme.surfaceContainer.withAlpha(0),
                       ],
                       stops: const [0.0, 1.0],
                     ),
@@ -314,13 +359,13 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
           // 4. Left Arrow (on top)
           Align(
             alignment: Alignment.centerLeft,
-            child: _buildArrow(isLeft: true), 
+            child: _buildArrow(isLeft: true),
           ),
 
           // 5. Right Arrow (on top)
           Align(
             alignment: Alignment.centerRight,
-            child: _buildArrow(isLeft: false), 
+            child: _buildArrow(isLeft: false),
           ),
         ],
       ),
@@ -341,13 +386,17 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                 final scrollAmount = screenWidth * 0.7;
                 final newOffset = (isLeft
                         ? max(0.0, _scrollController.offset - scrollAmount)
-                        : min(_scrollController.position.maxScrollExtent, _scrollController.offset + scrollAmount))
+                        : min(_scrollController.position.maxScrollExtent,
+                            _scrollController.offset + scrollAmount))
                     .toDouble();
-                _scrollController.animateTo(newOffset, duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
+                _scrollController.animateTo(newOffset,
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeInOut);
               },
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Icon(isLeft ? Icons.chevron_left : Icons.chevron_right, color: colorScheme.onSurface),
+          child: Icon(isLeft ? Icons.chevron_left : Icons.chevron_right,
+              color: colorScheme.onSurface),
         ),
       ),
     );
@@ -358,7 +407,7 @@ class _CategoriaItem extends StatefulWidget {
   final Categoria categoria;
   final bool isSelected;
   final VoidCallback onTap;
-  final bool isDragFeedback; 
+  final bool isDragFeedback;
 
   const _CategoriaItem({
     super.key,
@@ -379,16 +428,16 @@ class _CategoriaItemState extends State<_CategoriaItem> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme; 
+    final textTheme = Theme.of(context).textTheme;
 
     if (widget.isDragFeedback) {
       final pillColor = colorScheme.secondaryContainer;
       final contentColor = colorScheme.onSecondaryContainer;
-      final borderRadius = BorderRadius.circular(28.0); 
+      final borderRadius = BorderRadius.circular(28.0);
 
-      return Padding( 
+      return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4.0),
-        child: Container( 
+        child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
           decoration: BoxDecoration(
             color: pillColor,
@@ -452,7 +501,8 @@ class _CategoriaItemState extends State<_CategoriaItem> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOut,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
               decoration: BoxDecoration(
                 color: pillColor,
                 borderRadius: borderRadius,
@@ -461,7 +511,8 @@ class _CategoriaItemState extends State<_CategoriaItem> {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(widget.isSelected ? Icons.label : Icons.label_outline, color: contentColor, size: 20),
+                  Icon(widget.isSelected ? Icons.label : Icons.label_outline,
+                      color: contentColor, size: 20),
                   const SizedBox(height: 4),
                   Text(
                     widget.categoria.nome,

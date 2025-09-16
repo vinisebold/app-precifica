@@ -8,57 +8,117 @@ import 'package:share_plus/share_plus.dart';
 class GestaoPage extends ConsumerWidget {
   const GestaoPage({super.key});
 
+  void _showCustomToast(
+    BuildContext context,
+    String message, {
+    Color? backgroundColor,
+    Color? textColor,
+    Widget? action,
+  }) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+
+        return Positioned(
+          bottom: 96,
+          left: 16,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: screenWidth * 0.72,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: backgroundColor ??
+                    Theme.of(context).colorScheme.inverseSurface,
+                borderRadius: BorderRadius.circular(50),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                    child: Text(
+                      message,
+                      style: TextStyle(
+                        color: textColor ??
+                            Theme.of(context).colorScheme.onInverseSurface,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  if (action != null) ...[
+                    const SizedBox(width: 12),
+                    action,
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+
+    overlay.insert(overlayEntry);
+
+    Future.delayed(const Duration(seconds: 5), () {
+      overlayEntry.remove();
+    });
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    // Listener para exibir SnackBars de forma segura
+    // Listener para exibir Toasts customizados
     ref.listen<GestaoState>(
       gestaoControllerProvider,
-          (previousState, newState) {
-        // Se houver uma mensagem de erro, exibe na SnackBar
+      (previousState, newState) {
+        // Se houver uma mensagem de erro, exibe no toast
         if (newState.errorMessage != null &&
             newState.errorMessage != previousState?.errorMessage) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                newState.errorMessage!,
-                style: TextStyle(color: colorScheme.onErrorContainer),
-              ),
-              backgroundColor: colorScheme.errorContainer,
-              // Removido 'behavior' e 'margin' para usar o comportamento padrão do Scaffold
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-            ),
+          _showCustomToast(
+            context,
+            newState.errorMessage!,
+            backgroundColor: colorScheme.errorContainer,
+            textColor: colorScheme.onErrorContainer,
           );
           ref.read(gestaoControllerProvider.notifier).clearError();
         }
 
-        // Se um produto foi deletado, exibe a SnackBar de "DESFAZER"
+        // Se um produto foi deletado, exibe o toast de "DESFAZER"
         if (newState.ultimoProdutoDeletado != null &&
             newState.ultimoProdutoDeletado !=
                 previousState?.ultimoProdutoDeletado) {
           final produtoDeletado = newState.ultimoProdutoDeletado!;
-          ScaffoldMessenger.of(context).removeCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${produtoDeletado.nome} deletado'),
-              backgroundColor: colorScheme.secondary,
-              // Removido 'behavior' e 'margin' para usar o comportamento padrão do Scaffold
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
+
+          _showCustomToast(
+            context,
+            '${produtoDeletado.nome} deletado',
+            backgroundColor: colorScheme.secondary,
+            textColor: colorScheme.onSecondary,
+            action: TextButton(
+              onPressed: () {
+                ref
+                    .read(gestaoControllerProvider.notifier)
+                    .desfazerDeletarProduto();
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: colorScheme.onSecondary,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
-              action: SnackBarAction(
-                label: 'DESFAZER',
-                textColor: colorScheme.onSecondary,
-                onPressed: () {
-                  ref
-                      .read(gestaoControllerProvider.notifier)
-                      .desfazerDeletarProduto();
-                },
-              ),
+              child: const Text('DESFAZER'),
             ),
           );
         }

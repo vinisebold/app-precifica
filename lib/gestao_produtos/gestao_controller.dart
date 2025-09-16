@@ -10,12 +10,14 @@ class GestaoState {
   final List<Produto> produtos;
   final String? categoriaSelecionadaId;
   final String? errorMessage;
+  final bool isReordering;
 
   GestaoState({
     this.categorias = const [],
     this.produtos = const [],
     this.categoriaSelecionadaId,
     this.errorMessage,
+    this.isReordering = false,
   });
 
   GestaoState copyWith({
@@ -23,6 +25,7 @@ class GestaoState {
     List<Produto>? produtos,
     String? categoriaSelecionadaId,
     String? errorMessage,
+    bool? isReordering,
     bool clearErrorMessage = false,
   }) {
     return GestaoState(
@@ -32,6 +35,7 @@ class GestaoState {
           categoriaSelecionadaId ?? this.categoriaSelecionadaId,
       errorMessage:
           clearErrorMessage ? null : errorMessage ?? this.errorMessage,
+      isReordering: isReordering ?? this.isReordering,
     );
   }
 }
@@ -67,6 +71,31 @@ class GestaoController extends Notifier<GestaoState> {
 
   void clearError() {
     state = state.copyWith(clearErrorMessage: true);
+  }
+
+  void setReordering(bool value) {
+    state = state.copyWith(isReordering: value);
+  }
+
+  Future<void> reordenarCategoria(
+      String draggedItemId, String targetItemId) async {
+    final categorias = List<Categoria>.from(state.categorias);
+
+    final draggedIndex =
+        categorias.indexWhere((cat) => cat.id == draggedItemId);
+    final targetIndex = categorias.indexWhere((cat) => cat.id == targetItemId);
+
+    if (draggedIndex == -1 || targetIndex == -1) return;
+
+    final item = categorias.removeAt(draggedIndex);
+    categorias.insert(targetIndex, item);
+
+    try {
+      await _repository.atualizarOrdemCategorias(categorias);
+      state = state.copyWith(categorias: categorias);
+    } catch (e) {
+      state = state.copyWith(errorMessage: 'Falha ao reordenar categorias.');
+    }
   }
 
   Future<void> criarCategoria(String nome) async {
@@ -134,9 +163,6 @@ class GestaoController extends Notifier<GestaoState> {
       try {
         await _repository.atualizarPrecoProduto(produtoId, novoPreco);
       } catch (e) {
-        // A atualização de preço é uma ação contínua (com debounce),
-        // então um erro aqui pode não precisar de um SnackBar para não poluir a UI.
-        // Um log de erro é suficiente.
         print("ERRO AO ATUALIZAR PREÇO: $e");
       }
     }

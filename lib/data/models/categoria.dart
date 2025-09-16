@@ -9,8 +9,12 @@ class Categoria {
   @HiveField(1)
   String nome;
 
+  @HiveField(2)
+  int ordem;
+
   Categoria({
     required this.id,
     required this.nome,
+    required this.ordem,
   });
 }

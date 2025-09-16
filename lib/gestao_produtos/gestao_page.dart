@@ -10,26 +10,22 @@ class GestaoPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Adicionamos este "ouvinte" para reagir a erros.
     ref.listen(
       gestaoControllerProvider,
       (previousState, newState) {
         final errorMessage = (newState).errorMessage;
         if (errorMessage != null) {
-          // Se uma nova mensagem de erro apareceu no estado, mostramos a SnackBar.
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(errorMessage),
               backgroundColor: Colors.redAccent,
             ),
           );
-          // E imediatamente limpamos o erro do estado para não mostrá-lo novamente.
           ref.read(gestaoControllerProvider.notifier).clearError();
         }
       },
     );
 
-    // Este watch continua responsável por reconstruir a UI quando os dados mudam.
     final gestaoState = ref.watch(gestaoControllerProvider);
 
     return Scaffold(
@@ -52,12 +48,18 @@ class GestaoPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: gestaoState.produtos.length,
-        itemBuilder: (context, index) {
-          final produto = gestaoState.produtos[index];
-          return ItemProduto(produto: produto);
-        },
+      body: Stack(
+        children: [
+          ListView.builder(
+            itemCount: gestaoState.produtos.length,
+            itemBuilder: (context, index) {
+              final produto = gestaoState.produtos[index];
+              return ItemProduto(produto: produto);
+            },
+          ),
+          // Área de lixo que aparece condicionalmente
+          if (gestaoState.isReordering) _buildDeleteArea(context, ref),
+        ],
       ),
       bottomNavigationBar: const CategoriaNavBar(),
       floatingActionButton: FloatingActionButton(
@@ -65,6 +67,48 @@ class GestaoPage extends ConsumerWidget {
             ? () => _mostrarDialogoNovoProduto(context, ref)
             : null,
         child: const Icon(Icons.add_shopping_cart),
+      ),
+    );
+  }
+
+  // Widget para a área de apagar
+  Widget _buildDeleteArea(BuildContext context, WidgetRef ref) {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: DragTarget<String>(
+        builder: (context, candidateData, rejectedData) {
+          final isHovering = candidateData.isNotEmpty;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: isHovering ? 120 : 100,
+            decoration: BoxDecoration(
+              color: isHovering
+                  ? Colors.red.withOpacity(0.9)
+                  : Colors.red.withOpacity(0.7),
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(60),
+              ),
+            ),
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.delete_outline, color: Colors.white, size: 32),
+                SizedBox(height: 8),
+                Text(
+                  'Arraste aqui para apagar',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ],
+            ),
+          );
+        },
+        onAcceptWithDetails: (details) {
+          ref
+              .read(gestaoControllerProvider.notifier)
+              .deletarCategoria(details.data);
+        },
       ),
     );
   }

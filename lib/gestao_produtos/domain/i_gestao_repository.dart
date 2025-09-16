@@ -12,6 +12,7 @@ abstract class IGestaoRepository {
   Future<void> criarCategoria(String nome);
   List<Categoria> getCategorias();
   Future<void> deletarCategoria(String categoriaId);
+  Future<void> atualizarOrdemCategorias(List<Categoria> categorias);
 
   // --- Métodos para Produto ---
   Future<void> criarProduto(String nome, String categoriaId);

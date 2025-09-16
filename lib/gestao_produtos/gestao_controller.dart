@@ -16,13 +16,13 @@ class GestaoState {
 
   GestaoState({
     this.categorias = const [],
-    this.produtos = const [],
+    List<Produto> produtosParam = const [], 
     this.categoriaSelecionadaId,
     this.errorMessage,
     this.isReordering = false,
     this.ultimoProdutoDeletado,
     this.idCategoriaProdutoDeletado,
-  });
+  }) : this.produtos = produtosParam;
 
   GestaoState copyWith({
     List<Categoria>? categorias,
@@ -38,7 +38,7 @@ class GestaoState {
   }) {
     return GestaoState(
       categorias: categorias ?? this.categorias,
-      produtos: produtos ?? this.produtos,
+      produtosParam: produtos ?? this.produtos, 
       categoriaSelecionadaId:
           categoriaSelecionadaId ?? this.categoriaSelecionadaId,
       errorMessage:
@@ -72,19 +72,22 @@ class GestaoController extends Notifier<GestaoState> {
             _repository.getProdutosPorCategoria(primeiraCategoriaId);
         return GestaoState(
           categorias: categorias,
-          produtos: produtos,
+          produtosParam: produtos, 
           categoriaSelecionadaId: primeiraCategoriaId,
         );
       }
     } catch (e) {
-      print("Erro ao inicializar o estado: $e");
+      // Consider logging to a crash reporting service in production
       return GestaoState(errorMessage: "Falha ao carregar dados.");
     }
-    return GestaoState();
+    return GestaoState(); 
   }
 
   void clearError() {
-    state = state.copyWith(clearErrorMessage: true);
+    state = state.copyWith(
+      produtos: state.produtos, 
+      clearErrorMessage: true
+    );
   }
 
   void setReordering(bool value) {
@@ -137,7 +140,7 @@ class GestaoController extends Notifier<GestaoState> {
         );
       } else {
         state = GestaoState(
-            categorias: [], produtos: [], categoriaSelecionadaId: null);
+            categorias: [], produtosParam: [], categoriaSelecionadaId: null); 
       }
     } catch (e) {
       state = state.copyWith(errorMessage: 'Falha ao apagar categoria.');
@@ -175,11 +178,10 @@ class GestaoController extends Notifier<GestaoState> {
       return;
     }
 
-    final Produto produtoParaDeletar; // Declared as non-nullable final
+    final Produto produtoParaDeletar;
     try {
       produtoParaDeletar = state.produtos.firstWhere((p) => p.id == produtoId);
     } catch (e) {
-      print("Produto $produtoId não encontrado na lista de estado atual: $e");
       state = state.copyWith(errorMessage: 'Produto não encontrado para deletar.');
       return;
     }
@@ -191,31 +193,33 @@ class GestaoController extends Notifier<GestaoState> {
       final produtosAtualizados = _repository.getProdutosPorCategoria(categoriaDoProdutoDeletado);
       state = state.copyWith(
         produtos: produtosAtualizados,
-        ultimoProdutoDeletado: produtoParaDeletar, // produtoParaDeletar is non-nullable here
+        ultimoProdutoDeletado: produtoParaDeletar,
         idCategoriaProdutoDeletado: categoriaDoProdutoDeletado,
       );
     } catch (e) {
-      print("Erro ao deletar produto: $e");
       state = state.copyWith(errorMessage: 'Falha ao deletar produto.');
     }
   }
 
   Future<void> desfazerDeletarProduto() async {
     if (state.ultimoProdutoDeletado != null && state.idCategoriaProdutoDeletado != null) {
-      // Assign to local non-nullable variables after null check for type promotion
       final Produto produtoParaRestaurar = state.ultimoProdutoDeletado!;
       final String categoriaOriginalDoProduto = state.idCategoriaProdutoDeletado!;
       
       try {
         await _repository.adicionarProdutoObjeto(produtoParaRestaurar);
         
-        List<Produto> produtosAtualizados = _repository.getProdutosPorCategoria(categoriaOriginalDoProduto);
-
         if (state.categoriaSelecionadaId == categoriaOriginalDoProduto) {
-          state = state.copyWith(
-            produtos: produtosAtualizados,
-            clearUltimoProdutoDeletado: true,
-            clearIdCategoriaProdutoDeletado: true,
+          List<Produto> produtosRecarregados = _repository.getProdutosPorCategoria(categoriaOriginalDoProduto);
+          
+          state = GestaoState(
+            categorias: state.categorias, 
+            produtosParam: produtosRecarregados, 
+            categoriaSelecionadaId: categoriaOriginalDoProduto,
+            ultimoProdutoDeletado: null, 
+            idCategoriaProdutoDeletado: null, 
+            errorMessage: null, 
+            isReordering: state.isReordering 
           );
         } else {
           state = state.copyWith(
@@ -223,8 +227,8 @@ class GestaoController extends Notifier<GestaoState> {
             clearIdCategoriaProdutoDeletado: true,
           );
         }
+
       } catch (e) {
-        print("Erro ao desfazer deletar produto: $e");
         state = state.copyWith(
           errorMessage: 'Falha ao desfazer a exclusão do produto.',
           clearUltimoProdutoDeletado: true,
@@ -244,7 +248,7 @@ class GestaoController extends Notifier<GestaoState> {
       try {
         await _repository.atualizarPrecoProduto(produtoId, novoPreco);
       } catch (e) {
-        print("ERRO AO ATUALIZAR PREÇO: $e");
+        // Considerar um feedback de erro para o usuário
       }
     }
   }

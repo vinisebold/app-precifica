@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
 import 'package:organiza_ae/gestao_produtos/widgets/categoria_nav_bar.dart';
@@ -67,7 +68,6 @@ class GestaoPage extends ConsumerWidget {
       },
     );
 
-
     overlay.insert(overlayEntry);
 
     Future.delayed(const Duration(seconds: 5), () {
@@ -109,6 +109,7 @@ class GestaoPage extends ConsumerWidget {
             textColor: colorScheme.onSecondary,
             action: TextButton(
               onPressed: () {
+                HapticFeedback.lightImpact();
                 ref
                     .read(gestaoControllerProvider.notifier)
                     .desfazerDeletarProduto();
@@ -138,6 +139,7 @@ class GestaoPage extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: () {
+              HapticFeedback.lightImpact();
               final textoRelatorio = ref
                   .read(gestaoControllerProvider.notifier)
                   .gerarTextoRelatorio();
@@ -146,7 +148,10 @@ class GestaoPage extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.add_box_outlined),
-            onPressed: () => _mostrarDialogoNovaCategoria(context, ref),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              _mostrarDialogoNovaCategoria(context, ref);
+            },
           ),
         ],
       ),
@@ -160,12 +165,19 @@ class GestaoPage extends ConsumerWidget {
             },
           ),
           if (gestaoState.isReordering) _buildDeleteArea(context, ref),
+          if (gestaoState.isLoading)
+            const Center(
+              child: CircularProgressIndicator(),
+            ),
         ],
       ),
       bottomNavigationBar: const CategoriaNavBar(),
       floatingActionButton: _StatefulFab(
         onPressed: gestaoState.categoriaSelecionadaId != null
-            ? () => _mostrarDialogoNovoProduto(context, ref)
+            ? () {
+                HapticFeedback.lightImpact();
+                _mostrarDialogoNovoProduto(context, ref);
+              }
             : null,
         icon: const Icon(Icons.add_shopping_cart),
       ),
@@ -209,6 +221,7 @@ class GestaoPage extends ConsumerWidget {
           );
         },
         onAcceptWithDetails: (details) {
+          HapticFeedback.lightImpact();
           ref
               .read(gestaoControllerProvider.notifier)
               .deletarCategoria(details.data);
@@ -237,6 +250,7 @@ class GestaoPage extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () {
+              HapticFeedback.lightImpact();
               final nomeProduto = controller.text;
               if (nomeProduto.isNotEmpty) {
                 ref
@@ -273,6 +287,7 @@ class GestaoPage extends ConsumerWidget {
           TextButton(
             child: Text('Salvar', style: textTheme.labelLarge),
             onPressed: () {
+              HapticFeedback.lightImpact();
               final nomeCategoria = controller.text;
               if (nomeCategoria.isNotEmpty) {
                 ref

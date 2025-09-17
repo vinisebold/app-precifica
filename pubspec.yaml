@@ -10,6 +10,8 @@ dependencies:
   flutter:
     sdk: flutter
 
+  dynamic_color: ^1.8.1
+
   # Pacotes para o banco de dados local
   hive: ^2.2.3
   hive_flutter: ^1.1.0

@@ -33,10 +33,10 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     _precoController = InputCursorFinalController(
       text: formatter
           .formatEditUpdate(
-            TextEditingValue.empty,
-            TextEditingValue(
-                text: (widget.produto.preco * 100).toInt().toString()),
-          )
+        TextEditingValue.empty,
+        TextEditingValue(
+            text: (widget.produto.preco * 100).toInt().toString()),
+      )
           .text,
     );
   }
@@ -73,7 +73,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
         child: ListTile(
           title: Text(widget.produto.nome),
           trailing: SizedBox(
-            width: 100,
+            width: 120,
             child: TextField(
               controller: _precoController,
               textAlign: TextAlign.right,
@@ -85,8 +85,14 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
                       widget.produto.id, novoPrecoFormatado);
                 });
               },
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 prefixText: 'R\$ ',
+                filled: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               keyboardType: TextInputType.number,
               inputFormatters: [

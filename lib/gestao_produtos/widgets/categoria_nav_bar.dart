@@ -92,32 +92,28 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
     final categorias = state.categorias;
     final colorScheme = Theme.of(context).colorScheme;
 
-    // Adiciona chaves para novas categorias
     for (var cat in categorias) {
       _itemKeys.putIfAbsent(cat.id, () => GlobalKey());
     }
-    // Limpa chaves de categorias removidas (correção do memory leak)
     _itemKeys
         .removeWhere((key, value) => !categorias.any((cat) => cat.id == key));
 
     if (categorias.isEmpty) {
-      return const SizedBox.shrink();
+      return const SizedBox(height: 48);
     }
 
     return Container(
-      height: 80,
-      color: colorScheme.surfaceContainer,
+      height: 48,
+      color: Colors.transparent,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // 1. SingleChildScrollView for categories
           SingleChildScrollView(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0), // Padding for first/last items
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
                 children: categorias.map((categoria) {
                   final itemKey = _itemKeys[categoria.id]!;
@@ -202,7 +198,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                                   child: _CategoriaItem(
                                     categoria: categoriaToRevert,
                                     isSelected: true,
-                                    // Simulate selection for feedback
                                     onTap: () {},
                                     onDoubleTap: () {},
                                     isDragFeedback: true,
@@ -249,8 +244,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                             shadowColor:
                                 Colors.black.withAlpha((255 * 0.075).round()),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  28.0), // Rounded corners for the feedback
+                              borderRadius: BorderRadius.circular(28.0),
                             ),
                             child: _CategoriaItem(
                               categoria: categoria,
@@ -313,8 +307,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
               ),
             ),
           ),
-
-          // 2. Left Fade Gradient
           Positioned(
             left: 0,
             top: 0,
@@ -324,7 +316,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
               duration: const Duration(milliseconds: 200),
               child: IgnorePointer(
                 child: Container(
-                  width: 48.0, // Width of the fade effect
+                  width: 48.0,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.centerLeft,
@@ -340,8 +332,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
               ),
             ),
           ),
-
-          // 3. Right Fade Gradient
           Positioned(
             right: 0,
             top: 0,
@@ -351,7 +341,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
               duration: const Duration(milliseconds: 200),
               child: IgnorePointer(
                 child: Container(
-                  width: 48.0, // Width of the fade effect
+                  width: 48.0,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.centerRight,
@@ -367,14 +357,10 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
               ),
             ),
           ),
-
-          // 4. Left Arrow (on top)
           Align(
             alignment: Alignment.centerLeft,
             child: _buildArrow(isLeft: true),
           ),
-
-          // 5. Right Arrow (on top)
           Align(
             alignment: Alignment.centerRight,
             child: _buildArrow(isLeft: false),
@@ -414,6 +400,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
     );
   }
 }
+
 class _CategoriaItem extends StatefulWidget {
   final Categoria categoria;
   final bool isSelected;
@@ -435,7 +422,6 @@ class _CategoriaItem extends StatefulWidget {
 }
 
 class _CategoriaItemState extends State<_CategoriaItem> {
-  // NOVO: Variável de estado para controlar se o item está "pressionado" ou "ativo".
   bool _isActivated = false;
 
   @override
@@ -445,99 +431,76 @@ class _CategoriaItemState extends State<_CategoriaItem> {
     final isSelected = widget.isSelected;
     final duration = const Duration(milliseconds: 300);
 
-    // ALTERADO: O raio do canto agora depende se o item está pressionado (_isActivated).
+    // Raio do canto, muda com o toque do utilizador
     final double cornerRadius = _isActivated ? 28.0 : 50.0;
 
-    // A lógica para o feedback de arrastar (o clone) permanece a mesma.
-    // Ele já usa o raio de canto "ativo" para consistência.
+    // ----- MODIFICAÇÃO #1: Widget de feedback ao arrastar -----
+    // Este é o visual do item enquanto ele está a ser arrastado pela tela.
     if (widget.isDragFeedback) {
       final pillColor = colorScheme.secondaryContainer;
       final contentColor = colorScheme.onSecondaryContainer;
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
+        // Ajuste no padding para o item não ficar muito alto sem o ícone.
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
         decoration: BoxDecoration(
           color: pillColor,
-          borderRadius: BorderRadius.circular(18.0), // Usa o raio "ativo".
+          borderRadius: BorderRadius.circular(18.0),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.label, color: contentColor, size: 20),
-            const SizedBox(height: 4),
-            Text(
+        // O `Column` foi substituído por um `Center` para garantir o alinhamento.
+        child: Center(
+          child: Text(
+            widget.categoria.nome,
+            style: textTheme.labelLarge?.copyWith(color: contentColor),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ),
+      );
+    }
+
+    // Cor de fundo do item: selecionado ou transparente
+    final Color pillColor =
+        isSelected ? colorScheme.secondaryContainer : Colors.transparent;
+
+    // Cor do texto do item: uma para selecionado, outra para o estado normal
+    final Color contentColor = isSelected
+        ? colorScheme.onSecondaryContainer
+        : colorScheme.onSurfaceVariant;
+
+    // O padding horizontal aumenta quando o item é selecionado
+    final double horizontalPadding = isSelected ? 24.0 : 16.0;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        onDoubleTap: widget.onDoubleTap,
+        onTapDown: (_) => setState(() => _isActivated = true),
+        onTapUp: (_) => setState(() => _isActivated = false),
+        onTapCancel: () => setState(() => _isActivated = false),
+        child: AnimatedContainer(
+          duration: duration,
+          curve: Curves.easeInOut,
+          // Ajuste no padding vertical para compensar a ausência do ícone.
+          padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding, vertical: 12.0),
+          decoration: BoxDecoration(
+            color: pillColor,
+            border: Border.all(
+              color: _isActivated && !isSelected
+                  ? colorScheme.onSurface.withOpacity(0.12)
+                  : Colors.transparent,
+              width: 1,
+            ),
+            borderRadius: BorderRadius.circular(cornerRadius),
+          ),
+          child: Center(
+            child: Text(
               widget.categoria.nome,
               style: textTheme.labelLarge?.copyWith(color: contentColor),
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
             ),
-          ],
-        ),
-      );
-    }
-
-    final Color pillColor =
-    isSelected ? colorScheme.secondaryContainer : colorScheme.surfaceContainer;
-
-    final Color contentColor =
-    isSelected ? colorScheme.onSecondaryContainer : colorScheme.onSurfaceVariant;
-
-    final double horizontalPadding = isSelected ? 24.0 : 16.0;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-      // ALTERADO: O GestureDetector agora controla o estado _isActivated.
-      child: GestureDetector(
-        onTap: widget.onTap,
-        onDoubleTap: widget.onDoubleTap,
-
-        // Ativa a animação quando o dedo/rato pressiona.
-        onTapDown: (_) => setState(() => _isActivated = true),
-        // Desativa a animação quando o dedo/rato é solto.
-        onTapUp: (_) => setState(() => _isActivated = false),
-        // Garante que a animação também é desativada se o toque for cancelado.
-        onTapCancel: () => setState(() => _isActivated = false),
-
-        child: AnimatedContainer(
-          duration: duration,
-          curve: Curves.easeInOut,
-          padding: EdgeInsets.symmetric(
-              horizontal: horizontalPadding, vertical: 10.0),
-          decoration: BoxDecoration(
-            color: pillColor,
-            border: Border.all(
-              // Adiciona uma borda sutil quando o item está pressionado.
-              color: _isActivated && !isSelected
-                  ? colorScheme.onSurface.withValues(alpha: 0.12)
-                  : Colors.transparent,
-              width: 1,
-            ),
-            // O AnimatedContainer usa a nossa variável para animar o raio do canto.
-            borderRadius: BorderRadius.circular(cornerRadius),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AnimatedSwitcher(
-                duration: duration,
-                transitionBuilder: (child, animation) =>
-                    FadeTransition(opacity: animation, child: child),
-                child: Icon(
-                  isSelected ? Icons.label : Icons.label_outline,
-                  key: ValueKey<bool>(isSelected),
-                  color: contentColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.categoria.nome,
-                style: textTheme.labelLarge?.copyWith(color: contentColor),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ],
           ),
         ),
       ),

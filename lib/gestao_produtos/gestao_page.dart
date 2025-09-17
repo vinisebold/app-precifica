@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
 import 'package:organiza_ae/gestao_produtos/widgets/categoria_nav_bar.dart';
-import 'package:organiza_ae/gestao_produtos/widgets/item_produto.dart';
+import 'package:organiza_ae/gestao_produtos/widgets/product_list_view.dart';
 import 'package:share_plus/share_plus.dart';
 
 class GestaoPage extends ConsumerWidget {
@@ -37,7 +37,7 @@ class GestaoPage extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(50),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withOpacity(0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -91,7 +91,7 @@ class GestaoPage extends ConsumerWidget {
         title: Text(titulo, style: textTheme.headlineSmall),
         content: TextField(
           controller: controller,
-          decoration: InputDecoration(hintText: "Novo nome"),
+          decoration: const InputDecoration(hintText: "Novo nome"),
           autofocus: true,
         ),
         actions: [
@@ -165,9 +165,11 @@ class GestaoPage extends ConsumerWidget {
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
     return Scaffold(
+      backgroundColor: colorScheme.surfaceContainer,
       appBar: AppBar(
         title: Text('Gestão de Preços', style: textTheme.titleLarge),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
@@ -186,15 +188,20 @@ class GestaoPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          ListView.separated(
-            itemCount: gestaoState.produtos.length,
-            itemBuilder: (context, index) {
-              final produto = gestaoState.produtos[index];
-              return ItemProduto(
-                produto: produto,
-                onDoubleTap: () {
+      // O corpo agora é o container azul
+      body: Container(
+        margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+        decoration: BoxDecoration(
+          // A cor do "miolo" azul
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16.0),
+          child: Stack(
+            children: [
+              ProductListView(
+                onProdutoDoubleTap: (produto) {
                   _mostrarDialogoEditarNome(
                     context,
                     ref,
@@ -205,32 +212,28 @@ class GestaoPage extends ConsumerWidget {
                     },
                   );
                 },
-              );
-            },
-            separatorBuilder: (context, index) => const Divider(
-              height: 1, // Altura do divisor
-              thickness: 1, // Espessura da linha do divisor
-              indent: 16, // Recuo à esquerda
-              endIndent: 16, // Recuo à direita
-            ),
+              ),
+              if (gestaoState.isReordering) _buildDeleteArea(context, ref),
+              if (gestaoState.isLoading)
+                const Center(child: CircularProgressIndicator()),
+            ],
           ),
-          if (gestaoState.isReordering) _buildDeleteArea(context, ref),
-          if (gestaoState.isLoading)
-            const Center(child: CircularProgressIndicator()),
-        ],
+        ),
       ),
-      bottomNavigationBar: CategoriaNavBar(
-        onCategoriaDoubleTap: (categoria) {
-          _mostrarDialogoEditarNome(
-            context,
-            ref,
-            titulo: "Editar Categoria",
-            valorAtual: categoria.nome,
-            onSalvar: (novoNome) {
-              gestaoNotifier.atualizarNomeCategoria(categoria.id, novoNome);
-            },
-          );
-        },
+      bottomNavigationBar: SafeArea(
+        child: CategoriaNavBar(
+          onCategoriaDoubleTap: (categoria) {
+            _mostrarDialogoEditarNome(
+              context,
+              ref,
+              titulo: "Editar Categoria",
+              valorAtual: categoria.nome,
+              onSalvar: (novoNome) {
+                gestaoNotifier.atualizarNomeCategoria(categoria.id, novoNome);
+              },
+            );
+          },
+        ),
       ),
       floatingActionButton: _StatefulFab(
         onPressed: gestaoState.categoriaSelecionadaId != null

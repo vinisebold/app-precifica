@@ -414,7 +414,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
     );
   }
 }
-
 class _CategoriaItem extends StatefulWidget {
   final Categoria categoria;
   final bool isSelected;
@@ -436,32 +435,101 @@ class _CategoriaItem extends StatefulWidget {
 }
 
 class _CategoriaItemState extends State<_CategoriaItem> {
-  bool _isHovering = false;
-  bool _isPressed = false;
+  // NOVO: Variável de estado para controlar se o item está "pressionado" ou "ativo".
+  bool _isActivated = false;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final isSelected = widget.isSelected;
+    final duration = const Duration(milliseconds: 300);
 
+    // ALTERADO: O raio do canto agora depende se o item está pressionado (_isActivated).
+    final double cornerRadius = _isActivated ? 28.0 : 50.0;
+
+    // A lógica para o feedback de arrastar (o clone) permanece a mesma.
+    // Ele já usa o raio de canto "ativo" para consistência.
     if (widget.isDragFeedback) {
       final pillColor = colorScheme.secondaryContainer;
       final contentColor = colorScheme.onSecondaryContainer;
-      final borderRadius = BorderRadius.circular(28.0);
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
+        decoration: BoxDecoration(
+          color: pillColor,
+          borderRadius: BorderRadius.circular(18.0), // Usa o raio "ativo".
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.label, color: contentColor, size: 20),
+            const SizedBox(height: 4),
+            Text(
+              widget.categoria.nome,
+              style: textTheme.labelLarge?.copyWith(color: contentColor),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ],
+        ),
+      );
+    }
 
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+    final Color pillColor =
+    isSelected ? colorScheme.secondaryContainer : colorScheme.surfaceContainer;
+
+    final Color contentColor =
+    isSelected ? colorScheme.onSecondaryContainer : colorScheme.onSurfaceVariant;
+
+    final double horizontalPadding = isSelected ? 24.0 : 16.0;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      // ALTERADO: O GestureDetector agora controla o estado _isActivated.
+      child: GestureDetector(
+        onTap: widget.onTap,
+        onDoubleTap: widget.onDoubleTap,
+
+        // Ativa a animação quando o dedo/rato pressiona.
+        onTapDown: (_) => setState(() => _isActivated = true),
+        // Desativa a animação quando o dedo/rato é solto.
+        onTapUp: (_) => setState(() => _isActivated = false),
+        // Garante que a animação também é desativada se o toque for cancelado.
+        onTapCancel: () => setState(() => _isActivated = false),
+
+        child: AnimatedContainer(
+          duration: duration,
+          curve: Curves.easeInOut,
+          padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding, vertical: 10.0),
           decoration: BoxDecoration(
             color: pillColor,
-            borderRadius: borderRadius,
+            border: Border.all(
+              // Adiciona uma borda sutil quando o item está pressionado.
+              color: _isActivated && !isSelected
+                  ? colorScheme.onSurface.withOpacity(0.12)
+                  : Colors.transparent,
+              width: 1,
+            ),
+            // O AnimatedContainer usa a nossa variável para animar o raio do canto.
+            borderRadius: BorderRadius.circular(cornerRadius),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.label, color: contentColor, size: 20),
+              AnimatedSwitcher(
+                duration: duration,
+                transitionBuilder: (child, animation) =>
+                    FadeTransition(opacity: animation, child: child),
+                child: Icon(
+                  isSelected ? Icons.label : Icons.label_outline,
+                  key: ValueKey<bool>(isSelected),
+                  color: contentColor,
+                  size: 20,
+                ),
+              ),
               const SizedBox(height: 4),
               Text(
                 widget.categoria.nome,
@@ -472,79 +540,7 @@ class _CategoriaItemState extends State<_CategoriaItem> {
             ],
           ),
         ),
-      );
-    } else {
-      Color pillColor;
-      if (widget.isSelected) {
-        pillColor = colorScheme.secondaryContainer;
-      } else if (_isHovering) {
-        pillColor = colorScheme.onSurface.withAlpha((255 * 0.08).round());
-      } else {
-        pillColor = Colors.transparent;
-      }
-
-      Color contentColor;
-      if (widget.isSelected) {
-        contentColor = colorScheme.onSecondaryContainer;
-      } else {
-        contentColor = colorScheme.onSurfaceVariant;
-      }
-
-      final BorderRadius borderRadius = BorderRadius.circular(
-        (widget.isSelected && _isPressed) ? 28.0 : 20.0,
-      );
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-        child: MouseRegion(
-          onEnter: (_) => setState(() => _isHovering = true),
-          onExit: (_) => setState(() => _isHovering = false),
-          child: GestureDetector(
-            onDoubleTap: widget.onDoubleTap,
-            child: InkWell(
-              onTap: widget.onTap,
-              onHighlightChanged: (isHighlighted) {
-                if (mounted) {
-                  setState(() {
-                    _isPressed = isHighlighted;
-                  });
-                }
-              },
-              borderRadius: borderRadius,
-              hoverColor: Colors.transparent,
-              splashColor:
-                  colorScheme.onSurface.withAlpha((255 * 0.12).round()),
-              highlightColor: Colors.transparent,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 10.0),
-                decoration: BoxDecoration(
-                  color: pillColor,
-                  borderRadius: borderRadius,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(widget.isSelected ? Icons.label : Icons.label_outline,
-                        color: contentColor, size: 20),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.categoria.nome,
-                      style:
-                          textTheme.labelLarge?.copyWith(color: contentColor),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
+      ),
+    );
   }
 }

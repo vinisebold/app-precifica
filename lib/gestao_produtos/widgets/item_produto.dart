@@ -88,6 +88,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
               decoration: InputDecoration(
                 prefixText: 'R\$ ',
                 filled: true,
+                fillColor: colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.0),
                   borderSide: BorderSide.none,

@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+
 part 'categoria.g.dart';
 
 @HiveType(typeId: 0) // typeId deve ser único para cada modelo

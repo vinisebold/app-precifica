@@ -508,7 +508,7 @@ class _CategoriaItemState extends State<_CategoriaItem> {
             border: Border.all(
               // Adiciona uma borda sutil quando o item está pressionado.
               color: _isActivated && !isSelected
-                  ? colorScheme.onSurface.withOpacity(0.12)
+                  ? colorScheme.onSurface.withValues(alpha: 0.12)
                   : Colors.transparent,
               width: 1,
             ),

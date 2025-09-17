@@ -165,7 +165,7 @@ class GestaoPage extends ConsumerWidget {
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainer, // <- ALTERAÇÃO AQUI
+      backgroundColor: colorScheme.onInverseSurface,
       appBar: AppBar(
         title: Text('Gestão de Preços', style: textTheme.titleLarge),
         backgroundColor: Colors.transparent,
@@ -191,7 +191,7 @@ class GestaoPage extends ConsumerWidget {
       body: Container(
         margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerLowest, // <- ALTERAÇÃO AQUI
+          color: colorScheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(16.0),
         ),
         child: ClipRRect(

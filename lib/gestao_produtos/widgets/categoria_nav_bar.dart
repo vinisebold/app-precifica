@@ -322,8 +322,8 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        colorScheme.surfaceContainer, // <- ALTERAÇÃO AQUI
-                        colorScheme.surfaceContainer.withAlpha(0), // <- ALTERAÇÃO AQUI
+                        colorScheme.surfaceContainer,
+                        colorScheme.surfaceContainer.withAlpha(0),
                       ],
                       stops: const [0.0, 1.0],
                     ),
@@ -347,8 +347,8 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                       begin: Alignment.centerRight,
                       end: Alignment.centerLeft,
                       colors: [
-                        colorScheme.surfaceContainer, // <- ALTERAÇÃO AQUI
-                        colorScheme.surfaceContainer.withAlpha(0), // <- ALTERAÇÃO AQUI
+                        colorScheme.surfaceContainer,
+                        colorScheme.surfaceContainer.withAlpha(0),
                       ],
                       stops: const [0.0, 1.0],
                     ),

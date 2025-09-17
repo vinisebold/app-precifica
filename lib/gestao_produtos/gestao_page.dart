@@ -10,12 +10,12 @@ class GestaoPage extends ConsumerWidget {
   const GestaoPage({super.key});
 
   void _showCustomToast(
-    BuildContext context,
-    String message, {
-    Color? backgroundColor,
-    Color? textColor,
-    Widget? action,
-  }) {
+      BuildContext context,
+      String message, {
+        Color? backgroundColor,
+        Color? textColor,
+        Widget? action,
+      }) {
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
 
@@ -37,7 +37,7 @@ class GestaoPage extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(50),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -76,12 +76,12 @@ class GestaoPage extends ConsumerWidget {
   }
 
   void _mostrarDialogoEditarNome(
-    BuildContext context,
-    WidgetRef ref, {
-    required String titulo,
-    required String valorAtual,
-    required Function(String) onSalvar,
-  }) {
+      BuildContext context,
+      WidgetRef ref, {
+        required String titulo,
+        required String valorAtual,
+        required Function(String) onSalvar,
+      }) {
     final controller = TextEditingController(text: valorAtual);
     final textTheme = Theme.of(context).textTheme;
 
@@ -121,7 +121,7 @@ class GestaoPage extends ConsumerWidget {
 
     ref.listen<GestaoState>(
       gestaoControllerProvider,
-      (previousState, newState) {
+          (previousState, newState) {
         if (newState.errorMessage != null &&
             newState.errorMessage != previousState?.errorMessage) {
           _showCustomToast(
@@ -152,7 +152,7 @@ class GestaoPage extends ConsumerWidget {
               style: TextButton.styleFrom(
                 foregroundColor: colorScheme.onSecondary,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
               child: const Text('DESFAZER'),
             ),
@@ -165,7 +165,7 @@ class GestaoPage extends ConsumerWidget {
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainer,
+      backgroundColor: colorScheme.surfaceContainer, // <- ALTERAÇÃO AQUI
       appBar: AppBar(
         title: Text('Gestão de Preços', style: textTheme.titleLarge),
         backgroundColor: Colors.transparent,
@@ -188,12 +188,10 @@ class GestaoPage extends ConsumerWidget {
           ),
         ],
       ),
-      // O corpo agora é o container azul
       body: Container(
         margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
         decoration: BoxDecoration(
-          // A cor do "miolo" azul
-          color: colorScheme.surface,
+          color: colorScheme.surfaceContainerLowest, // <- ALTERAÇÃO AQUI
           borderRadius: BorderRadius.circular(16.0),
         ),
         child: ClipRRect(
@@ -238,9 +236,9 @@ class GestaoPage extends ConsumerWidget {
       floatingActionButton: _StatefulFab(
         onPressed: gestaoState.categoriaSelecionadaId != null
             ? () {
-                HapticFeedback.lightImpact();
-                _mostrarDialogoNovoProduto(context, ref);
-              }
+          HapticFeedback.lightImpact();
+          _mostrarDialogoNovoProduto(context, ref);
+        }
             : null,
         icon: const Icon(Icons.add_shopping_cart),
       ),
@@ -265,7 +263,7 @@ class GestaoPage extends ConsumerWidget {
                   ? colorScheme.errorContainer.withAlpha((255 * 0.9).round())
                   : colorScheme.errorContainer.withAlpha((255 * 0.7).round()),
               borderRadius:
-                  const BorderRadius.vertical(bottom: Radius.circular(60)),
+              const BorderRadius.vertical(bottom: Radius.circular(60)),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

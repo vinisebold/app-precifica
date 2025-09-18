@@ -47,9 +47,9 @@ class GestaoState {
       categorias: categorias ?? this.categorias,
       produtos: produtos ?? this.produtos,
       categoriaSelecionadaId:
-      categoriaSelecionadaId ?? this.categoriaSelecionadaId,
+          categoriaSelecionadaId ?? this.categoriaSelecionadaId,
       errorMessage:
-      clearErrorMessage ? null : errorMessage ?? this.errorMessage,
+          clearErrorMessage ? null : errorMessage ?? this.errorMessage,
       isReordering: isReordering ?? this.isReordering,
       isLoading: isLoading ?? this.isLoading,
       ultimoProdutoDeletado: clearUltimoProdutoDeletado
@@ -58,7 +58,7 @@ class GestaoState {
       idCategoriaProdutoDeletado: clearUltimoProdutoDeletado
           ? null
           : idCategoriaProdutoDeletado ?? this.idCategoriaProdutoDeletado,
-      isDraggingProduto: isDraggingProduto ?? this.isDraggingProduto, // NOVO: Adicione esta linha
+      isDraggingProduto: isDraggingProduto ?? this.isDraggingProduto,
     );
   }
 }
@@ -68,6 +68,13 @@ final gestaoRepositoryProvider = Provider<IGestaoRepository>((ref) {
 });
 
 class GestaoController extends Notifier<GestaoState> {
+  void selecionarCategoriaPorIndice(int index) {
+    if (index >= 0 && index < state.categorias.length) {
+      final categoriaId = state.categorias[index].id;
+      selecionarCategoria(categoriaId);
+    }
+  }
+
   late final IGestaoRepository _repository;
 
   @override
@@ -78,7 +85,7 @@ class GestaoController extends Notifier<GestaoState> {
       if (categorias.isNotEmpty) {
         final primeiraCategoriaId = categorias.first.id;
         final produtos =
-        _repository.getProdutosPorCategoria(primeiraCategoriaId);
+            _repository.getProdutosPorCategoria(primeiraCategoriaId);
         return GestaoState(
           categorias: categorias,
           produtos: produtos,
@@ -109,7 +116,7 @@ class GestaoController extends Notifier<GestaoState> {
     final categorias = List<Categoria>.from(state.categorias);
 
     final draggedIndex =
-    categorias.indexWhere((cat) => cat.id == draggedItemId);
+        categorias.indexWhere((cat) => cat.id == draggedItemId);
     final targetIndex = categorias.indexWhere((cat) => cat.id == targetItemId);
 
     if (draggedIndex == -1 || targetIndex == -1) return;
@@ -148,7 +155,7 @@ class GestaoController extends Notifier<GestaoState> {
       if (categoriasAtualizadas.isNotEmpty) {
         final novaCategoriaId = categoriasAtualizadas.first.id;
         final novosProdutos =
-        _repository.getProdutosPorCategoria(novaCategoriaId);
+            _repository.getProdutosPorCategoria(novaCategoriaId);
         state = state.copyWith(
           categorias: categoriasAtualizadas,
           categoriaSelecionadaId: novaCategoriaId,
@@ -211,7 +218,6 @@ class GestaoController extends Notifier<GestaoState> {
 
     final categoriaDoProdutoDeletado = state.categoriaSelecionadaId!;
 
-    // Remove o produto da lista na UI imediatamente
     final produtosAtuais = List<Produto>.from(state.produtos);
     produtosAtuais.removeWhere((p) => p.id == produtoId);
 
@@ -219,15 +225,14 @@ class GestaoController extends Notifier<GestaoState> {
       produtos: produtosAtuais,
       ultimoProdutoDeletado: produtoParaDeletar,
       idCategoriaProdutoDeletado: categoriaDoProdutoDeletado,
+      isDraggingProduto: false,
     );
 
     try {
-      // Deleta do banco de dados em segundo plano
       await _repository.deletarProduto(produtoId, categoriaDoProdutoDeletado);
     } catch (e) {
-      // Se a exclusão falhar, restaura a lista e mostra o erro
       final produtosRecarregados =
-      _repository.getProdutosPorCategoria(categoriaDoProdutoDeletado);
+          _repository.getProdutosPorCategoria(categoriaDoProdutoDeletado);
       state = state.copyWith(
         produtos: produtosRecarregados,
         errorMessage: 'Falha ao deletar produto.',
@@ -248,7 +253,7 @@ class GestaoController extends Notifier<GestaoState> {
 
         if (state.categoriaSelecionadaId == categoriaOriginalId) {
           final produtosRecarregados =
-          _repository.getProdutosPorCategoria(categoriaOriginalId);
+              _repository.getProdutosPorCategoria(categoriaOriginalId);
           state = state.copyWith(
             produtos: produtosRecarregados,
             clearUltimoProdutoDeletado: true,
@@ -299,7 +304,7 @@ class GestaoController extends Notifier<GestaoState> {
 
     for (var produto in todosProdutos) {
       final precoFormatado =
-      produto.preco.toStringAsFixed(2).replaceAll('.', ',');
+          produto.preco.toStringAsFixed(2).replaceAll('.', ',');
       buffer.writeln('${produto.nome} – R\$ $precoFormatado');
     }
 
@@ -328,6 +333,6 @@ class GestaoController extends Notifier<GestaoState> {
 }
 
 final gestaoControllerProvider =
-NotifierProvider<GestaoController, GestaoState>(
-      () => GestaoController(),
+    NotifierProvider<GestaoController, GestaoState>(
+  () => GestaoController(),
 );

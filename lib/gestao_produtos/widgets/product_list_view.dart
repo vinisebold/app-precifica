@@ -7,17 +7,22 @@ import 'package:organiza_ae/gestao_produtos/widgets/item_produto.dart';
 class ProductListView extends ConsumerWidget {
   /// Callback para notificar a página pai que um produto foi tocado duas vezes.
   final Function(Produto) onProdutoDoubleTap;
+  final String categoriaId;
 
   const ProductListView({
     super.key,
     required this.onProdutoDoubleTap,
+    required this.categoriaId,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Observa o estado para reconstruir a lista quando os produtos mudarem
     final gestaoState = ref.watch(gestaoControllerProvider);
-    final produtos = gestaoState.produtos;
+    // Filtra os produtos com base no categoriaId recebido
+    final produtos = gestaoState.produtos
+        .where((p) => p.categoriaId == categoriaId)
+        .toList();
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 

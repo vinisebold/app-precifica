@@ -1,6 +1,9 @@
+// lib/gestao_produtos/gestao_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:organiza_ae/data/models/produto.dart'; // NOVO: Importe o modelo Produto
 import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
 import 'package:organiza_ae/gestao_produtos/widgets/categoria_nav_bar.dart';
 import 'package:organiza_ae/gestao_produtos/widgets/product_list_view.dart';
@@ -37,7 +40,7 @@ class GestaoPage extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(50),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withAlpha(10),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -165,7 +168,7 @@ class GestaoPage extends ConsumerWidget {
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
     return Scaffold(
-      backgroundColor: colorScheme.onInverseSurface,
+      backgroundColor: colorScheme.surfaceContainer,
       appBar: AppBar(
         title: Text('Gestão de Preços', style: textTheme.titleLarge),
         backgroundColor: Colors.transparent,
@@ -212,6 +215,9 @@ class GestaoPage extends ConsumerWidget {
                 },
               ),
               if (gestaoState.isReordering) _buildDeleteArea(context, ref),
+              // NOVO: Adicione estas linhas para mostrar a área de exclusão do produto
+              if (gestaoState.isDraggingProduto)
+                _buildProdutoDeleteArea(context, ref),
               if (gestaoState.isLoading)
                 const Center(child: CircularProgressIndicator()),
             ],
@@ -245,6 +251,50 @@ class GestaoPage extends ConsumerWidget {
     );
   }
 
+  // NOVO: Adicione todo este método
+  Widget _buildProdutoDeleteArea(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Positioned(
+      top: 0, // A área de exclusão para produtos ficará no topo
+      left: 0,
+      right: 0,
+      child: DragTarget<Produto>(
+        builder: (context, candidateData, rejectedData) {
+          final isHovering = candidateData.isNotEmpty;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: isHovering ? 120 : 100,
+            decoration: BoxDecoration(
+              color: isHovering
+                  ? colorScheme.errorContainer.withAlpha(230)
+                  : colorScheme.errorContainer.withAlpha(180),
+              borderRadius:
+              const BorderRadius.vertical(bottom: Radius.circular(60)),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.delete_outline,
+                    color: colorScheme.onErrorContainer, size: 32),
+                const SizedBox(height: 8),
+                Text('Arraste o produto aqui para apagar',
+                    style: textTheme.bodyMedium
+                        ?.copyWith(color: colorScheme.onErrorContainer)),
+              ],
+            ),
+          );
+        },
+        onAcceptWithDetails: (details) {
+          HapticFeedback.lightImpact();
+          ref
+              .read(gestaoControllerProvider.notifier)
+              .deletarProduto(details.data.id);
+        },
+      ),
+    );
+  }
+
   Widget _buildDeleteArea(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -260,8 +310,8 @@ class GestaoPage extends ConsumerWidget {
             height: isHovering ? 120 : 100,
             decoration: BoxDecoration(
               color: isHovering
-                  ? colorScheme.errorContainer.withAlpha((255 * 0.9).round())
-                  : colorScheme.errorContainer.withAlpha((255 * 0.7).round()),
+                  ? colorScheme.errorContainer.withAlpha(230)
+                  : colorScheme.errorContainer.withAlpha(180),
               borderRadius:
               const BorderRadius.vertical(bottom: Radius.circular(60)),
             ),
@@ -394,9 +444,9 @@ class _StatefulFabState extends State<_StatefulFab> {
       fabForegroundColor = colorScheme.onPrimaryContainer;
     } else {
       fabBackgroundColor =
-          colorScheme.onSurface.withAlpha((255 * 0.12).round());
+          colorScheme.onSurface.withAlpha(30);
       fabForegroundColor =
-          colorScheme.onSurface.withAlpha((255 * 0.38).round());
+          colorScheme.onSurface.withAlpha(97);
     }
 
     const double currentElevation = 0.0;

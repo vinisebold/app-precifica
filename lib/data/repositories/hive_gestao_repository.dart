@@ -11,7 +11,7 @@ class HiveGestaoRepository implements IGestaoRepository {
   static const _produtosBox = 'produtos_box';
 
   // Instância do gerador de IDs
-  final _uuid = Uuid();
+  static const _uuid = Uuid();
 
   // Métod para inicializar o Hive e registrar os adaptadores
   @override

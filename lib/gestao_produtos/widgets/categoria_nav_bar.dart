@@ -429,7 +429,7 @@ class _CategoriaItemState extends State<_CategoriaItem> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isSelected = widget.isSelected;
-    final duration = const Duration(milliseconds: 300);
+    const duration = Duration(milliseconds: 300);
 
     // Raio do canto, muda com o toque do utilizador
     final double cornerRadius = _isActivated ? 28.0 : 50.0;

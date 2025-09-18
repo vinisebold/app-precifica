@@ -1,3 +1,5 @@
+// lib/gestao_produtos/gestao_controller.dart
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:organiza_ae/data/models/categoria.dart';
@@ -14,6 +16,7 @@ class GestaoState {
   final bool isLoading;
   final Produto? ultimoProdutoDeletado;
   final String? idCategoriaProdutoDeletado;
+  final bool isDraggingProduto; // NOVO: Adicione esta linha
 
   GestaoState({
     this.categorias = const [],
@@ -24,6 +27,7 @@ class GestaoState {
     this.isLoading = false,
     this.ultimoProdutoDeletado,
     this.idCategoriaProdutoDeletado,
+    this.isDraggingProduto = false, // NOVO: Adicione esta linha
   });
 
   GestaoState copyWith({
@@ -35,6 +39,7 @@ class GestaoState {
     bool? isLoading,
     Produto? ultimoProdutoDeletado,
     String? idCategoriaProdutoDeletado,
+    bool? isDraggingProduto, // NOVO: Adicione esta linha
     bool clearErrorMessage = false,
     bool clearUltimoProdutoDeletado = false,
   }) {
@@ -42,9 +47,9 @@ class GestaoState {
       categorias: categorias ?? this.categorias,
       produtos: produtos ?? this.produtos,
       categoriaSelecionadaId:
-          categoriaSelecionadaId ?? this.categoriaSelecionadaId,
+      categoriaSelecionadaId ?? this.categoriaSelecionadaId,
       errorMessage:
-          clearErrorMessage ? null : errorMessage ?? this.errorMessage,
+      clearErrorMessage ? null : errorMessage ?? this.errorMessage,
       isReordering: isReordering ?? this.isReordering,
       isLoading: isLoading ?? this.isLoading,
       ultimoProdutoDeletado: clearUltimoProdutoDeletado
@@ -53,6 +58,7 @@ class GestaoState {
       idCategoriaProdutoDeletado: clearUltimoProdutoDeletado
           ? null
           : idCategoriaProdutoDeletado ?? this.idCategoriaProdutoDeletado,
+      isDraggingProduto: isDraggingProduto ?? this.isDraggingProduto, // NOVO: Adicione esta linha
     );
   }
 }
@@ -72,7 +78,7 @@ class GestaoController extends Notifier<GestaoState> {
       if (categorias.isNotEmpty) {
         final primeiraCategoriaId = categorias.first.id;
         final produtos =
-            _repository.getProdutosPorCategoria(primeiraCategoriaId);
+        _repository.getProdutosPorCategoria(primeiraCategoriaId);
         return GestaoState(
           categorias: categorias,
           produtos: produtos,
@@ -93,12 +99,17 @@ class GestaoController extends Notifier<GestaoState> {
     state = state.copyWith(isReordering: value);
   }
 
+  // NOVO: Adicione este método
+  void setDraggingProduto(bool value) {
+    state = state.copyWith(isDraggingProduto: value);
+  }
+
   Future<void> reordenarCategoria(
       String draggedItemId, String targetItemId) async {
     final categorias = List<Categoria>.from(state.categorias);
 
     final draggedIndex =
-        categorias.indexWhere((cat) => cat.id == draggedItemId);
+    categorias.indexWhere((cat) => cat.id == draggedItemId);
     final targetIndex = categorias.indexWhere((cat) => cat.id == targetItemId);
 
     if (draggedIndex == -1 || targetIndex == -1) return;
@@ -137,7 +148,7 @@ class GestaoController extends Notifier<GestaoState> {
       if (categoriasAtualizadas.isNotEmpty) {
         final novaCategoriaId = categoriasAtualizadas.first.id;
         final novosProdutos =
-            _repository.getProdutosPorCategoria(novaCategoriaId);
+        _repository.getProdutosPorCategoria(novaCategoriaId);
         state = state.copyWith(
           categorias: categoriasAtualizadas,
           categoriaSelecionadaId: novaCategoriaId,
@@ -216,7 +227,7 @@ class GestaoController extends Notifier<GestaoState> {
     } catch (e) {
       // Se a exclusão falhar, restaura a lista e mostra o erro
       final produtosRecarregados =
-          _repository.getProdutosPorCategoria(categoriaDoProdutoDeletado);
+      _repository.getProdutosPorCategoria(categoriaDoProdutoDeletado);
       state = state.copyWith(
         produtos: produtosRecarregados,
         errorMessage: 'Falha ao deletar produto.',
@@ -237,7 +248,7 @@ class GestaoController extends Notifier<GestaoState> {
 
         if (state.categoriaSelecionadaId == categoriaOriginalId) {
           final produtosRecarregados =
-              _repository.getProdutosPorCategoria(categoriaOriginalId);
+          _repository.getProdutosPorCategoria(categoriaOriginalId);
           state = state.copyWith(
             produtos: produtosRecarregados,
             clearUltimoProdutoDeletado: true,
@@ -288,7 +299,7 @@ class GestaoController extends Notifier<GestaoState> {
 
     for (var produto in todosProdutos) {
       final precoFormatado =
-          produto.preco.toStringAsFixed(2).replaceAll('.', ',');
+      produto.preco.toStringAsFixed(2).replaceAll('.', ',');
       buffer.writeln('${produto.nome} – R\$ $precoFormatado');
     }
 
@@ -317,6 +328,6 @@ class GestaoController extends Notifier<GestaoState> {
 }
 
 final gestaoControllerProvider =
-    NotifierProvider<GestaoController, GestaoState>(
-  () => GestaoController(),
+NotifierProvider<GestaoController, GestaoState>(
+      () => GestaoController(),
 );

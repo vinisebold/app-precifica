@@ -66,7 +66,7 @@ class ProductListView extends ConsumerWidget {
         );
       },
       separatorBuilder: (context, index) => const Divider(
-        height: 1,
+        height: 14,
         thickness: 1,
         indent: 16,
         endIndent: 16,

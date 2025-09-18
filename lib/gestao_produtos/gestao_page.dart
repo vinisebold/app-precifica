@@ -205,7 +205,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainer,
+      backgroundColor: colorScheme.surfaceContainerLow,
       appBar: AppBar(
         title: Text('Gestão de Preços', style: textTheme.titleLarge),
         backgroundColor: Colors.transparent,

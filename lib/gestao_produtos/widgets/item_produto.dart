@@ -100,13 +100,13 @@ class _ItemProdutoState extends ConsumerState<ItemProduto>
           decoration: InputDecoration(
             prefixText: 'R\$ ',
             filled: true,
-            fillColor: colorScheme.surfaceContainerHighest,
+            fillColor: colorScheme.surfaceContainerLow,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.0),
               borderSide: BorderSide.none,
             ),
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           ),
           keyboardType: TextInputType.number,
           inputFormatters: [

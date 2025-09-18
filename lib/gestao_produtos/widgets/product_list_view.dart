@@ -54,22 +54,25 @@ class ProductListView extends ConsumerWidget {
       );
     }
 
-    // A lista de produtos, agora em seu próprio widget
-    return ListView.separated(
-      itemCount: produtos.length,
-      itemBuilder: (context, index) {
-        final produto = produtos[index];
-        return ItemProduto(
-          produto: produto,
-          // Chama a função de callback quando o item é tocado duas vezes
-          onDoubleTap: () => onProdutoDoubleTap(produto),
-        );
-      },
-      separatorBuilder: (context, index) => const Divider(
-        height: 14,
-        thickness: 1,
-        indent: 16,
-        endIndent: 16,
+    // A lista de produtos, agora com padding vertical
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: ListView.separated(
+        itemCount: produtos.length,
+        itemBuilder: (context, index) {
+          final produto = produtos[index];
+          return ItemProduto(
+            produto: produto,
+            // Chama a função de callback quando o item é tocado duas vezes
+            onDoubleTap: () => onProdutoDoubleTap(produto),
+          );
+        },
+        separatorBuilder: (context, index) => const Divider(
+          height: 14,
+          thickness: 1,
+          indent: 16,
+          endIndent: 16,
+        ),
       ),
     );
   }

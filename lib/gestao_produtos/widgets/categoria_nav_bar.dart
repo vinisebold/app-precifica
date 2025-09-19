@@ -39,10 +39,10 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
       vsync: this,
       duration: const Duration(milliseconds: 250),
     )..addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _completeRevertAnimation();
-      }
-    });
+        if (status == AnimationStatus.completed) {
+          _completeRevertAnimation();
+        }
+      });
   }
 
   @override
@@ -175,8 +175,8 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                               }
 
                               final RenderBox? itemRenderBoxForTarget =
-                              keyOfRevertingItem.currentContext
-                                  ?.findRenderObject() as RenderBox?;
+                                  keyOfRevertingItem.currentContext
+                                      ?.findRenderObject() as RenderBox?;
 
                               if (itemRenderBoxForTarget == null ||
                                   !itemRenderBoxForTarget.attached) {
@@ -184,8 +184,8 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                                 return;
                               }
                               final Offset targetPosition =
-                              itemRenderBoxForTarget
-                                  .localToGlobal(Offset.zero);
+                                  itemRenderBoxForTarget
+                                      .localToGlobal(Offset.zero);
 
                               final Widget animationFeedbackWidget = Material(
                                 color: Colors.transparent,
@@ -207,7 +207,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
 
                               _revertAnimationController?.stop();
                               _revertAnimation = Tween<Offset>(
-                                  begin: dragOffset, end: targetPosition)
+                                      begin: dragOffset, end: targetPosition)
                                   .animate(CurvedAnimation(
                                 parent: _revertAnimationController!,
                                 curve: Curves.easeOutCubic,
@@ -216,18 +216,18 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                               _revertingOverlayEntry?.remove();
                               _revertingOverlayEntry =
                                   OverlayEntry(builder: (context) {
-                                    return AnimatedBuilder(
-                                      animation: _revertAnimation!,
-                                      builder: (context, child) {
-                                        return Positioned(
-                                          left: _revertAnimation!.value.dx,
-                                          top: _revertAnimation!.value.dy,
-                                          child: child!,
-                                        );
-                                      },
-                                      child: animationFeedbackWidget,
+                                return AnimatedBuilder(
+                                  animation: _revertAnimation!,
+                                  builder: (context, child) {
+                                    return Positioned(
+                                      left: _revertAnimation!.value.dx,
+                                      top: _revertAnimation!.value.dy,
+                                      child: child!,
                                     );
-                                  });
+                                  },
+                                  child: animationFeedbackWidget,
+                                );
+                              });
 
                               if (mounted) {
                                 Overlay.of(context)
@@ -242,7 +242,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                             color: Colors.transparent,
                             elevation: 2.0,
                             shadowColor:
-                            Colors.black.withAlpha((255 * 0.075).round()),
+                                Colors.black.withAlpha((255 * 0.075).round()),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(28.0),
                             ),
@@ -260,7 +260,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                               key: itemKey,
                               categoria: categoria,
                               isSelected:
-                              state.categoriaSelecionadaId == categoria.id,
+                                  state.categoriaSelecionadaId == categoria.id,
                               onTap: () {},
                               onDoubleTap: () {},
                             ),
@@ -273,7 +273,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                               key: itemKey,
                               categoria: categoria,
                               isSelected:
-                              state.categoriaSelecionadaId == categoria.id,
+                                  state.categoriaSelecionadaId == categoria.id,
                               onTap: () {
                                 if (!ref
                                     .read(gestaoControllerProvider)
@@ -296,7 +296,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                       );
                     },
                     onWillAcceptWithDetails: (details) =>
-                    details.data != categoria.id,
+                        details.data != categoria.id,
                     onAcceptWithDetails: (details) {
                       ref
                           .read(gestaoControllerProvider.notifier)
@@ -322,10 +322,10 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        colorScheme.surfaceContainer,
-                        colorScheme.surfaceContainer.withAlpha(0),
+                        colorScheme.surfaceContainerLow,
+                        colorScheme.surfaceContainerLow.withAlpha(0),
                       ],
-                      stops: const [0.0, 1.0],
+                      stops: const [0.2, 1.0],
                     ),
                   ),
                 ),
@@ -347,10 +347,10 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                       begin: Alignment.centerRight,
                       end: Alignment.centerLeft,
                       colors: [
-                        colorScheme.surfaceContainer,
-                        colorScheme.surfaceContainer.withAlpha(0),
+                        colorScheme.surfaceContainerLow,
+                        colorScheme.surfaceContainerLow.withAlpha(0),
                       ],
-                      stops: const [0.0, 1.0],
+                      stops: const [0.2, 1.0],
                     ),
                   ),
                 ),
@@ -380,17 +380,17 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
         onTap: !isVisible
             ? null
             : () {
-          final screenWidth = MediaQuery.of(context).size.width;
-          final scrollAmount = screenWidth * 0.7;
-          final newOffset = (isLeft
-              ? max(0.0, _scrollController.offset - scrollAmount)
-              : min(_scrollController.position.maxScrollExtent,
-              _scrollController.offset + scrollAmount))
-              .toDouble();
-          _scrollController.animateTo(newOffset,
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeInOut);
-        },
+                final screenWidth = MediaQuery.of(context).size.width;
+                final scrollAmount = screenWidth * 0.7;
+                final newOffset = (isLeft
+                        ? max(0.0, _scrollController.offset - scrollAmount)
+                        : min(_scrollController.position.maxScrollExtent,
+                            _scrollController.offset + scrollAmount))
+                    .toDouble();
+                _scrollController.animateTo(newOffset,
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeInOut);
+              },
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Icon(isLeft ? Icons.chevron_left : Icons.chevron_right,
@@ -460,7 +460,7 @@ class _CategoriaItemState extends State<_CategoriaItem> {
 
     // Cor de fundo do item: selecionado ou transparente
     final Color pillColor =
-    isSelected ? colorScheme.secondaryContainer : Colors.transparent;
+        isSelected ? colorScheme.secondaryContainer : Colors.transparent;
 
     // Cor do texto do item: uma para selecionado, outra para o estado normal
     final Color contentColor = isSelected

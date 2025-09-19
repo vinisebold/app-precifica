@@ -273,28 +273,31 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         ),
       ),
       bottomNavigationBar: SafeArea(
-        child: CategoriaNavBar(
-          onCategoriaDoubleTap: (categoria) {
-            _mostrarDialogoEditarNome(
-              context,
-              ref,
-              titulo: "Editar Categoria",
-              valorAtual: categoria.nome,
-              onSalvar: (novoNome) {
-                gestaoNotifier.atualizarNomeCategoria(categoria.id, novoNome);
-              },
-            );
-          },
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: CategoriaNavBar(
+            onCategoriaDoubleTap: (categoria) {
+              _mostrarDialogoEditarNome(
+                context,
+                ref,
+                titulo: "Editar Categoria",
+                valorAtual: categoria.nome,
+                onSalvar: (novoNome) {
+                  gestaoNotifier.atualizarNomeCategoria(categoria.id, novoNome);
+                },
+              );
+            },
+          ),
         ),
       ),
-      floatingActionButton: _StatefulFab(
+      floatingActionButton: FloatingActionButton(
         onPressed: gestaoState.categoriaSelecionadaId != null
             ? () {
                 HapticFeedback.lightImpact();
                 _mostrarDialogoNovoProduto(context, ref);
               }
             : null,
-        icon: const Icon(Icons.add_shopping_cart),
+        child: const Icon(Icons.add_shopping_cart),
       ),
     );
   }
@@ -453,79 +456,6 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             },
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StatefulFab extends StatefulWidget {
-  final VoidCallback? onPressed;
-  final Widget icon;
-
-  const _StatefulFab({this.onPressed, required this.icon});
-
-  @override
-  State<_StatefulFab> createState() => _StatefulFabState();
-}
-
-class _StatefulFabState extends State<_StatefulFab> {
-  bool _isHovered = false;
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isEnabled = widget.onPressed != null;
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-
-    final bool showSquircle = isEnabled && (_isHovered || _isPressed);
-    final ShapeBorder currentShape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(showSquircle ? 16.0 : 28.0),
-      side: BorderSide.none,
-    );
-
-    Color fabBackgroundColor;
-    Color fabForegroundColor;
-
-    if (isEnabled) {
-      fabBackgroundColor = colorScheme.primaryContainer;
-      fabForegroundColor = colorScheme.onPrimaryContainer;
-    } else {
-      fabBackgroundColor = colorScheme.onSurface.withAlpha(30);
-      fabForegroundColor = colorScheme.onSurface.withAlpha(97);
-    }
-
-    const double currentElevation = 0.0;
-
-    return MouseRegion(
-      onEnter: (_) {
-        if (mounted && isEnabled) setState(() => _isHovered = true);
-      },
-      onExit: (_) {
-        if (mounted && isEnabled) setState(() => _isHovered = false);
-      },
-      child: GestureDetector(
-        onTapDown: (_) {
-          if (mounted && isEnabled) setState(() => _isPressed = true);
-        },
-        onTapUp: (_) {
-          if (mounted && isEnabled) {
-            setState(() => _isPressed = false);
-          }
-        },
-        onTapCancel: () {
-          if (mounted && isEnabled) setState(() => _isPressed = false);
-        },
-        child: FloatingActionButton(
-          onPressed: widget.onPressed,
-          backgroundColor: fabBackgroundColor,
-          foregroundColor: fabForegroundColor,
-          shape: currentShape,
-          elevation: currentElevation,
-          hoverElevation: currentElevation,
-          focusElevation: currentElevation,
-          highlightElevation: currentElevation,
-          child: widget.icon,
-        ),
       ),
     );
   }

@@ -434,19 +434,16 @@ class _CategoriaItemState extends State<_CategoriaItem> {
     // Raio do canto, muda com o toque do utilizador
     final double cornerRadius = _isActivated ? 28.0 : 50.0;
 
-    // ----- MODIFICAÇÃO #1: Widget de feedback ao arrastar -----
     // Este é o visual do item enquanto ele está a ser arrastado pela tela.
     if (widget.isDragFeedback) {
       final pillColor = colorScheme.secondaryContainer;
       final contentColor = colorScheme.onSecondaryContainer;
       return Container(
-        // Ajuste no padding para o item não ficar muito alto sem o ícone.
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 14.0),
         decoration: BoxDecoration(
           color: pillColor,
-          borderRadius: BorderRadius.circular(18.0),
+          borderRadius: BorderRadius.circular(50.0), // Aumenta o raio
         ),
-        // O `Column` foi substituído por um `Center` para garantir o alinhamento.
         child: Center(
           child: Text(
             widget.categoria.nome,

@@ -183,14 +183,18 @@ class _ItemProdutoState extends ConsumerState<ItemProduto>
         },
         feedback: Material(
           elevation: 4.0,
+          borderRadius: BorderRadius.circular(12.0),
           child: Container(
             width: MediaQuery.of(context).size.width - 16,
-            color: colorScheme.surfaceContainerHighest,
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(12.0),
+            ),
             child: itemContent,
           ),
         ),
         childWhenDragging: Opacity(
-          opacity: 0.5,
+          opacity: 0.3,
           child: itemContent,
         ),
         child: GestureDetector(

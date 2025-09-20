@@ -1,13 +1,11 @@
-// lib/gestao_produtos/widgets/item_produto.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:organiza_ae/data/models/produto.dart';
-import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
-import 'package:organiza_ae/gestao_produtos/widgets/moeda_formatter.dart';
-import 'package:organiza_ae/gestao_produtos/widgets/input_cursor_final_controller.dart';
+import 'package:precifica/data/models/produto.dart';
+import 'package:precifica/gestao_produtos/gestao_controller.dart';
+import 'package:precifica/gestao_produtos/widgets/moeda_formatter.dart';
+import 'package:precifica/gestao_produtos/widgets/input_cursor_final_controller.dart';
 
 class ItemProduto extends ConsumerStatefulWidget {
   final Produto produto;
@@ -23,57 +21,81 @@ class ItemProduto extends ConsumerStatefulWidget {
   ConsumerState<ItemProduto> createState() => _ItemProdutoState();
 }
 
-class _ItemProdutoState extends ConsumerState<ItemProduto>
-    with TickerProviderStateMixin {
+class _ItemProdutoState extends ConsumerState<ItemProduto> {
   late final InputCursorFinalController _precoController;
   Timer? _debounce;
   OverlayEntry? _revertingOverlayEntry;
-  AnimationController? _revertAnimationController;
-  Animation<Offset>? _revertAnimation;
   bool _isReverting = false;
 
   @override
   void initState() {
     super.initState();
     final formatter = MoedaFormatter();
-
     _precoController = InputCursorFinalController(
       text: formatter
           .formatEditUpdate(
-            TextEditingValue.empty,
-            TextEditingValue(
-                text: (widget.produto.preco * 100).toInt().toString()),
-          )
+        TextEditingValue.empty,
+        TextEditingValue(
+            text: (widget.produto.preco * 100).toInt().toString()),
+      )
           .text,
     );
-    _revertAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 250),
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _completeRevertAnimation();
-        }
-      });
-  }
-
-  void _completeRevertAnimation() {
-    _revertingOverlayEntry?.remove();
-    _revertingOverlayEntry = null;
-    if (mounted) {
-      setState(() {
-        _isReverting = false;
-      });
-    }
-    ref.read(gestaoControllerProvider.notifier).setDraggingProduto(false);
   }
 
   @override
   void dispose() {
     _precoController.dispose();
     _debounce?.cancel();
-    _revertAnimationController?.dispose();
     _revertingOverlayEntry?.remove();
     super.dispose();
+  }
+
+  // MÉTODO DE ANIMAÇÃO OTIMIZADO
+  void _revertDragAnimation(Offset dragEndOffset, Widget feedback) {
+    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.attached) return;
+
+    final Offset targetPosition = renderBox.localToGlobal(Offset.zero);
+    final size = renderBox.size;
+    bool isAnimationStarted = false;
+
+    _revertingOverlayEntry?.remove();
+    _revertingOverlayEntry = null;
+
+    _revertingOverlayEntry = OverlayEntry(builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!isAnimationStarted) {
+              setState(() => isAnimationStarted = true);
+            }
+          });
+
+          return AnimatedPositioned(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            top: isAnimationStarted ? targetPosition.dy : dragEndOffset.dy,
+            left: isAnimationStarted ? targetPosition.dx : dragEndOffset.dx,
+            width: size.width,
+            height: size.height,
+            onEnd: () {
+              if (mounted) {
+                _revertingOverlayEntry?.remove();
+                _revertingOverlayEntry = null;
+                this.setState(() => _isReverting = false);
+                ref
+                    .read(gestaoControllerProvider.notifier)
+                    .setDraggingProduto(false);
+              }
+            },
+            child: feedback, // Reutiliza o widget de feedback
+          );
+        },
+      );
+    });
+
+    setState(() => _isReverting = true);
+    Overlay.of(context).insert(_revertingOverlayEntry!);
   }
 
   @override
@@ -81,7 +103,6 @@ class _ItemProdutoState extends ConsumerState<ItemProduto>
     final colorScheme = Theme.of(context).colorScheme;
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
-    // O conteúdo visual do nosso item
     final itemContent = ListTile(
       title: Text(widget.produto.nome),
       trailing: SizedBox(
@@ -91,7 +112,6 @@ class _ItemProdutoState extends ConsumerState<ItemProduto>
           textAlign: TextAlign.right,
           onChanged: (novoPrecoFormatado) {
             if (_debounce?.isActive ?? false) _debounce!.cancel();
-
             _debounce = Timer(const Duration(milliseconds: 500), () {
               gestaoNotifier.atualizarPreco(
                   widget.produto.id, novoPrecoFormatado);
@@ -106,7 +126,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto>
               borderSide: BorderSide.none,
             ),
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           ),
           keyboardType: TextInputType.number,
           inputFormatters: [
@@ -114,6 +134,20 @@ class _ItemProdutoState extends ConsumerState<ItemProduto>
             MoedaFormatter(),
           ],
         ),
+      ),
+    );
+
+    // OTIMIZAÇÃO: Construir o feedback uma única vez.
+    final feedbackWidget = Material(
+      elevation: 4.0,
+      borderRadius: BorderRadius.circular(12.0),
+      child: Container(
+        width: MediaQuery.of(context).size.width - 16,
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        child: itemContent,
       ),
     );
 
@@ -126,73 +160,14 @@ class _ItemProdutoState extends ConsumerState<ItemProduto>
           gestaoNotifier.setDraggingProduto(true);
         },
         onDragEnd: (details) {
-          if (!details.wasAccepted) {
+          if (!details.wasAccepted && !_isReverting) {
             gestaoNotifier.setDraggingProduto(false);
           }
         },
         onDraggableCanceled: (velocity, offset) {
-          setState(() {
-            _isReverting = true;
-          });
-
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) {
-              _completeRevertAnimation();
-              return;
-            }
-
-            final RenderBox? renderBox =
-                context.findRenderObject() as RenderBox?;
-            if (renderBox == null || !renderBox.attached) {
-              _completeRevertAnimation();
-              return;
-            }
-            final Offset targetPosition = renderBox.localToGlobal(Offset.zero);
-
-            _revertAnimation = Tween<Offset>(begin: offset, end: targetPosition)
-                .animate(CurvedAnimation(
-              parent: _revertAnimationController!,
-              curve: Curves.easeOutCubic,
-            ));
-
-            _revertingOverlayEntry?.remove();
-            _revertingOverlayEntry = OverlayEntry(builder: (context) {
-              return AnimatedBuilder(
-                animation: _revertAnimation!,
-                builder: (context, child) {
-                  return Positioned(
-                    left: _revertAnimation!.value.dx,
-                    top: _revertAnimation!.value.dy,
-                    child: child!,
-                  );
-                },
-                child: Material(
-                  elevation: 4.0,
-                  child: Container(
-                    width: MediaQuery.of(context).size.width - 16,
-                    color: colorScheme.surfaceContainerHighest,
-                    child: itemContent,
-                  ),
-                ),
-              );
-            });
-
-            Overlay.of(context).insert(_revertingOverlayEntry!);
-            _revertAnimationController!.forward(from: 0.0);
-          });
+          _revertDragAnimation(offset, feedbackWidget);
         },
-        feedback: Material(
-          elevation: 4.0,
-          borderRadius: BorderRadius.circular(12.0),
-          child: Container(
-            width: MediaQuery.of(context).size.width - 16,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            child: itemContent,
-          ),
-        ),
+        feedback: feedbackWidget,
         childWhenDragging: Opacity(
           opacity: 0.3,
           child: itemContent,

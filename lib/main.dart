@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:organiza_ae/app_widget.dart';
-import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
+import 'package:precifica/app_widget.dart';
+import 'package:precifica/gestao_produtos/gestao_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

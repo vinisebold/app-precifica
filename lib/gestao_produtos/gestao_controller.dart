@@ -1,11 +1,9 @@
-// lib/gestao_produtos/gestao_controller.dart
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:organiza_ae/data/models/categoria.dart';
-import 'package:organiza_ae/data/models/produto.dart';
-import 'package:organiza_ae/data/repositories/hive_gestao_repository.dart';
-import 'package:organiza_ae/gestao_produtos/domain/i_gestao_repository.dart';
+import 'package:precifica/data/models/categoria.dart';
+import 'package:precifica/data/models/produto.dart';
+import 'package:precifica/data/repositories/hive_gestao_repository.dart';
+import 'package:precifica/gestao_produtos/domain/i_gestao_repository.dart';
 
 class GestaoState {
   final List<Categoria> categorias;

@@ -3,8 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:organiza_ae/data/models/categoria.dart';
-import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
+import 'package:precifica/data/models/categoria.dart';
+import 'package:precifica/gestao_produtos/gestao_controller.dart';
 
 class CategoriaNavBar extends ConsumerStatefulWidget {
   final Function(Categoria) onCategoriaDoubleTap;
@@ -15,15 +15,12 @@ class CategoriaNavBar extends ConsumerStatefulWidget {
   ConsumerState<CategoriaNavBar> createState() => _CategoriaNavBarState();
 }
 
-class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
-    with TickerProviderStateMixin {
+class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
   final ScrollController _scrollController = ScrollController();
   bool _showLeftArrow = false;
   bool _showRightArrow = false;
 
   OverlayEntry? _revertingOverlayEntry;
-  AnimationController? _revertAnimationController;
-  Animation<Offset>? _revertAnimation;
   Categoria? _revertingCategoria;
 
   final Map<String, GlobalKey> _itemKeys = {};
@@ -35,21 +32,12 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
     _scrollController.addListener(_updateArrowVisibility);
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _updateArrowVisibility());
-    _revertAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 250),
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _completeRevertAnimation();
-        }
-      });
   }
 
   @override
   void dispose() {
     _scrollController.removeListener(_updateArrowVisibility);
     _scrollController.dispose();
-    _revertAnimationController?.dispose();
     _revertingOverlayEntry?.remove();
     _revertingOverlayEntry = null;
     _scrollDebounce?.cancel();
@@ -75,15 +63,85 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
     });
   }
 
-  void _completeRevertAnimation() {
+  // MÉTODO DE ANIMAÇÃO OTIMIZADO
+  void _revertDragAnimation(
+      Categoria categoria, GlobalKey itemKey, Offset dragEndOffset) {
+    final RenderBox? itemRenderBox =
+    itemKey.currentContext?.findRenderObject() as RenderBox?;
+    if (itemRenderBox == null || !itemRenderBox.attached) return;
+
+    final Offset targetPosition = itemRenderBox.localToGlobal(Offset.zero);
+    final size = itemRenderBox.size;
+
+    // Posições inicial e final para o AnimatedPositioned
+    final dragEndTop = dragEndOffset.dy;
+    final dragEndLeft = dragEndOffset.dx;
+    final targetTop = targetPosition.dy;
+    final targetLeft = targetPosition.dx;
+
+    // Variáveis para controlar o estado da animação
+    bool isAnimationStarted = false;
+
+    // Remove qualquer overlay antigo
     _revertingOverlayEntry?.remove();
     _revertingOverlayEntry = null;
-    if (mounted) {
-      setState(() {
-        _revertingCategoria = null;
-      });
-    }
-    ref.read(gestaoControllerProvider.notifier).setReordering(false);
+
+    _revertingOverlayEntry = OverlayEntry(builder: (context) {
+      // Usamos um StatefulBuilder para gerir o estado da posição
+      return StatefulBuilder(
+        builder: (context, setState) {
+          // Inicia a animação no primeiro frame
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!isAnimationStarted) {
+              setState(() => isAnimationStarted = true);
+            }
+          });
+
+          return AnimatedPositioned(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            top: isAnimationStarted ? targetTop : dragEndTop,
+            left: isAnimationStarted ? targetLeft : dragEndLeft,
+            width: size.width,
+            height: size.height,
+            onEnd: () {
+              // Limpa o overlay e o estado quando a animação termina
+              if (mounted && _revertingCategoria == categoria) {
+                _revertingOverlayEntry?.remove();
+                _revertingOverlayEntry = null;
+                this.setState(() {
+                  _revertingCategoria = null;
+                });
+                ref
+                    .read(gestaoControllerProvider.notifier)
+                    .setReordering(false);
+              }
+            },
+            child: Material(
+              color: Colors.transparent,
+              elevation: 2.0,
+              shadowColor: Colors.black.withAlpha((255 * 0.075).round()),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28.0),
+              ),
+              child: _CategoriaItem(
+                categoria: categoria,
+                isSelected: true,
+                onTap: () {},
+                onDoubleTap: () {},
+                isDragFeedback: true,
+              ),
+            ),
+          );
+        },
+      );
+    });
+
+    // Mostra o overlay e esconde o item original
+    setState(() {
+      _revertingCategoria = categoria;
+    });
+    Overlay.of(context).insert(_revertingOverlayEntry!);
   }
 
   @override
@@ -131,118 +189,27 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                           data: categoria.id,
                           onDragStarted: () {
                             HapticFeedback.lightImpact();
-                            _revertingOverlayEntry?.remove();
-                            _revertingOverlayEntry = null;
-                            _revertAnimationController?.stop();
                             ref
                                 .read(gestaoControllerProvider.notifier)
                                 .setReordering(true);
-                            if (mounted) {
-                              setState(() {
-                                _revertingCategoria = null;
-                              });
-                            }
                           },
                           onDragEnd: (details) {
-                            if (details.wasAccepted) {
-                              HapticFeedback.lightImpact();
+                            if (!details.wasAccepted) {
                               ref
                                   .read(gestaoControllerProvider.notifier)
                                   .setReordering(false);
                             }
                           },
+                          // FUNÇÃO DE CANCELAMENTO REINTRODUZIDA E OTIMIZADA
                           onDraggableCanceled: (velocity, dragOffset) {
-                            final Categoria categoriaToRevert = categoria;
-                            final GlobalKey keyOfRevertingItem = itemKey;
-
-                            if (!mounted) {
-                              _completeRevertAnimation();
-                              return;
-                            }
-
-                            setState(() {
-                              _revertingCategoria = categoriaToRevert;
-                            });
-
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (!mounted ||
-                                  _revertingCategoria != categoriaToRevert) {
-                                if (_revertingCategoria == null ||
-                                    _revertingCategoria == categoriaToRevert) {
-                                  _completeRevertAnimation();
-                                }
-                                return;
-                              }
-
-                              final RenderBox? itemRenderBoxForTarget =
-                                  keyOfRevertingItem.currentContext
-                                      ?.findRenderObject() as RenderBox?;
-
-                              if (itemRenderBoxForTarget == null ||
-                                  !itemRenderBoxForTarget.attached) {
-                                _completeRevertAnimation();
-                                return;
-                              }
-                              final Offset targetPosition =
-                                  itemRenderBoxForTarget
-                                      .localToGlobal(Offset.zero);
-
-                              final Widget animationFeedbackWidget = Material(
-                                color: Colors.transparent,
-                                shadowColor: Colors.black
-                                    .withAlpha((255 * 0.075).round()),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(28.0)),
-                                child: Transform.scale(
-                                  scale: 1.0,
-                                  child: _CategoriaItem(
-                                    categoria: categoriaToRevert,
-                                    isSelected: true,
-                                    onTap: () {},
-                                    onDoubleTap: () {},
-                                    isDragFeedback: true,
-                                  ),
-                                ),
-                              );
-
-                              _revertAnimationController?.stop();
-                              _revertAnimation = Tween<Offset>(
-                                      begin: dragOffset, end: targetPosition)
-                                  .animate(CurvedAnimation(
-                                parent: _revertAnimationController!,
-                                curve: Curves.easeOutCubic,
-                              ));
-
-                              _revertingOverlayEntry?.remove();
-                              _revertingOverlayEntry =
-                                  OverlayEntry(builder: (context) {
-                                return AnimatedBuilder(
-                                  animation: _revertAnimation!,
-                                  builder: (context, child) {
-                                    return Positioned(
-                                      left: _revertAnimation!.value.dx,
-                                      top: _revertAnimation!.value.dy,
-                                      child: child!,
-                                    );
-                                  },
-                                  child: animationFeedbackWidget,
-                                );
-                              });
-
-                              if (mounted) {
-                                Overlay.of(context)
-                                    .insert(_revertingOverlayEntry!);
-                                _revertAnimationController!.forward(from: 0.0);
-                              } else {
-                                _completeRevertAnimation();
-                              }
-                            });
+                            _revertDragAnimation(
+                                categoria, itemKey, dragOffset);
                           },
                           feedback: Material(
                             color: Colors.transparent,
                             elevation: 2.0,
                             shadowColor:
-                                Colors.black.withAlpha((255 * 0.075).round()),
+                            Colors.black.withAlpha((255 * 0.075).round()),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(28.0),
                             ),
@@ -260,7 +227,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                               key: itemKey,
                               categoria: categoria,
                               isSelected:
-                                  state.categoriaSelecionadaId == categoria.id,
+                              state.categoriaSelecionadaId == categoria.id,
                               onTap: () {},
                               onDoubleTap: () {},
                             ),
@@ -273,7 +240,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                               key: itemKey,
                               categoria: categoria,
                               isSelected:
-                                  state.categoriaSelecionadaId == categoria.id,
+                              state.categoriaSelecionadaId == categoria.id,
                               onTap: () {
                                 if (!ref
                                     .read(gestaoControllerProvider)
@@ -296,7 +263,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
                       );
                     },
                     onWillAcceptWithDetails: (details) =>
-                        details.data != categoria.id,
+                    details.data != categoria.id,
                     onAcceptWithDetails: (details) {
                       ref
                           .read(gestaoControllerProvider.notifier)
@@ -380,17 +347,17 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar>
         onTap: !isVisible
             ? null
             : () {
-                final screenWidth = MediaQuery.of(context).size.width;
-                final scrollAmount = screenWidth * 0.7;
-                final newOffset = (isLeft
-                        ? max(0.0, _scrollController.offset - scrollAmount)
-                        : min(_scrollController.position.maxScrollExtent,
-                            _scrollController.offset + scrollAmount))
-                    .toDouble();
-                _scrollController.animateTo(newOffset,
-                    duration: const Duration(milliseconds: 400),
-                    curve: Curves.easeInOut);
-              },
+          final screenWidth = MediaQuery.of(context).size.width;
+          final scrollAmount = screenWidth * 0.7;
+          final newOffset = (isLeft
+              ? max(0.0, _scrollController.offset - scrollAmount)
+              : min(_scrollController.position.maxScrollExtent,
+              _scrollController.offset + scrollAmount))
+              .toDouble();
+          _scrollController.animateTo(newOffset,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut);
+        },
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Icon(isLeft ? Icons.chevron_left : Icons.chevron_right,
@@ -431,10 +398,8 @@ class _CategoriaItemState extends State<_CategoriaItem> {
     final isSelected = widget.isSelected;
     const duration = Duration(milliseconds: 200);
 
-    // Raio do canto, muda com o toque do utilizador
     final double cornerRadius = _isActivated ? 28.0 : 50.0;
 
-    // Este é o visual do item enquanto ele está a ser arrastado pela tela.
     if (widget.isDragFeedback) {
       final pillColor = colorScheme.secondaryContainer;
       final contentColor = colorScheme.onSecondaryContainer;
@@ -442,7 +407,7 @@ class _CategoriaItemState extends State<_CategoriaItem> {
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 14.0),
         decoration: BoxDecoration(
           color: pillColor,
-          borderRadius: BorderRadius.circular(50.0), // Aumenta o raio
+          borderRadius: BorderRadius.circular(50.0),
         ),
         child: Center(
           child: Text(
@@ -455,16 +420,11 @@ class _CategoriaItemState extends State<_CategoriaItem> {
       );
     }
 
-    // Cor de fundo do item: selecionado ou transparente
     final Color pillColor =
-        isSelected ? colorScheme.secondaryContainer : Colors.transparent;
-
-    // Cor do texto do item: uma para selecionado, outra para o estado normal
+    isSelected ? colorScheme.secondaryContainer : Colors.transparent;
     final Color contentColor = isSelected
         ? colorScheme.onSecondaryContainer
         : colorScheme.onSurfaceVariant;
-
-    // O padding horizontal aumenta quando o item é selecionado
     final double horizontalPadding = isSelected ? 24.0 : 16.0;
 
     return Padding(
@@ -478,14 +438,13 @@ class _CategoriaItemState extends State<_CategoriaItem> {
         child: AnimatedContainer(
           duration: duration,
           curve: Curves.easeInOut,
-          // Ajuste no padding vertical para compensar a ausência do ícone.
           padding: EdgeInsets.symmetric(
               horizontal: horizontalPadding, vertical: 12.0),
           decoration: BoxDecoration(
             color: pillColor,
             border: Border.all(
               color: _isActivated && !isSelected
-                  ? colorScheme.onSurface.withValues(alpha: 0.12)
+                  ? colorScheme.onSurface.withOpacity(0.12)
                   : Colors.transparent,
               width: 1,
             ),

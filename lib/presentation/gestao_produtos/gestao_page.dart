@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:precifica/data/models/produto.dart';
-import 'package:precifica/gestao_produtos/gestao_controller.dart';
-import 'package:precifica/gestao_produtos/widgets/categoria_nav_bar.dart';
-import 'package:precifica/gestao_produtos/widgets/product_list_view.dart';
 import 'package:share_plus/share_plus.dart';
+
+// Importando as entidades do domínio
+import '../../domain/entities/produto.dart';
+
+// Importando o controller e o state da camada de apresentação
+import 'gestao_controller.dart';
+import 'gestao_state.dart';
+
+// Importando os widgets da camada de apresentação
+import 'widgets/categoria_nav_bar.dart';
+import 'widgets/product_list_view.dart';
 
 class GestaoPage extends ConsumerStatefulWidget {
   const GestaoPage({super.key});
@@ -16,10 +23,12 @@ class GestaoPage extends ConsumerStatefulWidget {
 
 class _GestaoPageState extends ConsumerState<GestaoPage> {
   late PageController _pageController;
+  OverlayEntry? _currentToastOverlayEntry; // Guarda a referência do toast atual
 
   @override
   void initState() {
     super.initState();
+    // Acessa o estado inicial para configurar o PageController
     final selectedId =
         ref.read(gestaoControllerProvider).categoriaSelecionadaId;
     final categorias = ref.read(gestaoControllerProvider).categorias;
@@ -33,60 +42,63 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   @override
   void dispose() {
     _pageController.dispose();
+    _currentToastOverlayEntry
+        ?.remove(); // Garante a remoção do toast ao sair da página
     super.dispose();
   }
 
-  void _showCustomToast(
+  OverlayEntry? _showCustomToast(
     BuildContext context,
     String message, {
     Color? backgroundColor,
     Color? textColor,
     Widget? action,
+    Duration duration = const Duration(seconds: 5),
   }) {
+    _currentToastOverlayEntry?.remove();
+    _currentToastOverlayEntry = null;
+
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
 
     overlayEntry = OverlayEntry(
       builder: (context) {
         final screenWidth = MediaQuery.of(context).size.width;
+        final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
         return Positioned(
-          bottom: 96,
+          bottom: bottomPadding > 0 ? bottomPadding + 16 : 96,
           left: 16,
+          width: screenWidth * 0.75, // Ocupa 75% da largura da tela
           child: Material(
             color: Colors.transparent,
             child: Container(
-              width: screenWidth * 0.72,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
               decoration: BoxDecoration(
-                color: backgroundColor ??
-                    Theme.of(context).colorScheme.inverseSurface,
-                borderRadius: BorderRadius.circular(50),
+                color: Theme.of(context).colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withAlpha(10),
+                    color: Colors.black.withOpacity(0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
                       message,
                       style: TextStyle(
-                        color: textColor ??
-                            Theme.of(context).colorScheme.onInverseSurface,
+                        color:
+                            Theme.of(context).colorScheme.onSecondaryContainer,
                         fontSize: 14,
                       ),
                     ),
                   ),
-                  if (action != null) ...[
-                    const SizedBox(width: 12),
-                    action,
-                  ],
+                  if (action != null) action,
                 ],
               ),
             ),
@@ -96,10 +108,24 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     );
 
     overlay.insert(overlayEntry);
+    _currentToastOverlayEntry = overlayEntry;
 
-    Future.delayed(const Duration(seconds: 5), () {
-      overlayEntry.remove();
-    });
+    if (duration != Duration.zero) {
+      Future.delayed(duration, () {
+        if (overlayEntry == _currentToastOverlayEntry && overlayEntry.mounted) {
+          overlayEntry.remove();
+          if (_currentToastOverlayEntry == overlayEntry) {
+            _currentToastOverlayEntry = null;
+          }
+        }
+      });
+    }
+    return overlayEntry;
+  }
+
+  void _removeCurrentToast() {
+    _currentToastOverlayEntry?.remove();
+    _currentToastOverlayEntry = null;
   }
 
   void _mostrarDialogoEditarNome(
@@ -167,17 +193,18 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           _showCustomToast(
             context,
             '${produtoDeletado.nome} deletado',
-            backgroundColor: colorScheme.secondary,
-            textColor: colorScheme.onSecondary,
+            backgroundColor: colorScheme.inverseSurface,
+            textColor: colorScheme.onInverseSurface,
             action: TextButton(
               onPressed: () {
                 HapticFeedback.lightImpact();
+                _removeCurrentToast();
                 ref
                     .read(gestaoControllerProvider.notifier)
                     .desfazerDeletarProduto();
               },
               style: TextButton.styleFrom(
-                foregroundColor: colorScheme.onSecondary,
+                foregroundColor: colorScheme.primary,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
@@ -191,11 +218,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           final newIndex = newState.categorias
               .indexWhere((c) => c.id == newState.categoriaSelecionadaId);
           if (newIndex != -1 && _pageController.page?.round() != newIndex) {
-            _pageController.animateToPage(
-              newIndex,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
+            _pageController.jumpToPage(newIndex);
           }
         }
       },
@@ -341,6 +364,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           ref
               .read(gestaoControllerProvider.notifier)
               .deletarProduto(details.data.id);
+          ref.read(gestaoControllerProvider.notifier).setDraggingProduto(false);
         },
       ),
     );
@@ -381,9 +405,9 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         },
         onAcceptWithDetails: (details) {
           HapticFeedback.lightImpact();
-          ref
-              .read(gestaoControllerProvider.notifier)
-              .deletarCategoria(details.data);
+          final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
+          gestaoNotifier.deletarCategoria(details.data);
+          gestaoNotifier.setReordering(false);
         },
       ),
     );

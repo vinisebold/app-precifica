@@ -230,7 +230,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerLow,
       appBar: AppBar(
-        title: Text('Gestão de Preços', style: textTheme.titleLarge),
+        title: Text('Precificador', style: textTheme.titleLarge),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [

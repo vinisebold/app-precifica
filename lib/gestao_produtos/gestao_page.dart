@@ -37,12 +37,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   }
 
   void _showCustomToast(
-      BuildContext context,
-      String message, {
-        Color? backgroundColor,
-        Color? textColor,
-        Widget? action,
-      }) {
+    BuildContext context,
+    String message, {
+    Color? backgroundColor,
+    Color? textColor,
+    Widget? action,
+  }) {
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
 
@@ -103,12 +103,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   }
 
   void _mostrarDialogoEditarNome(
-      BuildContext context,
-      WidgetRef ref, {
-        required String titulo,
-        required String valorAtual,
-        required Function(String) onSalvar,
-      }) {
+    BuildContext context,
+    WidgetRef ref, {
+    required String titulo,
+    required String valorAtual,
+    required Function(String) onSalvar,
+  }) {
     final controller = TextEditingController(text: valorAtual);
     final textTheme = Theme.of(context).textTheme;
 
@@ -148,7 +148,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
     ref.listen<GestaoState>(
       gestaoControllerProvider,
-          (previousState, newState) {
+      (previousState, newState) {
         if (newState.errorMessage != null &&
             newState.errorMessage != previousState?.errorMessage) {
           _showCustomToast(
@@ -179,7 +179,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               style: TextButton.styleFrom(
                 foregroundColor: colorScheme.onSecondary,
                 padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
               child: const Text('DESFAZER'),
             ),
@@ -238,7 +238,6 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           borderRadius: BorderRadius.circular(16.0),
           child: Stack(
             children: [
-              // OTIMIZAÇÃO APLICADA AQUI
               RepaintBoundary(
                 child: PageView.builder(
                   controller: _pageController,
@@ -295,9 +294,9 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: gestaoState.categoriaSelecionadaId != null
             ? () {
-          HapticFeedback.lightImpact();
-          _mostrarDialogoNovoProduto(context, ref);
-        }
+                HapticFeedback.lightImpact();
+                _mostrarDialogoNovoProduto(context, ref);
+              }
             : null,
         child: const Icon(Icons.add_shopping_cart),
       ),
@@ -322,7 +321,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                   ? colorScheme.errorContainer.withAlpha(230)
                   : colorScheme.errorContainer.withAlpha(180),
               borderRadius:
-              const BorderRadius.vertical(bottom: Radius.circular(60)),
+                  const BorderRadius.vertical(bottom: Radius.circular(60)),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -365,7 +364,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                   ? colorScheme.errorContainer.withAlpha(230)
                   : colorScheme.errorContainer.withAlpha(180),
               borderRadius:
-              const BorderRadius.vertical(bottom: Radius.circular(60)),
+                  const BorderRadius.vertical(bottom: Radius.circular(60)),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

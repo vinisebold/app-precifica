@@ -17,16 +17,14 @@ class ProductListView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Observa o estado para reconstruir a lista quando os produtos mudarem
-    final gestaoState = ref.watch(gestaoControllerProvider);
-    // Filtra os produtos com base no categoriaId recebido
-    final produtos = gestaoState.produtos
-        .where((p) => p.categoriaId == categoriaId)
-        .toList();
+    final produtos = ref.watch(gestaoControllerProvider.select(
+            (state) => state.produtos.where((p) => p.categoriaId == categoriaId).toList()));
+
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
-    // Mensagem para quando não há categorias criadas
+    final gestaoState = ref.watch(gestaoControllerProvider);
+
     if (gestaoState.categorias.isEmpty) {
       return Center(
         child: Padding(
@@ -40,7 +38,6 @@ class ProductListView extends ConsumerWidget {
       );
     }
 
-    // Mensagem para quando uma categoria está vazia
     if (produtos.isEmpty) {
       return Center(
         child: Padding(
@@ -54,7 +51,6 @@ class ProductListView extends ConsumerWidget {
       );
     }
 
-    // A lista de produtos, agora com padding vertical
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: ListView.separated(
@@ -63,7 +59,6 @@ class ProductListView extends ConsumerWidget {
           final produto = produtos[index];
           return ItemProduto(
             produto: produto,
-            // Chama a função de callback quando o item é tocado duas vezes
             onDoubleTap: () => onProdutoDoubleTap(produto),
           );
         },

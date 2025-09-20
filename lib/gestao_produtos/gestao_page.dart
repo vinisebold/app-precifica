@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:organiza_ae/data/models/produto.dart';
-import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
-import 'package:organiza_ae/gestao_produtos/widgets/categoria_nav_bar.dart';
-import 'package:organiza_ae/gestao_produtos/widgets/product_list_view.dart';
+import 'package:precifica/data/models/produto.dart';
+import 'package:precifica/gestao_produtos/gestao_controller.dart';
+import 'package:precifica/gestao_produtos/widgets/categoria_nav_bar.dart';
+import 'package:precifica/gestao_produtos/widgets/product_list_view.dart';
 import 'package:share_plus/share_plus.dart';
 
 class GestaoPage extends ConsumerStatefulWidget {
@@ -37,12 +37,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   }
 
   void _showCustomToast(
-    BuildContext context,
-    String message, {
-    Color? backgroundColor,
-    Color? textColor,
-    Widget? action,
-  }) {
+      BuildContext context,
+      String message, {
+        Color? backgroundColor,
+        Color? textColor,
+        Widget? action,
+      }) {
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
 
@@ -103,12 +103,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   }
 
   void _mostrarDialogoEditarNome(
-    BuildContext context,
-    WidgetRef ref, {
-    required String titulo,
-    required String valorAtual,
-    required Function(String) onSalvar,
-  }) {
+      BuildContext context,
+      WidgetRef ref, {
+        required String titulo,
+        required String valorAtual,
+        required Function(String) onSalvar,
+      }) {
     final controller = TextEditingController(text: valorAtual);
     final textTheme = Theme.of(context).textTheme;
 
@@ -148,7 +148,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
     ref.listen<GestaoState>(
       gestaoControllerProvider,
-      (previousState, newState) {
+          (previousState, newState) {
         if (newState.errorMessage != null &&
             newState.errorMessage != previousState?.errorMessage) {
           _showCustomToast(
@@ -179,7 +179,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               style: TextButton.styleFrom(
                 foregroundColor: colorScheme.onSecondary,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
               child: const Text('DESFAZER'),
             ),
@@ -238,30 +238,32 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           borderRadius: BorderRadius.circular(16.0),
           child: Stack(
             children: [
-              PageView.builder(
-                controller: _pageController,
-                itemCount: gestaoState.categorias.length,
-                onPageChanged: (index) {
-                  gestaoNotifier.selecionarCategoriaPorIndice(index);
-                },
-                itemBuilder: (context, index) {
-                  return ProductListView(
-                    // Passa o ID da categoria para o ProductListView
-                    categoriaId: gestaoState.categorias[index].id,
-                    onProdutoDoubleTap: (produto) {
-                      _mostrarDialogoEditarNome(
-                        context,
-                        ref,
-                        titulo: "Editar Produto",
-                        valorAtual: produto.nome,
-                        onSalvar: (novoNome) {
-                          gestaoNotifier.atualizarNomeProduto(
-                              produto.id, novoNome);
-                        },
-                      );
-                    },
-                  );
-                },
+              // OTIMIZAÇÃO APLICADA AQUI
+              RepaintBoundary(
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: gestaoState.categorias.length,
+                  onPageChanged: (index) {
+                    gestaoNotifier.selecionarCategoriaPorIndice(index);
+                  },
+                  itemBuilder: (context, index) {
+                    return ProductListView(
+                      categoriaId: gestaoState.categorias[index].id,
+                      onProdutoDoubleTap: (produto) {
+                        _mostrarDialogoEditarNome(
+                          context,
+                          ref,
+                          titulo: "Editar Produto",
+                          valorAtual: produto.nome,
+                          onSalvar: (novoNome) {
+                            gestaoNotifier.atualizarNomeProduto(
+                                produto.id, novoNome);
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
               if (gestaoState.isReordering) _buildDeleteArea(context, ref),
               if (gestaoState.isDraggingProduto)
@@ -293,9 +295,9 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: gestaoState.categoriaSelecionadaId != null
             ? () {
-                HapticFeedback.lightImpact();
-                _mostrarDialogoNovoProduto(context, ref);
-              }
+          HapticFeedback.lightImpact();
+          _mostrarDialogoNovoProduto(context, ref);
+        }
             : null,
         child: const Icon(Icons.add_shopping_cart),
       ),
@@ -306,7 +308,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return Positioned(
-      top: 0, // A área de exclusão para produtos ficará no topo
+      top: 0,
       left: 0,
       right: 0,
       child: DragTarget<Produto>(
@@ -320,7 +322,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                   ? colorScheme.errorContainer.withAlpha(230)
                   : colorScheme.errorContainer.withAlpha(180),
               borderRadius:
-                  const BorderRadius.vertical(bottom: Radius.circular(60)),
+              const BorderRadius.vertical(bottom: Radius.circular(60)),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -363,7 +365,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                   ? colorScheme.errorContainer.withAlpha(230)
                   : colorScheme.errorContainer.withAlpha(180),
               borderRadius:
-                  const BorderRadius.vertical(bottom: Radius.circular(60)),
+              const BorderRadius.vertical(bottom: Radius.circular(60)),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

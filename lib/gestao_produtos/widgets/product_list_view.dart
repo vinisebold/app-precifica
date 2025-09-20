@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:organiza_ae/data/models/produto.dart';
-import 'package:organiza_ae/gestao_produtos/gestao_controller.dart';
-import 'package:organiza_ae/gestao_produtos/widgets/item_produto.dart';
+import 'package:precifica/data/models/produto.dart';
+import 'package:precifica/gestao_produtos/gestao_controller.dart';
+import 'package:precifica/gestao_produtos/widgets/item_produto.dart';
 
 class ProductListView extends ConsumerWidget {
   /// Callback para notificar a página pai que um produto foi tocado duas vezes.

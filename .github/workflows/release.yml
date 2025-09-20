@@ -50,7 +50,7 @@ jobs:
           KEY_STORE_FILE: ${{ steps.decode_keystore.outputs.filePath }}
 
       - name: Rename APK
-        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/organiza-ae-${{ github.ref_name }}.apk
+        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/precifica-${{ github.ref_name }}.apk
 
       - name: Create Release
         uses: softprops/action-gh-release@v1

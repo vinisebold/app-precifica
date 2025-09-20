@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:organiza_ae/gestao_produtos/gestao_page.dart';
+import 'package:precifica/gestao_produtos/gestao_page.dart';
+
 class AppWidget extends StatelessWidget {
   const AppWidget({super.key});
 
@@ -31,7 +32,7 @@ class AppWidget extends StatelessWidget {
 
     return ProviderScope(
       child: MaterialApp(
-        title: 'OrganizaAí',
+        title: 'Precifica',
         debugShowCheckedModeBanner: false,
 
         // Tema para o modo claro

@@ -1,5 +1,5 @@
-name: organiza_ae
-description: "A flutter project."
+name: precifica
+description: "Um aplicativo que ajuda na precificação de produtos."
 publish_to: 'none'
 version: 1.0.0+1
 

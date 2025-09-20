@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:precifica/data/models/produto.dart';
-import 'package:precifica/gestao_produtos/gestao_controller.dart';
-import 'package:precifica/gestao_produtos/widgets/item_produto.dart';
+
+import '../../../domain/entities/produto.dart';
+import '../gestao_controller.dart';
+import 'item_produto.dart';
 
 class ProductListView extends ConsumerWidget {
-  /// Callback para notificar a página pai que um produto foi tocado duas vezes.
   final Function(Produto) onProdutoDoubleTap;
   final String categoriaId;
 
@@ -18,13 +18,14 @@ class ProductListView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final produtos = ref.watch(gestaoControllerProvider.select(
-            (state) => state.produtos.where((p) => p.categoriaId == categoriaId).toList()));
+            (state) => state.produtos));
 
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
     final gestaoState = ref.watch(gestaoControllerProvider);
 
+    // As mensagens para o usuário em caso de listas vazias não mudam.
     if (gestaoState.categorias.isEmpty) {
       return Center(
         child: Padding(
@@ -51,6 +52,7 @@ class ProductListView extends ConsumerWidget {
       );
     }
 
+    // A construção da ListView permanece idêntica.
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: ListView.separated(

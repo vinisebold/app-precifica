@@ -2,10 +2,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:precifica/data/models/produto.dart';
-import 'package:precifica/gestao_produtos/gestao_controller.dart';
-import 'package:precifica/gestao_produtos/widgets/moeda_formatter.dart';
-import 'package:precifica/gestao_produtos/widgets/input_cursor_final_controller.dart';
+
+// Importa a entidade Produto da camada de domínio
+import '../../../domain/entities/produto.dart';
+
+// Importa o controller da camada de apresentação
+import '../gestao_controller.dart';
+
+// Importa os formatters da nova pasta de utilitários
+import '../../../app/core/utils/currency_formatter.dart';
+import '../../../app/core/utils/final_cursor_text_input_formatter.dart';
+
 
 class ItemProduto extends ConsumerStatefulWidget {
   final Produto produto;
@@ -30,6 +37,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
   @override
   void initState() {
     super.initState();
+    // A lógica de inicialização do controller do TextField permanece a mesma
     final formatter = MoedaFormatter();
     _precoController = InputCursorFinalController(
       text: formatter
@@ -50,7 +58,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     super.dispose();
   }
 
-  // MÉTODO DE ANIMAÇÃO OTIMIZADO
+  // A lógica de animação não precisa de alterações
   void _revertDragAnimation(Offset dragEndOffset, Widget feedback) {
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null || !renderBox.attached) return;
@@ -88,7 +96,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
                     .setDraggingProduto(false);
               }
             },
-            child: feedback, // Reutiliza o widget de feedback
+            child: feedback,
           );
         },
       );
@@ -103,6 +111,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     final colorScheme = Theme.of(context).colorScheme;
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
+    // A construção do conteúdo do item (ListTile) permanece a mesma
     final itemContent = ListTile(
       title: Text(widget.produto.nome),
       trailing: SizedBox(
@@ -137,7 +146,6 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
       ),
     );
 
-    // OTIMIZAÇÃO: Construir o feedback uma única vez.
     final feedbackWidget = Material(
       elevation: 4.0,
       borderRadius: BorderRadius.circular(12.0),
@@ -151,6 +159,8 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
       ),
     );
 
+    // A lógica do LongPressDraggable também permanece, pois o tipo `Produto`
+    // agora vem da entidade do domínio, que é o que o controller espera.
     return Opacity(
       opacity: _isReverting ? 0.0 : 1.0,
       child: LongPressDraggable<Produto>(

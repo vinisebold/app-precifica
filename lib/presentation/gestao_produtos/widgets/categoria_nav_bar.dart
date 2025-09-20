@@ -3,8 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:precifica/data/models/categoria.dart';
-import 'package:precifica/gestao_produtos/gestao_controller.dart';
+
+// Importa a entidade Categoria da camada de domínio
+import '../../../domain/entities/categoria.dart';
+
+// Importa o controller da camada de apresentação
+import '../gestao_controller.dart';
 
 class CategoriaNavBar extends ConsumerStatefulWidget {
   final Function(Categoria) onCategoriaDoubleTap;
@@ -30,8 +34,18 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
   void initState() {
     super.initState();
     _scrollController.addListener(_updateArrowVisibility);
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _updateArrowVisibility());
+
+    // Garante que a categoria inicial (se houver) esteja visível com um pulo
+    // e atualiza a visibilidade das setas após o primeiro frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _updateArrowVisibility();
+        final initialSelectedId = ref.read(gestaoControllerProvider).categoriaSelecionadaId;
+        if (initialSelectedId != null) {
+          _ensureCategoryIsVisible(initialSelectedId, jump: true);
+        }
+      }
+    });
   }
 
   @override
@@ -54,7 +68,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
       }
       final maxScroll = _scrollController.position.maxScrollExtent;
       final currentScroll = _scrollController.position.pixels;
-      const tolerance = 1.0;
+      const tolerance = 1.0; 
       if (!mounted) return;
       setState(() {
         _showLeftArrow = currentScroll > tolerance;
@@ -63,33 +77,54 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
     });
   }
 
+  // Método para rolar/pular para uma categoria específica
+  void _ensureCategoryIsVisible(String categoriaId, {bool jump = false}) {
+    if (!_scrollController.hasClients || _itemKeys[categoriaId] == null) {
+      return;
+    }
+
+    final GlobalKey? itemKey = _itemKeys[categoriaId];
+    final BuildContext? itemContext = itemKey?.currentContext;
+
+    if (itemContext != null) {
+      Scrollable.ensureVisible(
+        itemContext,
+        alignment: 0.5, // Centraliza o item na tela
+        duration: jump ? Duration.zero : const Duration(milliseconds: 300), // Pula ou anima
+        curve: Curves.easeInOut, // Curva padrão para animação
+      );
+      // Atualiza a visibilidade das setas após o scroll/pulo.
+      // Usar addPostFrameCallback garante que aconteça após as mudanças de layout.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _updateArrowVisibility();
+        }
+      });
+    }
+  }
+
   void _revertDragAnimation(
       Categoria categoria, GlobalKey itemKey, Offset dragEndOffset) {
     final RenderBox? itemRenderBox =
-    itemKey.currentContext?.findRenderObject() as RenderBox?;
+        itemKey.currentContext?.findRenderObject() as RenderBox?;
     if (itemRenderBox == null || !itemRenderBox.attached) return;
 
     final Offset targetPosition = itemRenderBox.localToGlobal(Offset.zero);
     final size = itemRenderBox.size;
 
-    // Posições inicial e final para o AnimatedPositioned
     final dragEndTop = dragEndOffset.dy;
     final dragEndLeft = dragEndOffset.dx;
     final targetTop = targetPosition.dy;
     final targetLeft = targetPosition.dx;
 
-    // Variáveis para controlar o estado da animação
     bool isAnimationStarted = false;
 
-    // Remove qualquer overlay antigo
     _revertingOverlayEntry?.remove();
     _revertingOverlayEntry = null;
 
     _revertingOverlayEntry = OverlayEntry(builder: (context) {
-      // Usamos um StatefulBuilder para gerir o estado da posição
       return StatefulBuilder(
         builder: (context, setState) {
-          // Inicia a animação no primeiro frame
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!isAnimationStarted) {
               setState(() => isAnimationStarted = true);
@@ -104,8 +139,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
             width: size.width,
             height: size.height,
             onEnd: () {
-              // Limpa o overlay e o estado quando a animação termina
-              if (mounted && _revertingCategoria == categoria) {
+              if (mounted && _revertingCategoria?.id == categoria.id) {
                 _revertingOverlayEntry?.remove();
                 _revertingOverlayEntry = null;
                 this.setState(() {
@@ -125,9 +159,9 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
               ),
               child: _CategoriaItem(
                 categoria: categoria,
-                isSelected: true,
-                onTap: () {},
-                onDoubleTap: () {},
+                isSelected: true, // Feedback is always 'selected' looking
+                onTap: () {}, // No action on tap for feedback
+                onDoubleTap: () {}, // No action on double tap for feedback
                 isDragFeedback: true,
               ),
             ),
@@ -136,7 +170,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
       );
     });
 
-    // Mostra o overlay e esconde o item original
     setState(() {
       _revertingCategoria = categoria;
     });
@@ -145,10 +178,27 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
 
   @override
   Widget build(BuildContext context) {
+    // Ouve as mudanças no ID da categoria selecionada no controller.
+    // Quando mudar, garante que a nova categoria selecionada pule para a visão.
+    ref.listen<String?>(
+      gestaoControllerProvider.select((state) => state.categoriaSelecionadaId),
+      (previousSelectedId, newSelectedId) {
+        if (newSelectedId != null && newSelectedId != previousSelectedId) {
+          // Agenda o pulo para depois do frame atual para evitar conflitos de build.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _ensureCategoryIsVisible(newSelectedId, jump: true);
+            }
+          });
+        }
+      },
+    );
+
     final state = ref.watch(gestaoControllerProvider);
     final categorias = state.categorias;
     final colorScheme = Theme.of(context).colorScheme;
 
+    // Gerencia as chaves dos itens para o scroll e drag
     for (var cat in categorias) {
       _itemKeys.putIfAbsent(cat.id, () => GlobalKey());
     }
@@ -156,12 +206,12 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
         .removeWhere((key, value) => !categorias.any((cat) => cat.id == key));
 
     if (categorias.isEmpty) {
-      return const SizedBox(height: 48);
+      return const SizedBox(height: 48); // Altura padrão da barra
     }
 
     return Container(
       height: 48,
-      color: Colors.transparent,
+      color: Colors.transparent, // Cor de fundo da barra
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -181,11 +231,11 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
                         duration: const Duration(milliseconds: 200),
                         curve: Curves.easeOut,
                         transform: isBeingDraggedOver
-                            ? Matrix4.translationValues(0, -5, 0)
+                            ? Matrix4.translationValues(0, -5, 0) // Efeito visual ao arrastar sobre
                             : Matrix4.identity(),
                         child: LongPressDraggable<String>(
-                          key: ValueKey(categoria.id),
-                          data: categoria.id,
+                          key: ValueKey(categoria.id), // Chave para o Draggable
+                          data: categoria.id, // Dado a ser arrastado
                           onDragStarted: () {
                             HapticFeedback.lightImpact();
                             ref
@@ -193,57 +243,60 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
                                 .setReordering(true);
                           },
                           onDragEnd: (details) {
+                            // Se não foi aceito no target, reverte o estado de reordenação
                             if (!details.wasAccepted) {
                               ref
                                   .read(gestaoControllerProvider.notifier)
                                   .setReordering(false);
                             }
                           },
-                          // FUNÇÃO DE CANCELAMENTO REINTRODUZIDA E OTIMIZADA
                           onDraggableCanceled: (velocity, dragOffset) {
+                            // Animação para reverter ao local original se o drag for cancelado
                             _revertDragAnimation(
                                 categoria, itemKey, dragOffset);
                           },
-                          feedback: Material(
+                          feedback: Material( // Visual do item sendo arrastado
                             color: Colors.transparent,
                             elevation: 2.0,
                             shadowColor:
-                            Colors.black.withAlpha((255 * 0.075).round()),
+                                Colors.black.withAlpha((255 * 0.075).round()),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(28.0),
                             ),
                             child: _CategoriaItem(
                               categoria: categoria,
-                              isSelected: true,
+                              isSelected: true, // Feedback visual como selecionado
                               onTap: () {},
                               onDoubleTap: () {},
                               isDragFeedback: true,
                             ),
                           ),
-                          childWhenDragging: Opacity(
-                            opacity: 0.0,
+                          childWhenDragging: Opacity( // Aparência do item original enquanto arrasta
+                            opacity: 0.0, // Torna o item original invisível
                             child: _CategoriaItem(
-                              key: itemKey,
+                              key: itemKey, // Chave global para o item
                               categoria: categoria,
                               isSelected:
-                              state.categoriaSelecionadaId == categoria.id,
-                              onTap: () {},
-                              onDoubleTap: () {},
+                                  state.categoriaSelecionadaId == categoria.id,
+                              onTap: () {}, // Tap é tratado no child
+                              onDoubleTap: () {}, // DoubleTap é tratado no child
                             ),
                           ),
-                          child: Opacity(
+                          child: Opacity( // Item visível normal
                             opacity: (_revertingCategoria?.id == categoria.id)
-                                ? 0.0
+                                ? 0.0 // Torna invisível se estiver na animação de reversão
                                 : 1.0,
                             child: _CategoriaItem(
                               key: itemKey,
                               categoria: categoria,
                               isSelected:
-                              state.categoriaSelecionadaId == categoria.id,
+                                  state.categoriaSelecionadaId == categoria.id,
                               onTap: () {
                                 if (!ref
                                     .read(gestaoControllerProvider)
                                     .isReordering) {
+                                  // A seleção da categoria já é ouvida pelo listener no build,
+                                  // que chamará _ensureCategoryIsVisible com jump: true.
                                   ref
                                       .read(gestaoControllerProvider.notifier)
                                       .selecionarCategoria(categoria.id);
@@ -262,8 +315,9 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
                       );
                     },
                     onWillAcceptWithDetails: (details) =>
-                    details.data != categoria.id,
+                        details.data != categoria.id, // Não aceita arrastar sobre si mesmo
                     onAcceptWithDetails: (details) {
+                      // Aceita o item arrastado e reordena
                       ref
                           .read(gestaoControllerProvider.notifier)
                           .reordenarCategoria(details.data, categoria.id);
@@ -273,6 +327,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
               ),
             ),
           ),
+          // Setas de navegação (esquerda)
           Positioned(
             left: 0,
             top: 0,
@@ -280,24 +335,26 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
             child: AnimatedOpacity(
               opacity: _showLeftArrow ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 200),
-              child: IgnorePointer(
+              child: IgnorePointer( // Para não interferir com o scroll horizontal
+                ignoring: !_showLeftArrow,
                 child: Container(
-                  width: 48.0,
-                  decoration: BoxDecoration(
+                  width: 48.0, // Largura da área da seta
+                  decoration: BoxDecoration( // Gradiente para suavizar a borda
                     gradient: LinearGradient(
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        colorScheme.surfaceContainerLow,
-                        colorScheme.surfaceContainerLow.withAlpha(0),
+                        colorScheme.surfaceContainerLow, // Cor do fundo da página
+                        colorScheme.surfaceContainerLow.withAlpha(0), // Transparente
                       ],
-                      stops: const [0.2, 1.0],
+                      stops: const [0.2, 1.0], // Posição do gradiente
                     ),
                   ),
                 ),
               ),
             ),
           ),
+          // Setas de navegação (direita)
           Positioned(
             right: 0,
             top: 0,
@@ -306,6 +363,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
               opacity: _showRightArrow ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 200),
               child: IgnorePointer(
+                ignoring: !_showRightArrow,
                 child: Container(
                   width: 48.0,
                   decoration: BoxDecoration(
@@ -323,6 +381,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
               ),
             ),
           ),
+          // Ícones das setas
           Align(
             alignment: Alignment.centerLeft,
             child: _buildArrow(isLeft: true),
@@ -336,6 +395,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
     );
   }
 
+  // Widget para construir as setas de navegação
   Widget _buildArrow({required bool isLeft}) {
     final bool isVisible = isLeft ? _showLeftArrow : _showRightArrow;
     final colorScheme = Theme.of(context).colorScheme;
@@ -344,29 +404,32 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
       duration: const Duration(milliseconds: 200),
       child: InkWell(
         onTap: !isVisible
-            ? null
+            ? null // Desabilita o tap se não estiver visível
             : () {
-          final screenWidth = MediaQuery.of(context).size.width;
-          final scrollAmount = screenWidth * 0.7;
-          final newOffset = (isLeft
-              ? max(0.0, _scrollController.offset - scrollAmount)
-              : min(_scrollController.position.maxScrollExtent,
-              _scrollController.offset + scrollAmount))
-              .toDouble();
-          _scrollController.animateTo(newOffset,
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeInOut);
-        },
+                // Rola a lista suavemente ao clicar na seta
+                final screenWidth = MediaQuery.of(context).size.width;
+                final scrollAmount = screenWidth * 0.7; // Quantidade de scroll
+                final newOffset = (isLeft
+                        ? max(0.0, _scrollController.offset - scrollAmount)
+                        : min(_scrollController.position.maxScrollExtent,
+                            _scrollController.offset + scrollAmount))
+                    .toDouble();
+                _scrollController.animateTo(newOffset,
+                    duration: const Duration(milliseconds: 400), // Animação suave
+                    curve: Curves.easeInOut);
+              },
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Icon(isLeft ? Icons.chevron_left : Icons.chevron_right,
-              color: colorScheme.onSurface),
+              color: colorScheme.onSurface), // Cor do ícone
         ),
       ),
     );
   }
 }
 
+// Widget interno para cada item da categoria.
+// Este widget não precisou de alterações significativas para o "pulo".
 class _CategoriaItem extends StatefulWidget {
   final Categoria categoria;
   final bool isSelected;
@@ -388,17 +451,19 @@ class _CategoriaItem extends StatefulWidget {
 }
 
 class _CategoriaItemState extends State<_CategoriaItem> {
-  bool _isActivated = false;
+  bool _isActivated = false; // Para feedback visual no onTapDown/Up
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isSelected = widget.isSelected;
-    const duration = Duration(milliseconds: 200);
+    const duration = Duration(milliseconds: 200); // Duração para animações internas
 
-    final double cornerRadius = _isActivated ? 28.0 : 50.0;
+    // Raio da borda animado com base no estado _isActivated
+    final double cornerRadius = _isActivated ? 16.0 : 28.0;
 
+    // Visual especial para o feedback de arrastar
     if (widget.isDragFeedback) {
       final pillColor = colorScheme.secondaryContainer;
       final contentColor = colorScheme.onSecondaryContainer;
@@ -406,7 +471,7 @@ class _CategoriaItemState extends State<_CategoriaItem> {
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 14.0),
         decoration: BoxDecoration(
           color: pillColor,
-          borderRadius: BorderRadius.circular(50.0),
+          borderRadius: BorderRadius.circular(28.0), // Borda padrão para feedback
         ),
         child: Center(
           child: Text(
@@ -419,21 +484,22 @@ class _CategoriaItemState extends State<_CategoriaItem> {
       );
     }
 
+    // Cores e preenchimento baseados no estado de seleção
     final Color pillColor =
-    isSelected ? colorScheme.secondaryContainer : Colors.transparent;
+        isSelected ? colorScheme.secondaryContainer : Colors.transparent;
     final Color contentColor = isSelected
         ? colorScheme.onSecondaryContainer
         : colorScheme.onSurfaceVariant;
     final double horizontalPadding = isSelected ? 24.0 : 16.0;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 4.0), // Espaçamento entre itens
       child: GestureDetector(
         onTap: widget.onTap,
         onDoubleTap: widget.onDoubleTap,
-        onTapDown: (_) => setState(() => _isActivated = true),
-        onTapUp: (_) => setState(() => _isActivated = false),
-        onTapCancel: () => setState(() => _isActivated = false),
+        onTapDown: (_) => setState(() => _isActivated = true), // Ativa feedback visual
+        onTapUp: (_) => setState(() => _isActivated = false), // Desativa feedback
+        onTapCancel: () => setState(() => _isActivated = false), // Cancela feedback
         child: AnimatedContainer(
           duration: duration,
           curve: Curves.easeInOut,
@@ -441,13 +507,13 @@ class _CategoriaItemState extends State<_CategoriaItem> {
               horizontal: horizontalPadding, vertical: 12.0),
           decoration: BoxDecoration(
             color: pillColor,
-            border: Border.all(
+            border: Border.all( // Borda sutil para estado ativado não selecionado
               color: _isActivated && !isSelected
                   ? colorScheme.onSurface.withOpacity(0.12)
                   : Colors.transparent,
               width: 1,
             ),
-            borderRadius: BorderRadius.circular(cornerRadius),
+            borderRadius: BorderRadius.circular(cornerRadius), // Borda animada
           ),
           child: Center(
             child: Text(

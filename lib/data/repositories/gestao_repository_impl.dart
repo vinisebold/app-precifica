@@ -1,42 +1,47 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:precifica/data/models/categoria.dart';
-import 'package:precifica/data/models/produto.dart';
 import 'package:uuid/uuid.dart';
+import '../../data/models/categoria_model.dart';
+import '../../data/models/produto_model.dart';
+import '../../domain/entities/categoria.dart';
+import '../../domain/entities/produto.dart';
+import '../../domain/repositories/i_gestao_repository.dart';
 
-import '../../gestao_produtos/domain/i_gestao_repository.dart';
+/// Implementação do repositório de gestão que utiliza o Hive como banco de dados local.
+///
+/// Esta classe é responsável por traduzir as chamadas do domínio em operações
+/// específicas do Hive, manipulando os `CategoriaModel` e `ProdutoModel`.
 
-class HiveGestaoRepository implements IGestaoRepository {
-  // Nomes das "caixas" (tabelas) do nosso banco de dados.
+class GestaoRepositoryImpl implements IGestaoRepository {
   static const _categoriasBox = 'categorias_box';
   static const _produtosBox = 'produtos_box';
 
-  // Instância do gerador de IDs
   static const _uuid = Uuid();
 
-  // Métod para inicializar o Hive e registrar os adaptadores
+  /// Inicializa o Hive, registra os adaptadores dos modelos e abre as caixas.
   @override
   Future<void> init() async {
-    Hive.registerAdapter(CategoriaAdapter());
-    Hive.registerAdapter(ProdutoAdapter());
+    Hive.registerAdapter(CategoriaModelAdapter());
+    Hive.registerAdapter(ProdutoModelAdapter());
 
-    await Hive.openBox<Categoria>(_categoriasBox);
-    await Hive.openBox<Produto>(_produtosBox);
+    await Hive.openBox<CategoriaModel>(_categoriasBox);
+    await Hive.openBox<ProdutoModel>(_produtosBox);
   }
 
-  // Criar categoria
+  // --- Métodos para Categoria ---
+
   @override
   Future<void> criarCategoria(String nome) async {
-    final box = Hive.box<Categoria>(_categoriasBox);
+    final box = Hive.box<CategoriaModel>(_categoriasBox);
     final novaOrdem = box.values.length;
     final novoId = _uuid.v4();
-    final novaCategoria = Categoria(id: novoId, nome: nome, ordem: novaOrdem);
+    final novaCategoria =
+        CategoriaModel(id: novoId, nome: nome, ordem: novaOrdem);
     await box.put(novoId, novaCategoria);
   }
 
-  // Listar categorias
   @override
   List<Categoria> getCategorias() {
-    final box = Hive.box<Categoria>(_categoriasBox);
+    final box = Hive.box<CategoriaModel>(_categoriasBox);
     final categorias = box.values.toList();
     categorias.sort((a, b) => a.ordem.compareTo(b.ordem));
     return categorias;
@@ -44,20 +49,20 @@ class HiveGestaoRepository implements IGestaoRepository {
 
   @override
   Future<void> atualizarOrdemCategorias(List<Categoria> categorias) async {
-    final box = Hive.box<Categoria>(_categoriasBox);
-    final Map<String, Categoria> updates = {};
+    final box = Hive.box<CategoriaModel>(_categoriasBox);
+    final Map<String, CategoriaModel> updates = {};
     for (int i = 0; i < categorias.length; i++) {
       final categoria = categorias[i];
       categoria.ordem = i;
-      updates[categoria.id] = categoria;
+      updates[categoria.id] = CategoriaModel.fromEntity(categoria);
     }
     await box.putAll(updates);
   }
 
   @override
   Future<void> deletarCategoria(String categoriaId) async {
-    final boxCategorias = Hive.box<Categoria>(_categoriasBox);
-    final boxProdutos = Hive.box<Produto>(_produtosBox);
+    final boxCategorias = Hive.box<CategoriaModel>(_categoriasBox);
+    final boxProdutos = Hive.box<ProdutoModel>(_produtosBox);
 
     final produtosParaDeletar =
         boxProdutos.values.where((p) => p.categoriaId == categoriaId).toList();
@@ -71,7 +76,7 @@ class HiveGestaoRepository implements IGestaoRepository {
   @override
   Future<void> atualizarNomeCategoria(
       String categoriaId, String novoNome) async {
-    final box = Hive.box<Categoria>(_categoriasBox);
+    final box = Hive.box<CategoriaModel>(_categoriasBox);
     final categoria = box.get(categoriaId);
     if (categoria != null) {
       categoria.nome = novoNome;
@@ -80,12 +85,13 @@ class HiveGestaoRepository implements IGestaoRepository {
   }
 
   // --- Métodos para Produto ---
+
   @override
   Future<void> criarProduto(String nome, String categoriaId) async {
-    final box = Hive.box<Produto>(_produtosBox);
+    final box = Hive.box<ProdutoModel>(_produtosBox);
     final novoId = _uuid.v4();
 
-    final novoProduto = Produto(
+    final novoProduto = ProdutoModel(
       id: novoId,
       nome: nome,
       categoriaId: categoriaId,
@@ -95,7 +101,7 @@ class HiveGestaoRepository implements IGestaoRepository {
 
   @override
   List<Produto> getProdutosPorCategoria(String categoriaId) {
-    final box = Hive.box<Produto>(_produtosBox);
+    final box = Hive.box<ProdutoModel>(_produtosBox);
     return box.values
         .where((produto) => produto.categoriaId == categoriaId)
         .toList();
@@ -103,13 +109,13 @@ class HiveGestaoRepository implements IGestaoRepository {
 
   @override
   List<Produto> getAllProdutos() {
-    final box = Hive.box<Produto>(_produtosBox);
+    final box = Hive.box<ProdutoModel>(_produtosBox);
     return box.values.toList();
   }
 
   @override
   Future<void> atualizarPrecoProduto(String produtoId, double novoPreco) async {
-    final box = Hive.box<Produto>(_produtosBox);
+    final box = Hive.box<ProdutoModel>(_produtosBox);
     final produto = box.get(produtoId);
 
     if (produto != null) {
@@ -120,19 +126,20 @@ class HiveGestaoRepository implements IGestaoRepository {
 
   @override
   Future<void> deletarProduto(String produtoId, String categoriaId) async {
-    final box = Hive.box<Produto>(_produtosBox);
+    final box = Hive.box<ProdutoModel>(_produtosBox);
     await box.delete(produtoId);
   }
 
   @override
   Future<void> adicionarProdutoObjeto(Produto produto) async {
-    final box = Hive.box<Produto>(_produtosBox);
-    await box.put(produto.id, produto); // Add the product back using its ID
+    final box = Hive.box<ProdutoModel>(_produtosBox);
+    final produtoModel = ProdutoModel.fromEntity(produto);
+    await box.put(produtoModel.id, produtoModel);
   }
 
   @override
   Future<void> atualizarNomeProduto(String produtoId, String novoNome) async {
-    final box = Hive.box<Produto>(_produtosBox);
+    final box = Hive.box<ProdutoModel>(_produtosBox);
     final produto = box.get(produtoId);
     if (produto != null) {
       produto.nome = novoNome;

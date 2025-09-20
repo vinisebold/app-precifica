@@ -63,7 +63,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
     });
   }
 
-  // MÉTODO DE ANIMAÇÃO OTIMIZADO
   void _revertDragAnimation(
       Categoria categoria, GlobalKey itemKey, Offset dragEndOffset) {
     final RenderBox? itemRenderBox =

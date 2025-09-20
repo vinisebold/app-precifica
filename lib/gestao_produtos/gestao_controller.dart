@@ -174,16 +174,30 @@ class GestaoController extends Notifier<GestaoState> {
   }
 
   void selecionarCategoria(String categoriaId) {
-    try {
-      final produtos = _repository.getProdutosPorCategoria(categoriaId);
-      state = state.copyWith(
-        categoriaSelecionadaId: categoriaId,
-        produtos: produtos,
-        clearUltimoProdutoDeletado: true,
-      );
-    } catch (e) {
-      state = state.copyWith(errorMessage: 'Falha ao carregar produtos.');
+    if (state.categoriaSelecionadaId == categoriaId) {
+      return;
     }
+
+    state = state.copyWith(
+      categoriaSelecionadaId: categoriaId,
+      clearUltimoProdutoDeletado: true,
+    );
+
+    Future(() {
+      try {
+        final produtos = _repository.getProdutosPorCategoria(categoriaId);
+
+        if (state.categoriaSelecionadaId == categoriaId) {
+          state = state.copyWith(
+            produtos: produtos,
+          );
+        }
+      } catch (e) {
+        if (state.categoriaSelecionadaId == categoriaId) {
+          state = state.copyWith(errorMessage: 'Falha ao carregar produtos.');
+        }
+      }
+    });
   }
 
   Future<void> criarProduto(String nome) async {

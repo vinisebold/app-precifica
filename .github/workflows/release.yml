@@ -55,8 +55,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: build/app/outputs/flutter-apk/organiza-ae-${{ github.ref_name }}.apk
+          files: build/app/outputs/flutter-apk/precifica-${{ github.ref_name }}.apk
           tag_name: ${{ github.ref_name }}
           name: "Release ${{ github.ref_name }}"
-          body: "Release automática da versão ${{ github.ref_name }}"
+          generate_release_notes: true
           prerelease: false

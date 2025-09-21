@@ -21,8 +21,6 @@ class CategoriaNavBar extends ConsumerStatefulWidget {
 
 class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
   final ScrollController _scrollController = ScrollController();
-  bool _showLeftArrow = false;
-  bool _showRightArrow = false;
 
   OverlayEntry? _revertingOverlayEntry;
   Categoria? _revertingCategoria;
@@ -30,17 +28,24 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
   final Map<String, GlobalKey> _itemKeys = {};
   Timer? _scrollDebounce;
 
+  final Map<String, double> _scales = {};
+  final Map<String, double> _opacities = {};
+  final Map<String, double> _rotations = {};
+
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_updateArrowVisibility);
+    _scrollController.addListener(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _calculateVisuals());
+    });
 
     // Garante que a categoria inicial (se houver) esteja visível com um pulo
     // e atualiza a visibilidade das setas após o primeiro frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _updateArrowVisibility();
-        final initialSelectedId = ref.read(gestaoControllerProvider).categoriaSelecionadaId;
+        _calculateVisuals();
+        final initialSelectedId =
+            ref.read(gestaoControllerProvider).categoriaSelecionadaId;
         if (initialSelectedId != null) {
           _ensureCategoryIsVisible(initialSelectedId, jump: true);
         }
@@ -50,31 +55,14 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
 
   @override
   void dispose() {
-    _scrollController.removeListener(_updateArrowVisibility);
+    _scrollController.removeListener(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _calculateVisuals());
+    });
     _scrollController.dispose();
     _revertingOverlayEntry?.remove();
     _revertingOverlayEntry = null;
     _scrollDebounce?.cancel();
     super.dispose();
-  }
-
-  void _updateArrowVisibility() {
-    _scrollDebounce?.cancel();
-    _scrollDebounce = Timer(const Duration(milliseconds: 100), () {
-      if (!mounted ||
-          !_scrollController.hasClients ||
-          !_scrollController.position.hasContentDimensions) {
-        return;
-      }
-      final maxScroll = _scrollController.position.maxScrollExtent;
-      final currentScroll = _scrollController.position.pixels;
-      const tolerance = 1.0; 
-      if (!mounted) return;
-      setState(() {
-        _showLeftArrow = currentScroll > tolerance;
-        _showRightArrow = currentScroll < maxScroll - tolerance;
-      });
-    });
   }
 
   // Método para rolar/pular para uma categoria específica
@@ -89,15 +77,17 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
     if (itemContext != null) {
       Scrollable.ensureVisible(
         itemContext,
-        alignment: 0.5, // Centraliza o item na tela
-        duration: jump ? Duration.zero : const Duration(milliseconds: 300), // Pula ou anima
+        alignment: 0.5,
+        // Centraliza o item na tela
+        duration: jump ? Duration.zero : const Duration(milliseconds: 300),
+        // Pula ou anima
         curve: Curves.easeInOut, // Curva padrão para animação
       );
       // Atualiza a visibilidade das setas após o scroll/pulo.
       // Usar addPostFrameCallback garante que aconteça após as mudanças de layout.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _updateArrowVisibility();
+          _calculateVisuals();
         }
       });
     }
@@ -159,9 +149,12 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
               ),
               child: _CategoriaItem(
                 categoria: categoria,
-                isSelected: true, // Feedback is always 'selected' looking
-                onTap: () {}, // No action on tap for feedback
-                onDoubleTap: () {}, // No action on double tap for feedback
+                isSelected: true,
+                // Feedback is always 'selected' looking
+                onTap: () {},
+                // No action on tap for feedback
+                onDoubleTap: () {},
+                // No action on double tap for feedback
                 isDragFeedback: true,
               ),
             ),
@@ -176,6 +169,91 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
     Overlay.of(context).insert(_revertingOverlayEntry!);
   }
 
+  void _calculateVisuals() {
+    if (!mounted || !_scrollController.hasClients) return;
+
+    final viewportWidth = MediaQuery.of(context).size.width;
+    final viewportCenter = viewportWidth / 2;
+    final state = ref.read(gestaoControllerProvider);
+    final categorias = state.categorias;
+
+    Map<String, double> newScales = {};
+    Map<String, double> newOpacities = {};
+    Map<String, double> newRotations = {};
+
+    for (var categoria in categorias) {
+      final key = _itemKeys[categoria.id];
+      final box = key?.currentContext?.findRenderObject() as RenderBox?;
+      if (box == null || !box.hasSize) {
+        newScales[categoria.id] = 0.7;
+        newOpacities[categoria.id] = 0.6;
+        newRotations[categoria.id] = 0.0;
+        continue;
+      }
+
+      final position = box.localToGlobal(Offset.zero);
+      final itemCenter = position.dx + box.size.width / 2;
+      final signedDistance = itemCenter - viewportCenter;
+      final distance = signedDistance.abs();
+
+      final maxDistance =
+          viewportWidth / 1.5; // Ajuste para o alcance do efeito
+      final factor =
+          (maxDistance - distance.clamp(0, maxDistance)) / maxDistance;
+
+      final scale = 0.7 + 0.5 * factor; // min 0.7, max 1.2
+      final opacity = 0.6 + 0.4 * factor; // min 0.6, max 1.0
+      final rotation =
+          signedDistance / viewportWidth * 0.3; // Rotação máxima ~17 graus
+
+      newScales[categoria.id] = scale;
+      newOpacities[categoria.id] = opacity;
+      newRotations[categoria.id] = rotation;
+    }
+
+    setState(() {
+      _scales.clear();
+      _scales.addAll(newScales);
+      _opacities.clear();
+      _opacities.addAll(newOpacities);
+      _rotations.clear();
+      _rotations.addAll(newRotations);
+    });
+  }
+
+  void _selectClosest() {
+    if (!mounted || !_scrollController.hasClients) return;
+
+    final viewportWidth = MediaQuery.of(context).size.width;
+    final viewportCenter = viewportWidth / 2;
+    final state = ref.read(gestaoControllerProvider);
+    final categorias = state.categorias;
+
+    String? closestId;
+    double minDistance = double.infinity;
+
+    for (var categoria in categorias) {
+      final key = _itemKeys[categoria.id];
+      final box = key?.currentContext?.findRenderObject() as RenderBox?;
+      if (box == null || !box.hasSize) continue;
+
+      final position = box.localToGlobal(Offset.zero);
+      final itemCenter = position.dx + box.size.width / 2;
+      final distance = (itemCenter - viewportCenter).abs();
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestId = categoria.id;
+      }
+    }
+
+    if (closestId != null && closestId != state.categoriaSelecionadaId) {
+      ref
+          .read(gestaoControllerProvider.notifier)
+          .selecionarCategoria(closestId);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Ouve as mudanças no ID da categoria selecionada no controller.
@@ -187,7 +265,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
           // Agenda o pulo para depois do frame atual para evitar conflitos de build.
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
-              _ensureCategoryIsVisible(newSelectedId, jump: true);
+              _ensureCategoryIsVisible(newSelectedId, jump: false);
             }
           });
         }
@@ -197,6 +275,14 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
     final state = ref.watch(gestaoControllerProvider);
     final categorias = state.categorias;
     final colorScheme = Theme.of(context).colorScheme;
+
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // 2. Calcule o padding horizontal.
+    // O ideal é (largura da tela / 2) - (metade da largura de um item).
+    // Vamos usar um valor aproximado para simplificar, como 40.0.
+    // Isso garante que o centro do primeiro/último item possa alcançar o centro da tela.
+    final horizontalPadding = (screenWidth / 2) - 40.0;
 
     // Gerencia as chaves dos itens para o scroll e drag
     for (var cat in categorias) {
@@ -212,216 +298,144 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
     return Container(
       height: 48,
       color: Colors.transparent, // Cor de fundo da barra
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SingleChildScrollView(
-            controller: _scrollController,
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: categorias.map((categoria) {
-                  final itemKey = _itemKeys[categoria.id]!;
-                  return DragTarget<String>(
-                    builder: (context, candidateData, rejectedData) {
-                      final isBeingDraggedOver = candidateData.isNotEmpty;
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        curve: Curves.easeOut,
-                        transform: isBeingDraggedOver
-                            ? Matrix4.translationValues(0, -5, 0) // Efeito visual ao arrastar sobre
-                            : Matrix4.identity(),
-                        child: LongPressDraggable<String>(
-                          key: ValueKey(categoria.id), // Chave para o Draggable
-                          data: categoria.id, // Dado a ser arrastado
-                          onDragStarted: () {
-                            HapticFeedback.lightImpact();
+      clipBehavior: Clip.none, // Permite overflow visual para escalas >1
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollEndNotification) {
+            _selectClosest();
+          }
+          return false;
+        },
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          scrollDirection: Axis.horizontal,
+          physics: const ClampingScrollPhysics(),
+          clipBehavior: Clip.none,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+            child: Row(
+              children: categorias.map((categoria) {
+                final itemKey = _itemKeys[categoria.id]!;
+                final scale = _scales[categoria.id] ?? 1.0;
+                final opacity = _opacities[categoria.id] ?? 1.0;
+                final rotation = _rotations[categoria.id] ?? 0.0;
+                return DragTarget<String>(
+                  builder: (context, candidateData, rejectedData) {
+                    final isBeingDraggedOver = candidateData.isNotEmpty;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOut,
+                      transform: isBeingDraggedOver
+                          ? Matrix4.translationValues(
+                              0, -5, 0) // Efeito visual ao arrastar sobre
+                          : Matrix4.identity(),
+                      child: LongPressDraggable<String>(
+                        key: ValueKey(categoria.id),
+                        // Chave para o Draggable
+                        data: categoria.id,
+                        // Dado a ser arrastado
+                        onDragStarted: () {
+                          HapticFeedback.lightImpact();
+                          ref
+                              .read(gestaoControllerProvider.notifier)
+                              .setReordering(true);
+                        },
+                        onDragEnd: (details) {
+                          // Se não foi aceito no target, reverte o estado de reordenação
+                          if (!details.wasAccepted) {
                             ref
                                 .read(gestaoControllerProvider.notifier)
-                                .setReordering(true);
-                          },
-                          onDragEnd: (details) {
-                            // Se não foi aceito no target, reverte o estado de reordenação
-                            if (!details.wasAccepted) {
-                              ref
-                                  .read(gestaoControllerProvider.notifier)
-                                  .setReordering(false);
-                            }
-                          },
-                          onDraggableCanceled: (velocity, dragOffset) {
-                            // Animação para reverter ao local original se o drag for cancelado
-                            _revertDragAnimation(
-                                categoria, itemKey, dragOffset);
-                          },
-                          feedback: Material( // Visual do item sendo arrastado
-                            color: Colors.transparent,
-                            elevation: 2.0,
-                            shadowColor:
-                                Colors.black.withAlpha((255 * 0.075).round()),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28.0),
-                            ),
-                            child: _CategoriaItem(
-                              categoria: categoria,
-                              isSelected: true, // Feedback visual como selecionado
-                              onTap: () {},
-                              onDoubleTap: () {},
-                              isDragFeedback: true,
-                            ),
+                                .setReordering(false);
+                          }
+                        },
+                        onDraggableCanceled: (velocity, dragOffset) {
+                          // Animação para reverter ao local original se o drag for cancelado
+                          _revertDragAnimation(categoria, itemKey, dragOffset);
+                        },
+                        feedback: Material(
+                          // Visual do item sendo arrastado
+                          color: Colors.transparent,
+                          elevation: 2.0,
+                          shadowColor:
+                              Colors.black.withAlpha((255 * 0.075).round()),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28.0),
                           ),
-                          childWhenDragging: Opacity( // Aparência do item original enquanto arrasta
-                            opacity: 0.0, // Torna o item original invisível
-                            child: _CategoriaItem(
-                              key: itemKey, // Chave global para o item
-                              categoria: categoria,
-                              isSelected:
-                                  state.categoriaSelecionadaId == categoria.id,
-                              onTap: () {}, // Tap é tratado no child
-                              onDoubleTap: () {}, // DoubleTap é tratado no child
-                            ),
+                          child: _CategoriaItem(
+                            categoria: categoria,
+                            isSelected: true,
+                            // Feedback visual como selecionado
+                            onTap: () {},
+                            onDoubleTap: () {},
+                            isDragFeedback: true,
                           ),
-                          child: Opacity( // Item visível normal
-                            opacity: (_revertingCategoria?.id == categoria.id)
-                                ? 0.0 // Torna invisível se estiver na animação de reversão
-                                : 1.0,
-                            child: _CategoriaItem(
-                              key: itemKey,
-                              categoria: categoria,
-                              isSelected:
-                                  state.categoriaSelecionadaId == categoria.id,
-                              onTap: () {
-                                if (!ref
-                                    .read(gestaoControllerProvider)
-                                    .isReordering) {
-                                  // A seleção da categoria já é ouvida pelo listener no build,
-                                  // que chamará _ensureCategoryIsVisible com jump: true.
-                                  ref
-                                      .read(gestaoControllerProvider.notifier)
-                                      .selecionarCategoria(categoria.id);
-                                }
-                              },
-                              onDoubleTap: () {
-                                if (!ref
-                                    .read(gestaoControllerProvider)
-                                    .isReordering) {
-                                  widget.onCategoriaDoubleTap(categoria);
-                                }
-                              },
+                        ),
+                        childWhenDragging: Opacity(
+                          // Aparência do item original enquanto arrasta
+                          opacity: 0.0, // Torna o item original invisível
+                          child: _CategoriaItem(
+                            key: itemKey,
+                            // Chave global para o item
+                            categoria: categoria,
+                            isSelected:
+                                state.categoriaSelecionadaId == categoria.id,
+                            onTap: () {},
+                            // Tap é tratado no child
+                            onDoubleTap: () {}, // DoubleTap é tratado no child
+                          ),
+                        ),
+                        child: Opacity(
+                          // Item visível normal
+                          opacity: (_revertingCategoria?.id == categoria.id)
+                              ? 0.0 // Torna invisível se estiver na animação de reversão
+                              : 1.0,
+                          child: Transform(
+                            alignment: Alignment.center,
+                            transform: Matrix4.identity()
+                              ..setEntry(
+                                  3, 2, 0.002) // Perspectiva para profundidade
+                              ..rotateY(rotation),
+                            child: Transform.scale(
+                              scale: scale,
+                              alignment: Alignment.center,
+                              child: Opacity(
+                                opacity: opacity,
+                                child: _CategoriaItem(
+                                  key: itemKey,
+                                  categoria: categoria,
+                                  isSelected: state.categoriaSelecionadaId ==
+                                      categoria.id,
+                                  onTap: () {
+                                    // Removido a seleção por tap simples
+                                  },
+                                  onDoubleTap: () {
+                                    if (!ref
+                                        .read(gestaoControllerProvider)
+                                        .isReordering) {
+                                      widget.onCategoriaDoubleTap(categoria);
+                                    }
+                                  },
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      );
-                    },
-                    onWillAcceptWithDetails: (details) =>
-                        details.data != categoria.id, // Não aceita arrastar sobre si mesmo
-                    onAcceptWithDetails: (details) {
-                      // Aceita o item arrastado e reordena
-                      ref
-                          .read(gestaoControllerProvider.notifier)
-                          .reordenarCategoria(details.data, categoria.id);
-                    },
-                  );
-                }).toList(),
-              ),
+                      ),
+                    );
+                  },
+                  onWillAcceptWithDetails: (details) =>
+                      details.data != categoria.id,
+                  // Não aceita arrastar sobre si mesmo
+                  onAcceptWithDetails: (details) {
+                    // Aceita o item arrastado e reordena
+                    ref
+                        .read(gestaoControllerProvider.notifier)
+                        .reordenarCategoria(details.data, categoria.id);
+                  },
+                );
+              }).toList(),
             ),
           ),
-          // Setas de navegação (esquerda)
-          Positioned(
-            left: 0,
-            top: 0,
-            bottom: 0,
-            child: AnimatedOpacity(
-              opacity: _showLeftArrow ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 200),
-              child: IgnorePointer( // Para não interferir com o scroll horizontal
-                ignoring: !_showLeftArrow,
-                child: Container(
-                  width: 48.0, // Largura da área da seta
-                  decoration: BoxDecoration( // Gradiente para suavizar a borda
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [
-                        colorScheme.surfaceContainerLow, // Cor do fundo da página
-                        colorScheme.surfaceContainerLow.withAlpha(0), // Transparente
-                      ],
-                      stops: const [0.2, 1.0], // Posição do gradiente
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // Setas de navegação (direita)
-          Positioned(
-            right: 0,
-            top: 0,
-            bottom: 0,
-            child: AnimatedOpacity(
-              opacity: _showRightArrow ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 200),
-              child: IgnorePointer(
-                ignoring: !_showRightArrow,
-                child: Container(
-                  width: 48.0,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerRight,
-                      end: Alignment.centerLeft,
-                      colors: [
-                        colorScheme.surfaceContainerLow,
-                        colorScheme.surfaceContainerLow.withAlpha(0),
-                      ],
-                      stops: const [0.2, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // Ícones das setas
-          Align(
-            alignment: Alignment.centerLeft,
-            child: _buildArrow(isLeft: true),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: _buildArrow(isLeft: false),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Widget para construir as setas de navegação
-  Widget _buildArrow({required bool isLeft}) {
-    final bool isVisible = isLeft ? _showLeftArrow : _showRightArrow;
-    final colorScheme = Theme.of(context).colorScheme;
-    return AnimatedOpacity(
-      opacity: isVisible ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 200),
-      child: InkWell(
-        onTap: !isVisible
-            ? null // Desabilita o tap se não estiver visível
-            : () {
-                // Rola a lista suavemente ao clicar na seta
-                final screenWidth = MediaQuery.of(context).size.width;
-                final scrollAmount = screenWidth * 0.7; // Quantidade de scroll
-                final newOffset = (isLeft
-                        ? max(0.0, _scrollController.offset - scrollAmount)
-                        : min(_scrollController.position.maxScrollExtent,
-                            _scrollController.offset + scrollAmount))
-                    .toDouble();
-                _scrollController.animateTo(newOffset,
-                    duration: const Duration(milliseconds: 400), // Animação suave
-                    curve: Curves.easeInOut);
-              },
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Icon(isLeft ? Icons.chevron_left : Icons.chevron_right,
-              color: colorScheme.onSurface), // Cor do ícone
         ),
       ),
     );
@@ -458,7 +472,8 @@ class _CategoriaItemState extends State<_CategoriaItem> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isSelected = widget.isSelected;
-    const duration = Duration(milliseconds: 200); // Duração para animações internas
+    const duration =
+        Duration(milliseconds: 200); // Duração para animações internas
 
     // Raio da borda animado com base no estado _isActivated
     final double cornerRadius = _isActivated ? 16.0 : 28.0;
@@ -471,7 +486,8 @@ class _CategoriaItemState extends State<_CategoriaItem> {
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 14.0),
         decoration: BoxDecoration(
           color: pillColor,
-          borderRadius: BorderRadius.circular(28.0), // Borda padrão para feedback
+          borderRadius:
+              BorderRadius.circular(28.0), // Borda padrão para feedback
         ),
         child: Center(
           child: Text(
@@ -493,13 +509,17 @@ class _CategoriaItemState extends State<_CategoriaItem> {
     final double horizontalPadding = isSelected ? 24.0 : 16.0;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0), // Espaçamento entre itens
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      // Espaçamento entre itens aumentado para evitar overlap em escalas >1
       child: GestureDetector(
         onTap: widget.onTap,
         onDoubleTap: widget.onDoubleTap,
-        onTapDown: (_) => setState(() => _isActivated = true), // Ativa feedback visual
-        onTapUp: (_) => setState(() => _isActivated = false), // Desativa feedback
-        onTapCancel: () => setState(() => _isActivated = false), // Cancela feedback
+        onTapDown: (_) => setState(() => _isActivated = true),
+        // Ativa feedback visual
+        onTapUp: (_) => setState(() => _isActivated = false),
+        // Desativa feedback
+        onTapCancel: () => setState(() => _isActivated = false),
+        // Cancela feedback
         child: AnimatedContainer(
           duration: duration,
           curve: Curves.easeInOut,
@@ -507,9 +527,10 @@ class _CategoriaItemState extends State<_CategoriaItem> {
               horizontal: horizontalPadding, vertical: 12.0),
           decoration: BoxDecoration(
             color: pillColor,
-            border: Border.all( // Borda sutil para estado ativado não selecionado
+            border: Border.all(
+              // Borda sutil para estado ativado não selecionado
               color: _isActivated && !isSelected
-                  ? colorScheme.onSurface.withOpacity(0.12)
+                  ? colorScheme.onSurface.withValues(alpha: 0.12)
                   : Colors.transparent,
               width: 1,
             ),

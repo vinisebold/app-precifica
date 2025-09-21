@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:precifica/data/profiles.dart';
 import 'package:share_plus/share_plus.dart';
 
 // Importando as entidades do domínio
@@ -43,7 +44,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   void dispose() {
     _pageController.dispose();
     _currentToastOverlayEntry
-        ?.remove(); // Garante a remoção do toast ao sair da página
+        ?.remove();
     super.dispose();
   }
 
@@ -126,6 +127,69 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   void _removeCurrentToast() {
     _currentToastOverlayEntry?.remove();
     _currentToastOverlayEntry = null;
+  }
+
+  void _mostrarDialogoSelecaoPerfil(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Selecionar Perfil'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: predefinedProfiles.length,
+              itemBuilder: (context, index) {
+                final profile = predefinedProfiles[index];
+                return ListTile(
+                  title: Text(profile['name'] as String),
+                  onTap: () {
+                    // Confirma a ação antes de prosseguir
+                    Navigator.of(dialogContext).pop(); // Fecha o diálogo de seleção
+                    _mostrarDialogoConfirmacao(context, ref, profile);
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancelar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _mostrarDialogoConfirmacao(BuildContext context, WidgetRef ref, Map<String, dynamic> profile) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirmar Ação'),
+        content: const Text(
+            'Isso substituirá todos os dados atuais. Deseja continuar?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              final seedData =
+              profile['data'] as List<Map<String, dynamic>>;
+              ref
+                  .read(gestaoControllerProvider.notifier)
+                  .resetAndSeedDatabase(seedData);
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _mostrarDialogoEditarNome(
@@ -230,7 +294,14 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerLow,
       appBar: AppBar(
-        title: Text('Precificador', style: textTheme.titleLarge),
+        // Adicione o GestureDetector como gatilho escondido
+        title: GestureDetector(
+          onLongPress: () {
+            HapticFeedback.heavyImpact();
+            _mostrarDialogoSelecaoPerfil(context, ref);
+          },
+          child: Text('Precificador', style: textTheme.titleLarge),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [

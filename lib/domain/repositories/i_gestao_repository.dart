@@ -1,4 +1,3 @@
-// Importa as entidades puras da camada de domínio
 import '../entities/categoria.dart';
 import '../entities/produto.dart';
 
@@ -9,6 +8,9 @@ import '../entities/produto.dart';
 /// dos detalhes de implementação da fonte de dados.
 abstract class IGestaoRepository {
   Future<void> init();
+
+  /// Reseta o banco de dados e o popula com um conjunto de dados pré-definidos.
+  Future<void> resetAndSeedDatabase(List<Map<String, dynamic>> seedData);
 
   // --- Métodos para Categoria ---
   /// Cria uma nova categoria.

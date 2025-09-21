@@ -27,8 +27,37 @@ class GestaoRepositoryImpl implements IGestaoRepository {
     await Hive.openBox<ProdutoModel>(_produtosBox);
   }
 
-  // --- Métodos para Categoria ---
+  @override
+  Future<void> resetAndSeedDatabase(List<Map<String, dynamic>> seedData) async {
+    final catBox = Hive.box<CategoriaModel>(_categoriasBox);
+    final prodBox = Hive.box<ProdutoModel>(_produtosBox);
 
+    await catBox.clear();
+    await prodBox.clear();
+
+    int catOrder = 0;
+    for (var catData in seedData) {
+      final catId = _uuid.v4();
+      final newCat =
+          CategoriaModel(id: catId, nome: catData['nome'], ordem: catOrder++);
+      await catBox.put(catId, newCat);
+
+      if (catData['produtos'] != null) {
+        for (var prodData in (catData['produtos'] as List)) {
+          final prodId = _uuid.v4();
+          final newProd = ProdutoModel(
+            id: prodId,
+            nome: prodData['nome'],
+            preco: (prodData['preco'] as double?) ?? 0.0,
+            categoriaId: catId,
+          );
+          await prodBox.put(prodId, newProd);
+        }
+      }
+    }
+  }
+
+  // --- Métodos para Categoria ---
   @override
   Future<void> criarCategoria(String nome) async {
     final box = Hive.box<CategoriaModel>(_categoriasBox);

@@ -198,7 +198,8 @@ class GestaoController extends Notifier<GestaoState> {
       await _createProduto(
           nome: nome, categoriaId: state.categoriaSelecionadaId!);
       // Recarrega os produtos da categoria selecionada diretamente
-      final produtosAtualizados = _getProdutosByCategoria(state.categoriaSelecionadaId!);
+      final produtosAtualizados =
+          _getProdutosByCategoria(state.categoriaSelecionadaId!);
       state = state.copyWith(produtos: produtosAtualizados, isLoading: false);
     } catch (e) {
       state = state.copyWith(
@@ -272,7 +273,6 @@ class GestaoController extends Notifier<GestaoState> {
     if (novoPreco != null) {
       try {
         await _updateProdutoPrice(id: produtoId, novoPreco: novoPreco);
-        // Opcional: recarregar produtos se precisar validar o salvamento
       } catch (e) {
         state = state.copyWith(errorMessage: 'Falha ao salvar o preço.');
       }
@@ -310,5 +310,33 @@ class GestaoController extends Notifier<GestaoState> {
     }
 
     return buffer.toString();
+  }
+
+  Future<void> resetAndSeedDatabase(List<Map<String, dynamic>> seedData) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final repository = ref.read(gestaoRepositoryProvider);
+      await repository.resetAndSeedDatabase(seedData);
+
+      // Recarrega o estado para refletir os dados do novo perfil.
+      final categorias = _getCategorias();
+      if (categorias.isNotEmpty) {
+        final primeiraCategoriaId = categorias.first.id;
+        final produtos = _getProdutosByCategoria(primeiraCategoriaId);
+        state = GestaoState(
+          categorias: categorias,
+          produtos: produtos,
+          categoriaSelecionadaId: primeiraCategoriaId,
+        );
+      } else {
+        // Se o perfil estiver vazio, reseta para um estado inicial.
+        state = GestaoState();
+      }
+    } catch (e) {
+      state = state.copyWith(
+          errorMessage: 'Falha ao carregar o perfil.', isLoading: false);
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
   }
 }

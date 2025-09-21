@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -274,7 +273,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
 
     final state = ref.watch(gestaoControllerProvider);
     final categorias = state.categorias;
-    final colorScheme = Theme.of(context).colorScheme;
 
     final screenWidth = MediaQuery.of(context).size.width;
 

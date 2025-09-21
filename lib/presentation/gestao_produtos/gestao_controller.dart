@@ -322,10 +322,10 @@ class GestaoController extends Notifier<GestaoState> {
           final restoDoNome = palavras.skip(1).join(' ');
 
           if (restoDoNome.isEmpty) {
-            buffer.writeln(' *${primeiraPalavra}*: $precoFormatado');
+            buffer.writeln(' *$primeiraPalavra*: $precoFormatado');
           } else {
             buffer
-                .writeln(' *${primeiraPalavra}* $restoDoNome: $precoFormatado');
+                .writeln(' *$primeiraPalavra* $restoDoNome: $precoFormatado');
           }
         }
         buffer.writeln();

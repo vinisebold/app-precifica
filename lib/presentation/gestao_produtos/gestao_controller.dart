@@ -291,8 +291,11 @@ class GestaoController extends Notifier<GestaoState> {
 
   String gerarTextoRelatorio() {
     final hoje = DateTime.now();
-    final formatoData = DateFormat('dd/MM/yyyy');
+    final formatoData = DateFormat('dd/MM/yy');
+    final formatoDiaSemana = DateFormat('EEEE', 'pt_BR');
     final dataFormatada = formatoData.format(hoje);
+    final diaSemanaFormatado = formatoDiaSemana.format(hoje);
+    final categorias = _getCategorias();
     final todosProdutos = _getAllProdutos();
 
     if (todosProdutos.isEmpty) {
@@ -300,15 +303,34 @@ class GestaoController extends Notifier<GestaoState> {
     }
 
     final buffer = StringBuffer();
-    buffer.writeln('Lista de Preços - $dataFormatada');
+    buffer.writeln('*Preços: $diaSemanaFormatado*');
+    buffer.writeln(dataFormatada);
     buffer.writeln();
 
-    for (var produto in todosProdutos) {
-      final precoFormatado =
-          produto.preco.toStringAsFixed(2).replaceAll('.', ',');
-      buffer.writeln('${produto.nome} – R\$ $precoFormatado');
-    }
+    for (var categoria in categorias) {
+      final produtosDaCategoria =
+          todosProdutos.where((p) => p.categoriaId == categoria.id).toList();
+      if (produtosDaCategoria.isNotEmpty) {
+        // Adiciona o emoji no final da linha da categoria
+        buffer.writeln('${categoria.nome.toUpperCase()}: ⬇️');
+        for (var produto in produtosDaCategoria) {
+          final precoFormatado =
+              produto.preco.toStringAsFixed(2).replaceAll('.', ',');
 
+          final palavras = produto.nome.split(' ');
+          final primeiraPalavra = palavras.first;
+          final restoDoNome = palavras.skip(1).join(' ');
+
+          if (restoDoNome.isEmpty) {
+            buffer.writeln(' *${primeiraPalavra}*: $precoFormatado');
+          } else {
+            buffer
+                .writeln(' *${primeiraPalavra}* $restoDoNome: $precoFormatado');
+          }
+        }
+        buffer.writeln();
+      }
+    }
     return buffer.toString();
   }
 

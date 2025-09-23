@@ -4,23 +4,24 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Importa a entidade Produto da camada de domínio
-import '../../../domain/entities/produto.dart';
+import 'package:precifica/domain/entities/produto.dart';
 
 // Importa o controller da camada de apresentação
 import '../gestao_controller.dart';
 
 // Importa os formatters da nova pasta de utilitários
-import '../../../app/core/utils/currency_formatter.dart';
-import '../../../app/core/utils/final_cursor_text_input_formatter.dart';
-
+import 'package:precifica/app/core/utils/currency_formatter.dart';
+import 'package:precifica/app/core/utils/final_cursor_text_input_formatter.dart';
 
 class ItemProduto extends ConsumerStatefulWidget {
   final Produto produto;
   final VoidCallback onDoubleTap;
+  final VoidCallback onTap;
 
   const ItemProduto({
     required this.produto,
     required this.onDoubleTap,
+    required this.onTap,
     super.key,
   });
 
@@ -42,10 +43,10 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     _precoController = InputCursorFinalController(
       text: formatter
           .formatEditUpdate(
-        TextEditingValue.empty,
-        TextEditingValue(
-            text: (widget.produto.preco * 100).toInt().toString()),
-      )
+            TextEditingValue.empty,
+            TextEditingValue(
+                text: (widget.produto.preco * 100).toInt().toString()),
+          )
           .text,
     );
   }
@@ -110,10 +111,18 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
+    final isAtivo = widget.produto.isAtivo;
 
-    // A construção do conteúdo do item (ListTile) permanece a mesma
+    // A construção do conteúdo do item (ListTile)
     final itemContent = ListTile(
-      title: Text(widget.produto.nome),
+      title: Text(
+        widget.produto.nome,
+        style: TextStyle(
+          decoration:
+              isAtivo ? TextDecoration.none : TextDecoration.lineThrough,
+          color: isAtivo ? null : colorScheme.outline,
+        ),
+      ),
       trailing: SizedBox(
         width: 120,
         child: TextField(
@@ -135,7 +144,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
               borderSide: BorderSide.none,
             ),
             contentPadding:
-            const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           ),
           keyboardType: TextInputType.number,
           inputFormatters: [
@@ -184,6 +193,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
         ),
         child: GestureDetector(
           onDoubleTap: widget.onDoubleTap,
+          onTap: widget.onTap,
           child: itemContent,
         ),
       ),

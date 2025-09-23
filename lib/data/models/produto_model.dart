@@ -17,12 +17,21 @@ class ProdutoModel extends Produto {
   @HiveField(3)
   String categoriaId;
 
+  @HiveField(4, defaultValue: true)
+  bool isAtivo;
+
   ProdutoModel({
     required this.id,
     required this.nome,
     this.preco = 0.0,
     required this.categoriaId,
-  }) : super(id: id, nome: nome, preco: preco, categoriaId: categoriaId);
+    this.isAtivo = true,
+  }) : super(
+            id: id,
+            nome: nome,
+            preco: preco,
+            categoriaId: categoriaId,
+            isAtivo: isAtivo);
 
   factory ProdutoModel.fromEntity(Produto produto) {
     return ProdutoModel(
@@ -30,6 +39,7 @@ class ProdutoModel extends Produto {
       nome: produto.nome,
       preco: produto.preco,
       categoriaId: produto.categoriaId,
+      isAtivo: produto.isAtivo,
     );
   }
 }

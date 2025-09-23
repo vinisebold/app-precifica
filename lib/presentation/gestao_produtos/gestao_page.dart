@@ -5,7 +5,7 @@ import 'package:precifica/data/profiles.dart';
 import 'package:share_plus/share_plus.dart';
 
 // Importando as entidades do domínio
-import '../../domain/entities/produto.dart';
+import 'package:precifica/domain/entities/produto.dart';
 
 // Importando o controller e o state da camada de apresentação
 import 'gestao_controller.dart';
@@ -353,6 +353,10 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                 produto.id, novoNome);
                           },
                         );
+                      },
+                      onProdutoTap: (produto) {
+                        gestaoNotifier.atualizarStatusProduto(
+                            produto.id, !produto.isAtivo);
                       },
                     );
                   },

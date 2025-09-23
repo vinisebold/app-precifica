@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/entities/produto.dart';
+import 'package:precifica/domain/entities/produto.dart';
 import '../gestao_controller.dart';
 import 'item_produto.dart';
 
 class ProductListView extends ConsumerWidget {
   final Function(Produto) onProdutoDoubleTap;
+  final Function(Produto) onProdutoTap;
   final String categoriaId;
 
   const ProductListView({
     super.key,
     required this.onProdutoDoubleTap,
+    required this.onProdutoTap,
     required this.categoriaId,
   });
 
@@ -62,6 +64,7 @@ class ProductListView extends ConsumerWidget {
           return ItemProduto(
             produto: produto,
             onDoubleTap: () => onProdutoDoubleTap(produto),
+            onTap: () => onProdutoTap(produto),
           );
         },
         separatorBuilder: (context, index) => const Divider(

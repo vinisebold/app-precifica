@@ -49,4 +49,7 @@ abstract class IGestaoRepository {
 
   /// Atualiza o nome de um produto existente.
   Future<void> atualizarNomeProduto(String produtoId, String novoNome);
+
+  /// Atualiza o status de um produto (ativo/inativo).
+  Future<void> atualizarStatusProduto(String produtoId, bool isAtivo);
 }

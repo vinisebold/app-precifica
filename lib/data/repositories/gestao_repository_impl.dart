@@ -50,6 +50,7 @@ class GestaoRepositoryImpl implements IGestaoRepository {
             nome: prodData['nome'],
             preco: (prodData['preco'] as double?) ?? 0.0,
             categoriaId: catId,
+            isAtivo: (prodData['isAtivo'] as bool?) ?? true,
           );
           await prodBox.put(prodId, newProd);
         }
@@ -172,6 +173,16 @@ class GestaoRepositoryImpl implements IGestaoRepository {
     final produto = box.get(produtoId);
     if (produto != null) {
       produto.nome = novoNome;
+      await box.put(produtoId, produto);
+    }
+  }
+
+  @override
+  Future<void> atualizarStatusProduto(String produtoId, bool isAtivo) async {
+    final box = Hive.box<ProdutoModel>(_produtosBox);
+    final produto = box.get(produtoId);
+    if (produto != null) {
+      produto.isAtivo = isAtivo;
       await box.put(produtoId, produto);
     }
   }

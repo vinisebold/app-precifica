@@ -20,19 +20,22 @@ class CategoriaModelAdapter extends TypeAdapter<CategoriaModel> {
       id: fields[0] as String,
       nome: fields[1] as String,
       ordem: fields[2] as int,
+      produtoIds: fields[3] == null ? [] : (fields[3] as List).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, CategoriaModel obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.nome)
       ..writeByte(2)
-      ..write(obj.ordem);
+      ..write(obj.ordem)
+      ..writeByte(3)
+      ..write(obj.produtoIds);
   }
 
   @override

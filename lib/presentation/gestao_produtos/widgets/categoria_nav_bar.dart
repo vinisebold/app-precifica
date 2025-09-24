@@ -31,6 +31,9 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
   final Map<String, double> _opacities = {};
   final Map<String, double> _rotations = {};
 
+  double _leftPadding = 0.0;
+  double _rightPadding = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -171,8 +174,8 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
   void _calculateVisuals() {
     if (!mounted || !_scrollController.hasClients) return;
 
-    final viewportWidth = MediaQuery.of(context).size.width;
-    final viewportCenter = viewportWidth / 2;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final viewportCenter = screenWidth / 2;
     final state = ref.read(gestaoControllerProvider);
     final categorias = state.categorias;
 
@@ -195,20 +198,49 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
       final signedDistance = itemCenter - viewportCenter;
       final distance = signedDistance.abs();
 
-      final maxDistance =
-          viewportWidth / 1.5; // Ajuste para o alcance do efeito
+      final maxDistance = screenWidth / 1.5; // Ajuste para o alcance do efeito
       final factor =
           (maxDistance - distance.clamp(0, maxDistance)) / maxDistance;
 
       final scale = 0.7 + 0.5 * factor; // min 0.7, max 1.2
       final opacity = 0.6 + 0.4 * factor; // min 0.6, max 1.0
       final rotation =
-          signedDistance / viewportWidth * 0.3; // Rotação máxima ~17 graus
+          signedDistance / screenWidth * 0.3; // Rotação máxima ~17 graus
 
       newScales[categoria.id] = scale;
       newOpacities[categoria.id] = opacity;
       newRotations[categoria.id] = rotation;
     }
+
+    // Calcula paddings assimétricos para centralização perfeita das extremidades
+    double newLeftPadding = (screenWidth / 2) - 48.0; // Fallback
+    double newRightPadding = (screenWidth / 2) - 48.0; // Fallback
+
+    if (categorias.isNotEmpty) {
+      final firstCategoria = categorias.first;
+      final lastCategoria = categorias.last;
+
+      final firstKey = _itemKeys[firstCategoria.id];
+      final lastKey = _itemKeys[lastCategoria.id];
+
+      final firstBox =
+          firstKey?.currentContext?.findRenderObject() as RenderBox?;
+      final lastBox = lastKey?.currentContext?.findRenderObject() as RenderBox?;
+
+      if (firstBox != null &&
+          firstBox.hasSize &&
+          lastBox != null &&
+          lastBox.hasSize) {
+        final halfFirstWidth = firstBox.size.width / 2;
+        final halfLastWidth = lastBox.size.width / 2;
+
+        newLeftPadding = (screenWidth / 2) - 8.0 - halfFirstWidth;
+        newRightPadding = (screenWidth / 2) - 8.0 - halfLastWidth;
+      }
+    }
+
+    _leftPadding = newLeftPadding;
+    _rightPadding = newRightPadding;
 
     setState(() {
       _scales.clear();
@@ -274,13 +306,16 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
     final state = ref.watch(gestaoControllerProvider);
     final categorias = state.categorias;
 
-    final screenWidth = MediaQuery.of(context).size.width;
+    // Garante atualização dos visuais e padding após o build quando há categorias
+    if (categorias.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _calculateVisuals();
+        }
+      });
+    }
 
-    // 2. Calcule o padding horizontal.
-    // O ideal é (largura da tela / 2) - (metade da largura de um item).
-    // Vamos usar um valor aproximado para simplificar, como 40.0.
-    // Isso garante que o centro do primeiro/último item possa alcançar o centro da tela.
-    final horizontalPadding = (screenWidth / 2) - 40.0;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     // Gerencia as chaves dos itens para o scroll e drag
     for (var cat in categorias) {
@@ -310,7 +345,10 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
           physics: const ClampingScrollPhysics(),
           clipBehavior: Clip.none,
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+            padding: EdgeInsets.only(
+              left: _leftPadding,
+              right: _rightPadding,
+            ),
             child: Row(
               children: categorias.map((categoria) {
                 final itemKey = _itemKeys[categoria.id]!;
@@ -532,7 +570,7 @@ class _CategoriaItemState extends State<_CategoriaItem> {
                   : Colors.transparent,
               width: 1,
             ),
-            borderRadius: BorderRadius.circular(cornerRadius), // Borda animada
+            borderRadius: BorderRadius.circular(cornerRadius),
           ),
           child: Center(
             child: Text(

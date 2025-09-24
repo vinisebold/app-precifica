@@ -45,10 +45,10 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     _precoController = InputCursorFinalController(
       text: formatter
           .formatEditUpdate(
-            TextEditingValue.empty,
-            TextEditingValue(
-                text: (widget.produto.preco * 100).toInt().toString()),
-          )
+        TextEditingValue.empty,
+        TextEditingValue(
+            text: (widget.produto.preco * 100).toInt().toString()),
+      )
           .text,
     );
   }
@@ -120,7 +120,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
         widget.produto.nome,
         style: TextStyle(
           decoration:
-              isAtivo ? TextDecoration.none : TextDecoration.lineThrough,
+          isAtivo ? TextDecoration.none : TextDecoration.lineThrough,
           color: isAtivo ? null : colorScheme.outline,
         ),
       ),
@@ -148,7 +148,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
               borderSide: BorderSide.none,
             ),
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           ),
           keyboardType: TextInputType.number,
           inputFormatters: [
@@ -172,33 +172,44 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
       ),
     );
 
-    // A lógica do LongPressDraggable também permanece, pois o tipo `Produto`
-    // agora vem da entidade do domínio, que é o que o controller espera.
-    return Opacity(
-      opacity: _isReverting ? 0.0 : 1.0,
-      child: LongPressDraggable<Produto>(
-        data: widget.produto,
-        onDragStarted: () {
-          HapticFeedback.lightImpact();
-          gestaoNotifier.setDraggingProduto(true);
-        },
-        onDragEnd: (details) {
-          if (!details.wasAccepted && !_isReverting) {
-            gestaoNotifier.setDraggingProduto(false);
-          }
-        },
-        onDraggableCanceled: (velocity, offset) {
-          _revertDragAnimation(offset, feedbackWidget);
-        },
-        feedback: feedbackWidget,
-        childWhenDragging: Opacity(
-          opacity: 0.3,
-          child: itemContent,
-        ),
-        child: GestureDetector(
-          onDoubleTap: widget.onDoubleTap,
-          onTap: widget.onTap,
-          child: itemContent,
+    // O GestureDetector para onTap (reativar) agora envolve tudo.
+    return GestureDetector(
+      onTap: widget.onTap,
+      // Passa o comportamento de toque para os filhos se não houver conflito.
+      behavior: HitTestBehavior.translucent,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: isAtivo ? 1.0 : 0.4,
+        child: IgnorePointer(
+          ignoring: !isAtivo,
+          child: Opacity(
+            opacity: _isReverting ? 0.0 : 1.0,
+            child: LongPressDraggable<Produto>(
+              data: widget.produto,
+              onDragStarted: () {
+                HapticFeedback.lightImpact();
+                gestaoNotifier.setDraggingProduto(true);
+              },
+              onDragEnd: (details) {
+                if (!details.wasAccepted && !_isReverting) {
+                  gestaoNotifier.setDraggingProduto(false);
+                }
+              },
+              onDraggableCanceled: (velocity, offset) {
+                _revertDragAnimation(offset, feedbackWidget);
+              },
+              feedback: feedbackWidget,
+              childWhenDragging: Opacity(
+                opacity: 0.3,
+                child: itemContent,
+              ),
+              // O GestureDetector interno agora só lida com o doubleTap.
+              child: GestureDetector(
+                onDoubleTap: widget.onDoubleTap,
+                child: itemContent,
+              ),
+            ),
+          ),
         ),
       ),
     );

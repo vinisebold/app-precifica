@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Importa a entidade Produto da camada de domínio
 import 'package:precifica/domain/entities/produto.dart';
 
-// Importa o controller da camada de apresentação
 import '../gestao_controller.dart';
 
-// Importa os formatters da nova pasta de utilitários
 import 'package:precifica/app/core/utils/currency_formatter.dart';
 import 'package:precifica/app/core/utils/final_cursor_text_input_formatter.dart';
 
@@ -17,11 +14,17 @@ class ItemProduto extends ConsumerStatefulWidget {
   final Produto produto;
   final VoidCallback onDoubleTap;
   final VoidCallback onTap;
+  final FocusNode focusNode;
+  final VoidCallback onSubmitted;
+  final TextInputAction textInputAction;
 
   const ItemProduto({
     required this.produto,
     required this.onDoubleTap,
     required this.onTap,
+    required this.focusNode,
+    required this.onSubmitted,
+    required this.textInputAction,
     super.key,
   });
 
@@ -38,7 +41,6 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
   @override
   void initState() {
     super.initState();
-    // A lógica de inicialização do controller do TextField permanece a mesma
     final formatter = MoedaFormatter();
     _precoController = InputCursorFinalController(
       text: formatter
@@ -59,7 +61,6 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     super.dispose();
   }
 
-  // A lógica de animação não precisa de alterações
   void _revertDragAnimation(Offset dragEndOffset, Widget feedback) {
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null || !renderBox.attached) return;
@@ -127,7 +128,10 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
         width: 120,
         child: TextField(
           controller: _precoController,
+          focusNode: widget.focusNode,
           textAlign: TextAlign.right,
+          onSubmitted: (_) => widget.onSubmitted(),
+          textInputAction: widget.textInputAction,
           onChanged: (novoPrecoFormatado) {
             if (_debounce?.isActive ?? false) _debounce!.cancel();
             _debounce = Timer(const Duration(milliseconds: 500), () {

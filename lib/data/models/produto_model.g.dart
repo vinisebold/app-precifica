@@ -21,13 +21,14 @@ class ProdutoModelAdapter extends TypeAdapter<ProdutoModel> {
       nome: fields[1] as String,
       preco: fields[2] as double,
       categoriaId: fields[3] as String,
+      isAtivo: fields[4] == null ? true : fields[4] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, ProdutoModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class ProdutoModelAdapter extends TypeAdapter<ProdutoModel> {
       ..writeByte(2)
       ..write(obj.preco)
       ..writeByte(3)
-      ..write(obj.categoriaId);
+      ..write(obj.categoriaId)
+      ..writeByte(4)
+      ..write(obj.isAtivo);
   }
 
   @override

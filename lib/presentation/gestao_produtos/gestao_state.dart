@@ -1,5 +1,5 @@
-import '../../domain/entities/categoria.dart';
-import '../../domain/entities/produto.dart';
+import 'package:precifica/domain/entities/categoria.dart';
+import 'package:precifica/domain/entities/produto.dart';
 
 /// Representa todos os possíveis estados da tela de gestão.
 class GestaoState {

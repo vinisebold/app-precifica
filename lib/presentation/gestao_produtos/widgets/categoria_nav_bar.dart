@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Importa a entidade Categoria da camada de domínio
-import '../../../domain/entities/categoria.dart';
+import 'package:precifica/domain/entities/categoria.dart';
 
 // Importa o controller da camada de apresentação
 import '../gestao_controller.dart';

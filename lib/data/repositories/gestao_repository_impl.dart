@@ -38,22 +38,31 @@ class GestaoRepositoryImpl implements IGestaoRepository {
     int catOrder = 0;
     for (var catData in seedData) {
       final catId = _uuid.v4();
-      final newCat =
-          CategoriaModel(id: catId, nome: catData['nome'], ordem: catOrder++);
-      await catBox.put(catId, newCat);
+      final List<String> produtoIds = [];
 
       if (catData['produtos'] != null) {
         for (var prodData in (catData['produtos'] as List)) {
           final prodId = _uuid.v4();
+          produtoIds.add(prodId);
+
           final newProd = ProdutoModel(
             id: prodId,
             nome: prodData['nome'],
             preco: (prodData['preco'] as double?) ?? 0.0,
             categoriaId: catId,
+            isAtivo: (prodData['isAtivo'] as bool?) ?? true,
           );
           await prodBox.put(prodId, newProd);
         }
       }
+
+      final newCat = CategoriaModel(
+        id: catId,
+        nome: catData['nome'],
+        ordem: catOrder++,
+        produtoIds: produtoIds,
+      );
+      await catBox.put(catId, newCat);
     }
   }
 
@@ -90,16 +99,14 @@ class GestaoRepositoryImpl implements IGestaoRepository {
 
   @override
   Future<void> deletarCategoria(String categoriaId) async {
-    final boxCategorias = Hive.box<CategoriaModel>(_categoriasBox);
-    final boxProdutos = Hive.box<ProdutoModel>(_produtosBox);
+    final categoriasBox = Hive.box<CategoriaModel>(_categoriasBox);
+    final produtosBox = Hive.box<ProdutoModel>(_produtosBox);
 
-    final produtosParaDeletar =
-        boxProdutos.values.where((p) => p.categoriaId == categoriaId).toList();
+    final categoria = categoriasBox.get(categoriaId);
+    if (categoria == null) return;
 
-    final chavesDosProdutos = produtosParaDeletar.map((p) => p.id).toList();
-
-    await boxProdutos.deleteAll(chavesDosProdutos);
-    await boxCategorias.delete(categoriaId);
+    await produtosBox.deleteAll(categoria.produtoIds);
+    await categoriasBox.delete(categoriaId);
   }
 
   @override
@@ -117,22 +124,33 @@ class GestaoRepositoryImpl implements IGestaoRepository {
 
   @override
   Future<void> criarProduto(String nome, String categoriaId) async {
-    final box = Hive.box<ProdutoModel>(_produtosBox);
+    final produtosBox = Hive.box<ProdutoModel>(_produtosBox);
+    final categoriasBox = Hive.box<CategoriaModel>(_categoriasBox);
     final novoId = _uuid.v4();
 
-    final novoProduto = ProdutoModel(
-      id: novoId,
-      nome: nome,
-      categoriaId: categoriaId,
-    );
-    await box.put(novoId, novoProduto);
+    final novoProduto =
+        ProdutoModel(id: novoId, nome: nome, categoriaId: categoriaId);
+    await produtosBox.put(novoId, novoProduto);
+
+    final categoria = categoriasBox.get(categoriaId);
+    if (categoria != null) {
+      categoria.produtoIds.add(novoId);
+      await categoriasBox.put(categoriaId, categoria);
+    }
   }
 
   @override
   List<Produto> getProdutosPorCategoria(String categoriaId) {
-    final box = Hive.box<ProdutoModel>(_produtosBox);
-    return box.values
-        .where((produto) => produto.categoriaId == categoriaId)
+    final produtosBox = Hive.box<ProdutoModel>(_produtosBox);
+    final categoriasBox = Hive.box<CategoriaModel>(_categoriasBox);
+
+    final categoria = categoriasBox.get(categoriaId);
+    if (categoria == null) return [];
+
+    return categoria.produtoIds
+        .map((id) => produtosBox.get(id))
+        .where((produto) => produto != null)
+        .cast<Produto>()
         .toList();
   }
 
@@ -155,15 +173,30 @@ class GestaoRepositoryImpl implements IGestaoRepository {
 
   @override
   Future<void> deletarProduto(String produtoId, String categoriaId) async {
-    final box = Hive.box<ProdutoModel>(_produtosBox);
-    await box.delete(produtoId);
+    final produtosBox = Hive.box<ProdutoModel>(_produtosBox);
+    final categoriasBox = Hive.box<CategoriaModel>(_categoriasBox);
+    await produtosBox.delete(produtoId);
+
+    final categoria = categoriasBox.get(categoriaId);
+    if (categoria != null) {
+      categoria.produtoIds.remove(produtoId);
+      await categoriasBox.put(categoriaId, categoria);
+    }
   }
 
   @override
   Future<void> adicionarProdutoObjeto(Produto produto) async {
-    final box = Hive.box<ProdutoModel>(_produtosBox);
+    final produtosBox = Hive.box<ProdutoModel>(_produtosBox);
+    final categoriasBox = Hive.box<CategoriaModel>(_categoriasBox);
     final produtoModel = ProdutoModel.fromEntity(produto);
-    await box.put(produtoModel.id, produtoModel);
+
+    await produtosBox.put(produtoModel.id, produtoModel);
+
+    final categoria = categoriasBox.get(produto.categoriaId);
+    if (categoria != null && !categoria.produtoIds.contains(produto.id)) {
+      categoria.produtoIds.add(produto.id);
+      await categoriasBox.put(produto.categoriaId, categoria);
+    }
   }
 
   @override
@@ -172,6 +205,16 @@ class GestaoRepositoryImpl implements IGestaoRepository {
     final produto = box.get(produtoId);
     if (produto != null) {
       produto.nome = novoNome;
+      await box.put(produtoId, produto);
+    }
+  }
+
+  @override
+  Future<void> atualizarStatusProduto(String produtoId, bool isAtivo) async {
+    final box = Hive.box<ProdutoModel>(_produtosBox);
+    final produto = box.get(produtoId);
+    if (produto != null) {
+      produto.isAtivo = isAtivo;
       await box.put(produtoId, produto);
     }
   }

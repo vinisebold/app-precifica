@@ -439,7 +439,8 @@ class GestaoController extends Notifier<GestaoState> {
 
     for (var categoria in categorias) {
       final produtosDaCategoria = todosProdutos
-          .where((p) => p.categoriaId == categoria.id && p.isAtivo)
+          .where(
+              (p) => p.categoriaId == categoria.id && p.isAtivo && p.preco > 0)
           .toList();
       if (produtosDaCategoria.isNotEmpty) {
         buffer.writeln('${categoria.nome.toUpperCase()}: ⬇️');
@@ -460,6 +461,12 @@ class GestaoController extends Notifier<GestaoState> {
         buffer.writeln();
       }
     }
-    return buffer.toString();
+
+    final report = buffer.toString();
+    if (report.split('\n').where((line) => line.isNotEmpty).length <= 2) {
+      return 'Nenhum produto com preço cadastrado para gerar relatório.';
+    }
+
+    return report;
   }
 }

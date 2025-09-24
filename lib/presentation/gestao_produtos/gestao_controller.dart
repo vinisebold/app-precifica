@@ -1,25 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:precifica/domain/usecases/produto/update_produto_status.dart';
 
 // Dependências das outras camadas
-import '../../data/repositories/gestao_repository_impl.dart';
-import '../../domain/entities/categoria.dart';
-import '../../domain/entities/produto.dart';
-import '../../domain/repositories/i_gestao_repository.dart';
+import 'package:precifica/data/repositories/gestao_repository_impl.dart';
+import 'package:precifica/domain/entities/categoria.dart';
+import 'package:precifica/domain/entities/produto.dart';
+import 'package:precifica/domain/repositories/i_gestao_repository.dart';
 
 // Importando todos os UseCases
-import '../../domain/usecases/categoria/create_categoria.dart';
-import '../../domain/usecases/categoria/delete_categoria.dart';
-import '../../domain/usecases/categoria/get_categorias.dart';
-import '../../domain/usecases/categoria/reorder_categorias.dart';
-import '../../domain/usecases/categoria/update_categoria_name.dart';
-import '../../domain/usecases/produto/create_produto.dart';
-import '../../domain/usecases/produto/delete_produto.dart';
-import '../../domain/usecases/produto/get_all_produtos.dart';
-import '../../domain/usecases/produto/get_produtos_by_categoria.dart';
-import '../../domain/usecases/produto/undo_delete_produto.dart';
-import '../../domain/usecases/produto/update_produto_name.dart';
-import '../../domain/usecases/produto/update_produto_price.dart';
+import 'package:precifica/domain/usecases/categoria/create_categoria.dart';
+import 'package:precifica/domain/usecases/categoria/delete_categoria.dart';
+import 'package:precifica/domain/usecases/categoria/get_categorias.dart';
+import 'package:precifica/domain/usecases/categoria/reorder_categorias.dart';
+import 'package:precifica/domain/usecases/categoria/update_categoria_name.dart';
+import 'package:precifica/domain/usecases/produto/create_produto.dart';
+import 'package:precifica/domain/usecases/produto/delete_produto.dart';
+import 'package:precifica/domain/usecases/produto/get_all_produtos.dart';
+import 'package:precifica/domain/usecases/produto/get_produtos_by_categoria.dart';
+import 'package:precifica/domain/usecases/produto/undo_delete_produto.dart';
+import 'package:precifica/domain/usecases/produto/update_produto_name.dart';
+import 'package:precifica/domain/usecases/produto/update_produto_price.dart';
 
 // Importando o State
 import 'gestao_state.dart';
@@ -51,6 +52,7 @@ class GestaoController extends Notifier<GestaoState> {
   late final UpdateProdutoPrice _updateProdutoPrice;
   late final UndoDeleteProduto _undoDeleteProduto;
   late final GetAllProdutos _getAllProdutos;
+  late final UpdateProdutoStatus _updateProdutoStatus;
 
   @override
   GestaoState build() {
@@ -68,6 +70,7 @@ class GestaoController extends Notifier<GestaoState> {
     _updateProdutoPrice = UpdateProdutoPrice(repository);
     _undoDeleteProduto = UndoDeleteProduto(repository);
     _getAllProdutos = GetAllProdutos(repository);
+    _updateProdutoStatus = UpdateProdutoStatus(repository);
 
     // Lógica para carregar o estado inicial
     try {
@@ -103,12 +106,16 @@ class GestaoController extends Notifier<GestaoState> {
       categoriaSelecionadaId: categoriaId,
       clearUltimoProdutoDeletado: true,
     );
+    _refreshProdutosDaCategoriaAtual();
+  }
 
+  void _refreshProdutosDaCategoriaAtual() {
+    if (state.categoriaSelecionadaId == null) return;
     try {
-      final produtos = _getProdutosByCategoria(categoriaId);
+      final produtos = _getProdutosByCategoria(state.categoriaSelecionadaId!);
       state = state.copyWith(produtos: produtos);
     } catch (e) {
-      state = state.copyWith(errorMessage: 'Falha ao carregar produtos.');
+      state = state.copyWith(errorMessage: 'Falha ao recarregar produtos.');
     }
   }
 
@@ -197,13 +204,11 @@ class GestaoController extends Notifier<GestaoState> {
     try {
       await _createProduto(
           nome: nome, categoriaId: state.categoriaSelecionadaId!);
-      // Recarrega os produtos da categoria selecionada diretamente
-      final produtosAtualizados =
-          _getProdutosByCategoria(state.categoriaSelecionadaId!);
-      state = state.copyWith(produtos: produtosAtualizados, isLoading: false);
+      _refreshProdutosDaCategoriaAtual();
     } catch (e) {
-      state = state.copyWith(
-          errorMessage: 'Falha ao criar produto.', isLoading: false);
+      state = state.copyWith(errorMessage: 'Falha ao criar produto.');
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 
@@ -246,21 +251,15 @@ class GestaoController extends Notifier<GestaoState> {
     try {
       await _undoDeleteProduto(produtoParaRestaurar);
       if (state.categoriaSelecionadaId == categoriaOriginalId) {
-        state = state.copyWith(
-          produtos: _getProdutosByCategoria(categoriaOriginalId),
-          clearUltimoProdutoDeletado: true,
-          isLoading: false,
-        );
-      } else {
-        state =
-            state.copyWith(clearUltimoProdutoDeletado: true, isLoading: false);
+        _refreshProdutosDaCategoriaAtual();
       }
     } catch (e) {
       state = state.copyWith(
         errorMessage: 'Falha ao desfazer a exclusão.',
-        clearUltimoProdutoDeletado: true,
-        isLoading: false,
       );
+    } finally {
+      state =
+          state.copyWith(clearUltimoProdutoDeletado: true, isLoading: false);
     }
   }
 
@@ -282,10 +281,20 @@ class GestaoController extends Notifier<GestaoState> {
   Future<void> atualizarNomeProduto(String id, String novoNome) async {
     try {
       await _updateProdutoName(id: id, novoNome: novoNome);
-      selecionarCategoria(state.categoriaSelecionadaId!);
+      _refreshProdutosDaCategoriaAtual();
     } catch (e) {
       state =
           state.copyWith(errorMessage: 'Falha ao atualizar nome do produto.');
+    }
+  }
+
+  Future<void> atualizarStatusProduto(String id, bool isAtivo) async {
+    try {
+      await _updateProdutoStatus(id: id, isAtivo: isAtivo);
+      _refreshProdutosDaCategoriaAtual();
+    } catch (e) {
+      state =
+          state.copyWith(errorMessage: 'Falha ao atualizar status do produto.');
     }
   }
 
@@ -308,8 +317,9 @@ class GestaoController extends Notifier<GestaoState> {
     buffer.writeln();
 
     for (var categoria in categorias) {
-      final produtosDaCategoria =
-          todosProdutos.where((p) => p.categoriaId == categoria.id).toList();
+      final produtosDaCategoria = todosProdutos
+          .where((p) => p.categoriaId == categoria.id && p.isAtivo)
+          .toList();
       if (produtosDaCategoria.isNotEmpty) {
         // Adiciona o emoji no final da linha da categoria
         buffer.writeln('${categoria.nome.toUpperCase()}: ⬇️');
@@ -324,8 +334,7 @@ class GestaoController extends Notifier<GestaoState> {
           if (restoDoNome.isEmpty) {
             buffer.writeln(' *$primeiraPalavra*: $precoFormatado');
           } else {
-            buffer
-                .writeln(' *$primeiraPalavra* $restoDoNome: $precoFormatado');
+            buffer.writeln(' *$primeiraPalavra* $restoDoNome: $precoFormatado');
           }
         }
         buffer.writeln();

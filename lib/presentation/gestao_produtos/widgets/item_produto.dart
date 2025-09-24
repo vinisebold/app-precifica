@@ -3,24 +3,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Importa a entidade Produto da camada de domínio
-import '../../../domain/entities/produto.dart';
+import 'package:precifica/domain/entities/produto.dart';
 
-// Importa o controller da camada de apresentação
 import '../gestao_controller.dart';
 
-// Importa os formatters da nova pasta de utilitários
-import '../../../app/core/utils/currency_formatter.dart';
-import '../../../app/core/utils/final_cursor_text_input_formatter.dart';
-
+import 'package:precifica/app/core/utils/currency_formatter.dart';
+import 'package:precifica/app/core/utils/final_cursor_text_input_formatter.dart';
 
 class ItemProduto extends ConsumerStatefulWidget {
   final Produto produto;
   final VoidCallback onDoubleTap;
+  final VoidCallback onTap;
+  final FocusNode focusNode;
+  final VoidCallback onSubmitted;
+  final TextInputAction textInputAction;
 
   const ItemProduto({
     required this.produto,
     required this.onDoubleTap,
+    required this.onTap,
+    required this.focusNode,
+    required this.onSubmitted,
+    required this.textInputAction,
     super.key,
   });
 
@@ -37,7 +41,6 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
   @override
   void initState() {
     super.initState();
-    // A lógica de inicialização do controller do TextField permanece a mesma
     final formatter = MoedaFormatter();
     _precoController = InputCursorFinalController(
       text: formatter
@@ -58,7 +61,6 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     super.dispose();
   }
 
-  // A lógica de animação não precisa de alterações
   void _revertDragAnimation(Offset dragEndOffset, Widget feedback) {
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null || !renderBox.attached) return;
@@ -110,15 +112,26 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
+    final isAtivo = widget.produto.isAtivo;
 
-    // A construção do conteúdo do item (ListTile) permanece a mesma
+    // A construção do conteúdo do item (ListTile)
     final itemContent = ListTile(
-      title: Text(widget.produto.nome),
+      title: Text(
+        widget.produto.nome,
+        style: TextStyle(
+          decoration:
+          isAtivo ? TextDecoration.none : TextDecoration.lineThrough,
+          color: isAtivo ? null : colorScheme.outline,
+        ),
+      ),
       trailing: SizedBox(
         width: 120,
         child: TextField(
           controller: _precoController,
+          focusNode: widget.focusNode,
           textAlign: TextAlign.right,
+          onSubmitted: (_) => widget.onSubmitted(),
+          textInputAction: widget.textInputAction,
           onChanged: (novoPrecoFormatado) {
             if (_debounce?.isActive ?? false) _debounce!.cancel();
             _debounce = Timer(const Duration(milliseconds: 500), () {
@@ -159,32 +172,44 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
       ),
     );
 
-    // A lógica do LongPressDraggable também permanece, pois o tipo `Produto`
-    // agora vem da entidade do domínio, que é o que o controller espera.
-    return Opacity(
-      opacity: _isReverting ? 0.0 : 1.0,
-      child: LongPressDraggable<Produto>(
-        data: widget.produto,
-        onDragStarted: () {
-          HapticFeedback.lightImpact();
-          gestaoNotifier.setDraggingProduto(true);
-        },
-        onDragEnd: (details) {
-          if (!details.wasAccepted && !_isReverting) {
-            gestaoNotifier.setDraggingProduto(false);
-          }
-        },
-        onDraggableCanceled: (velocity, offset) {
-          _revertDragAnimation(offset, feedbackWidget);
-        },
-        feedback: feedbackWidget,
-        childWhenDragging: Opacity(
-          opacity: 0.3,
-          child: itemContent,
-        ),
-        child: GestureDetector(
-          onDoubleTap: widget.onDoubleTap,
-          child: itemContent,
+    // O GestureDetector para onTap (reativar) agora envolve tudo.
+    return GestureDetector(
+      onTap: widget.onTap,
+      // Passa o comportamento de toque para os filhos se não houver conflito.
+      behavior: HitTestBehavior.translucent,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: isAtivo ? 1.0 : 0.4,
+        child: IgnorePointer(
+          ignoring: !isAtivo,
+          child: Opacity(
+            opacity: _isReverting ? 0.0 : 1.0,
+            child: LongPressDraggable<Produto>(
+              data: widget.produto,
+              onDragStarted: () {
+                HapticFeedback.lightImpact();
+                gestaoNotifier.setDraggingProduto(true);
+              },
+              onDragEnd: (details) {
+                if (!details.wasAccepted && !_isReverting) {
+                  gestaoNotifier.setDraggingProduto(false);
+                }
+              },
+              onDraggableCanceled: (velocity, offset) {
+                _revertDragAnimation(offset, feedbackWidget);
+              },
+              feedback: feedbackWidget,
+              childWhenDragging: Opacity(
+                opacity: 0.3,
+                child: itemContent,
+              ),
+              // O GestureDetector interno agora só lida com o doubleTap.
+              child: GestureDetector(
+                onDoubleTap: widget.onDoubleTap,
+                child: itemContent,
+              ),
+            ),
+          ),
         ),
       ),
     );

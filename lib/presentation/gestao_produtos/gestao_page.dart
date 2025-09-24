@@ -20,28 +20,31 @@ class GestaoPage extends ConsumerStatefulWidget {
 
 class _GestaoPageState extends ConsumerState<GestaoPage> {
   late PageController _pageController;
-  OverlayEntry? _currentToastOverlayEntry;
 
   @override
   void initState() {
     super.initState();
-    final selectedId =
-        ref.read(gestaoControllerProvider).categoriaSelecionadaId;
-    final categorias = ref.read(gestaoControllerProvider).categorias;
-    final initialPage = selectedId != null
-        ? categorias.indexWhere((c) => c.id == selectedId)
-        : 0;
-    _pageController =
-        PageController(initialPage: initialPage > -1 ? initialPage : 0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final selectedId =
+            ref.read(gestaoControllerProvider).categoriaSelecionadaId;
+        final categorias = ref.read(gestaoControllerProvider).categorias;
+        final initialPage = selectedId != null
+            ? categorias.indexWhere((c) => c.id == selectedId)
+            : 0;
+        _pageController =
+            PageController(initialPage: initialPage > -1 ? initialPage : 0);
+      }
+    });
   }
 
   @override
   void dispose() {
     _pageController.dispose();
-    _currentToastOverlayEntry?.remove();
     super.dispose();
   }
 
+  // O diálogo principal para gerir perfis
   void _mostrarDialogoGerenciarPerfis(BuildContext context, WidgetRef ref) {
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
@@ -56,11 +59,11 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 .watch(gestaoControllerProvider.select((s) => s.perfilAtual));
 
             return AlertDialog(
-              title: const Text('Gerenciar Perfis'),
+              title: const Text('Gerir Perfis'),
               content: SizedBox(
                 width: double.maxFinite,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.min, // Garante altura mínima
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
@@ -72,15 +75,14 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                     ),
                     const Divider(),
                     if (perfis.isEmpty)
-                      const Expanded(
-                        child: Center(
-                            child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 24.0),
-                          child: Text('Nenhum perfil salvo.'),
-                        )),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24.0),
+                        child: Center(child: Text('Nenhum perfil salvo.')),
                       ),
                     if (perfis.isNotEmpty)
-                      Expanded(
+                      SizedBox(
+                        // Define uma altura máxima para a lista
+                        height: MediaQuery.of(context).size.height * 0.3,
                         child: ListView.builder(
                           shrinkWrap: true,
                           itemCount: perfis.length,
@@ -89,8 +91,17 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                             return ListTile(
                               title: Text(nomePerfil),
                               onTap: () {
-                                Navigator.of(dialogContext).pop();
-                                gestaoNotifier.carregarPerfil(nomePerfil);
+                                _mostrarDialogoConfirmarAcao(
+                                  context: context,
+                                  titulo: 'Carregar Perfil?',
+                                  mensagem:
+                                      'Isto substituirá todos os seus dados atuais. Esta ação não pode ser desfeita.',
+                                  onConfirmar: () {
+                                    Navigator.of(dialogContext)
+                                        .pop(); // Fecha o modal de perfis
+                                    gestaoNotifier.carregarPerfil(nomePerfil);
+                                  },
+                                );
                               },
                               trailing: PopupMenuButton(
                                 itemBuilder: (context) => [
@@ -103,7 +114,16 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                   if (value == 'export') {
                                     gestaoNotifier.exportarPerfil(nomePerfil);
                                   } else if (value == 'delete') {
-                                    gestaoNotifier.excluirPerfil(nomePerfil);
+                                    _mostrarDialogoConfirmarAcao(
+                                      context: context,
+                                      titulo: 'Excluir Perfil?',
+                                      mensagem:
+                                          'O perfil "$nomePerfil" será excluído permanentemente.',
+                                      onConfirmar: () {
+                                        gestaoNotifier
+                                            .excluirPerfil(nomePerfil);
+                                      },
+                                    );
                                   }
                                 },
                               ),
@@ -135,6 +155,35 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     );
   }
 
+  // Diálogo de confirmação genérico para ações destrutivas
+  void _mostrarDialogoConfirmarAcao({
+    required BuildContext context,
+    required String titulo,
+    required String mensagem,
+    required VoidCallback onConfirmar,
+  }) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(titulo),
+        content: Text(mensagem),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              onConfirmar();
+            },
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _mostrarDialogoSalvarPerfil(BuildContext context, WidgetRef ref) {
     final controller = TextEditingController();
     showDialog(
@@ -159,34 +208,6 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               Navigator.of(dialogContext).pop();
             },
             child: const Text('Salvar'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _mostrarDialogoConfirmacao(
-      BuildContext context, WidgetRef ref, Map<String, dynamic> profile) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Confirmar Ação'),
-        content: const Text(
-            'Isso substituirá todos os dados atuais. Deseja continuar?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              final seedData = profile['data'] as List<Map<String, dynamic>>;
-              ref
-                  .read(gestaoControllerProvider.notifier)
-                  .resetAndSeedDatabase(seedData);
-              Navigator.of(dialogContext).pop();
-            },
-            child: const Text('Confirmar'),
           ),
         ],
       ),
@@ -324,39 +345,42 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           borderRadius: BorderRadius.circular(16.0),
           child: Stack(
             children: [
-              RepaintBoundary(
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: gestaoState.categorias.length,
-                  onPageChanged: (index) {
-                    gestaoNotifier.selecionarCategoriaPorIndice(index);
-                  },
-                  itemBuilder: (context, index) {
-                    return ProductListView(
-                      categoriaId: gestaoState.categorias[index].id,
-                      onProdutoDoubleTap: (produto) {
-                        _mostrarDialogoEditarNome(
-                          context,
-                          ref,
-                          titulo: "Editar Produto",
-                          valorAtual: produto.nome,
-                          onSalvar: (novoNome) {
-                            gestaoNotifier.atualizarNomeProduto(
-                                produto.id, novoNome);
-                          },
-                        );
-                      },
-                      onProdutoTap: (produto) {
-                        gestaoNotifier.atualizarStatusProduto(
-                            produto.id, !produto.isAtivo);
-                      },
-                    );
-                  },
+              // A PageView agora só é construída se houver categorias
+              if (gestaoState.categorias.isNotEmpty)
+                RepaintBoundary(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: gestaoState.categorias.length,
+                    onPageChanged: (index) {
+                      gestaoNotifier.selecionarCategoriaPorIndice(index);
+                    },
+                    itemBuilder: (context, index) {
+                      return ProductListView(
+                        categoriaId: gestaoState.categorias[index].id,
+                        onProdutoDoubleTap: (produto) {
+                          _mostrarDialogoEditarNome(
+                            context,
+                            ref,
+                            titulo: "Editar Produto",
+                            valorAtual: produto.nome,
+                            onSalvar: (novoNome) {
+                              gestaoNotifier.atualizarNomeProduto(
+                                  produto.id, novoNome);
+                            },
+                          );
+                        },
+                        onProdutoTap: (produto) {
+                          gestaoNotifier.atualizarStatusProduto(
+                              produto.id, !produto.isAtivo);
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
               if (gestaoState.isReordering) _buildDeleteArea(context, ref),
               if (gestaoState.isDraggingProduto)
                 _buildProdutoDeleteArea(context, ref),
+              // A tela de carregamento cobre tudo
               if (gestaoState.isLoading)
                 Container(
                   color: Colors.black.withValues(alpha: 0.3),

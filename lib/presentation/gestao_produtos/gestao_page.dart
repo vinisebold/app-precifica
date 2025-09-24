@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:precifica/data/profiles.dart';
 import 'package:share_plus/share_plus.dart';
 
-// Importando as entidades do domínio
 import 'package:precifica/domain/entities/produto.dart';
 
-// Importando o controller e o state da camada de apresentação
 import 'gestao_controller.dart';
 import 'gestao_state.dart';
 
-// Importando os widgets da camada de apresentação
 import 'widgets/categoria_nav_bar.dart';
 import 'widgets/product_list_view.dart';
 
@@ -24,12 +20,11 @@ class GestaoPage extends ConsumerStatefulWidget {
 
 class _GestaoPageState extends ConsumerState<GestaoPage> {
   late PageController _pageController;
-  OverlayEntry? _currentToastOverlayEntry; // Guarda a referência do toast atual
+  OverlayEntry? _currentToastOverlayEntry;
 
   @override
   void initState() {
     super.initState();
-    // Acessa o estado inicial para configurar o PageController
     final selectedId =
         ref.read(gestaoControllerProvider).categoriaSelecionadaId;
     final categorias = ref.read(gestaoControllerProvider).categorias;
@@ -43,128 +38,135 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   @override
   void dispose() {
     _pageController.dispose();
-    _currentToastOverlayEntry
-        ?.remove();
+    _currentToastOverlayEntry?.remove();
     super.dispose();
   }
 
-  OverlayEntry? _showCustomToast(
-    BuildContext context,
-    String message, {
-    Color? backgroundColor,
-    Color? textColor,
-    Widget? action,
-    Duration duration = const Duration(seconds: 5),
-  }) {
-    _currentToastOverlayEntry?.remove();
-    _currentToastOverlayEntry = null;
+  void _mostrarDialogoGerenciarPerfis(BuildContext context, WidgetRef ref) {
+    final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
-    final overlay = Overlay.of(context);
-    late OverlayEntry overlayEntry;
-
-    overlayEntry = OverlayEntry(
-      builder: (context) {
-        final screenWidth = MediaQuery.of(context).size.width;
-        final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
-
-        return Positioned(
-          bottom: bottomPadding > 0 ? bottomPadding + 16 : 96,
-          left: 16,
-          width: screenWidth * 0.75, // Ocupa 75% da largura da tela
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      message,
-                      style: TextStyle(
-                        color:
-                            Theme.of(context).colorScheme.onSecondaryContainer,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                  if (action != null) action,
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-
-    overlay.insert(overlayEntry);
-    _currentToastOverlayEntry = overlayEntry;
-
-    if (duration != Duration.zero) {
-      Future.delayed(duration, () {
-        if (overlayEntry == _currentToastOverlayEntry && overlayEntry.mounted) {
-          overlayEntry.remove();
-          if (_currentToastOverlayEntry == overlayEntry) {
-            _currentToastOverlayEntry = null;
-          }
-        }
-      });
-    }
-    return overlayEntry;
-  }
-
-  void _removeCurrentToast() {
-    _currentToastOverlayEntry?.remove();
-    _currentToastOverlayEntry = null;
-  }
-
-  void _mostrarDialogoSelecaoPerfil(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Selecionar Perfil'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: predefinedProfiles.length,
-              itemBuilder: (context, index) {
-                final profile = predefinedProfiles[index];
-                return ListTile(
-                  title: Text(profile['name'] as String),
-                  onTap: () {
-                    // Confirma a ação antes de prosseguir
-                    Navigator.of(dialogContext).pop(); // Fecha o diálogo de seleção
-                    _mostrarDialogoConfirmacao(context, ref, profile);
+        return Consumer(
+          builder: (context, ref, child) {
+            final perfis = ref
+                .watch(gestaoControllerProvider.select((s) => s.perfisSalvos));
+            final perfilAtual = ref
+                .watch(gestaoControllerProvider.select((s) => s.perfilAtual));
+
+            return AlertDialog(
+              title: const Text('Gerenciar Perfis'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Text(
+                        'Perfil Carregado: ${perfilAtual ?? "Nenhum (dados não salvos)"}',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                    const Divider(),
+                    if (perfis.isEmpty)
+                      const Expanded(
+                        child: Center(
+                            child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24.0),
+                          child: Text('Nenhum perfil salvo.'),
+                        )),
+                      ),
+                    if (perfis.isNotEmpty)
+                      Expanded(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: perfis.length,
+                          itemBuilder: (context, index) {
+                            final nomePerfil = perfis[index];
+                            return ListTile(
+                              title: Text(nomePerfil),
+                              onTap: () {
+                                Navigator.of(dialogContext).pop();
+                                gestaoNotifier.carregarPerfil(nomePerfil);
+                              },
+                              trailing: PopupMenuButton(
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem(
+                                      value: 'export', child: Text('Exportar')),
+                                  const PopupMenuItem(
+                                      value: 'delete', child: Text('Excluir')),
+                                ],
+                                onSelected: (value) {
+                                  if (value == 'export') {
+                                    gestaoNotifier.exportarPerfil(nomePerfil);
+                                  } else if (value == 'delete') {
+                                    gestaoNotifier.excluirPerfil(nomePerfil);
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    _mostrarDialogoSalvarPerfil(context, ref);
                   },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancelar'),
-            ),
-          ],
+                  child: const Text('SALVAR ATUAL'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    gestaoNotifier.importarPerfil();
+                  },
+                  child: const Text('IMPORTAR'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
 
-  void _mostrarDialogoConfirmacao(BuildContext context, WidgetRef ref, Map<String, dynamic> profile) {
+  void _mostrarDialogoSalvarPerfil(BuildContext context, WidgetRef ref) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Salvar Perfil Atual'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Nome do Perfil'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              ref
+                  .read(gestaoControllerProvider.notifier)
+                  .salvarPerfilAtual(controller.text);
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _mostrarDialogoConfirmacao(
+      BuildContext context, WidgetRef ref, Map<String, dynamic> profile) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -178,8 +180,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           ),
           TextButton(
             onPressed: () {
-              final seedData =
-              profile['data'] as List<Map<String, dynamic>>;
+              final seedData = profile['data'] as List<Map<String, dynamic>>;
               ref
                   .read(gestaoControllerProvider.notifier)
                   .resetAndSeedDatabase(seedData);
@@ -241,11 +242,11 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       (previousState, newState) {
         if (newState.errorMessage != null &&
             newState.errorMessage != previousState?.errorMessage) {
-          _showCustomToast(
-            context,
-            newState.errorMessage!,
-            backgroundColor: colorScheme.errorContainer,
-            textColor: colorScheme.onErrorContainer,
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(newState.errorMessage!),
+              backgroundColor: colorScheme.errorContainer,
+            ),
           );
           ref.read(gestaoControllerProvider.notifier).clearError();
         }
@@ -254,34 +255,26 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             newState.ultimoProdutoDeletado !=
                 previousState?.ultimoProdutoDeletado) {
           final produtoDeletado = newState.ultimoProdutoDeletado!;
-          _showCustomToast(
-            context,
-            '${produtoDeletado.nome} deletado',
-            backgroundColor: colorScheme.inverseSurface,
-            textColor: colorScheme.onInverseSurface,
-            action: TextButton(
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('${produtoDeletado.nome} deletado'),
+            action: SnackBarAction(
+              label: 'DESFAZER',
               onPressed: () {
-                HapticFeedback.lightImpact();
-                _removeCurrentToast();
                 ref
                     .read(gestaoControllerProvider.notifier)
                     .desfazerDeletarProduto();
               },
-              style: TextButton.styleFrom(
-                foregroundColor: colorScheme.primary,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-              child: const Text('DESFAZER'),
             ),
-          );
+          ));
         }
 
         if (previousState?.categoriaSelecionadaId !=
             newState.categoriaSelecionadaId) {
           final newIndex = newState.categorias
               .indexWhere((c) => c.id == newState.categoriaSelecionadaId);
-          if (newIndex != -1 && _pageController.page?.round() != newIndex) {
+          if (newIndex != -1 &&
+              _pageController.hasClients &&
+              _pageController.page?.round() != newIndex) {
             _pageController.jumpToPage(newIndex);
           }
         }
@@ -294,11 +287,10 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerLow,
       appBar: AppBar(
-        // Adicione o GestureDetector como gatilho escondido
         title: GestureDetector(
           onLongPress: () {
             HapticFeedback.heavyImpact();
-            _mostrarDialogoSelecaoPerfil(context, ref);
+            _mostrarDialogoGerenciarPerfis(context, ref);
           },
           child: Text('Precificador', style: textTheme.titleLarge),
         ),
@@ -366,7 +358,10 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               if (gestaoState.isDraggingProduto)
                 _buildProdutoDeleteArea(context, ref),
               if (gestaoState.isLoading)
-                const Center(child: CircularProgressIndicator()),
+                Container(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
             ],
           ),
         ),
@@ -396,7 +391,16 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 _mostrarDialogoNovoProduto(context, ref);
               }
             : null,
-        child: const Icon(Icons.add_shopping_cart),
+        elevation: gestaoState.categoriaSelecionadaId != null ? 6.0 : 0.0,
+        backgroundColor: gestaoState.categoriaSelecionadaId != null
+            ? colorScheme.primaryContainer
+            : colorScheme.surfaceContainer,
+        child: Icon(
+          Icons.add_shopping_cart,
+          color: gestaoState.categoriaSelecionadaId != null
+              ? colorScheme.onPrimaryContainer
+              : colorScheme.outline,
+        ),
       ),
     );
   }
@@ -416,8 +420,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             height: isHovering ? 120 : 100,
             decoration: BoxDecoration(
               color: isHovering
-                  ? colorScheme.errorContainer.withAlpha(230)
-                  : colorScheme.errorContainer.withAlpha(180),
+                  ? colorScheme.errorContainer.withValues(alpha: 0.9)
+                  : colorScheme.errorContainer.withValues(alpha: 0.7),
               borderRadius:
                   const BorderRadius.vertical(bottom: Radius.circular(60)),
             ),
@@ -460,8 +464,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             height: isHovering ? 120 : 100,
             decoration: BoxDecoration(
               color: isHovering
-                  ? colorScheme.errorContainer.withAlpha(230)
-                  : colorScheme.errorContainer.withAlpha(180),
+                  ? colorScheme.errorContainer.withValues(alpha: 0.9)
+                  : colorScheme.errorContainer.withValues(alpha: 0.7),
               borderRadius:
                   const BorderRadius.vertical(bottom: Radius.circular(60)),
             ),
@@ -500,6 +504,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           controller: controller,
           decoration: const InputDecoration(hintText: "Nome do produto"),
           autofocus: true,
+          onSubmitted: (_) =>
+              _salvarNovoProduto(dialogContext, controller, ref),
         ),
         actions: [
           TextButton(
@@ -507,21 +513,22 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             child: Text('Cancelar', style: textTheme.labelLarge),
           ),
           TextButton(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              final nomeProduto = controller.text;
-              if (nomeProduto.isNotEmpty) {
-                ref
-                    .read(gestaoControllerProvider.notifier)
-                    .criarProduto(nomeProduto);
-                Navigator.of(dialogContext).pop();
-              }
-            },
+            onPressed: () => _salvarNovoProduto(dialogContext, controller, ref),
             child: Text('Salvar', style: textTheme.labelLarge),
           ),
         ],
       ),
     );
+  }
+
+  void _salvarNovoProduto(BuildContext dialogContext,
+      TextEditingController controller, WidgetRef ref) {
+    HapticFeedback.lightImpact();
+    final nomeProduto = controller.text;
+    if (nomeProduto.isNotEmpty) {
+      ref.read(gestaoControllerProvider.notifier).criarProduto(nomeProduto);
+      Navigator.of(dialogContext).pop();
+    }
   }
 
   void _mostrarDialogoNovaCategoria(BuildContext pageContext, WidgetRef ref) {
@@ -536,6 +543,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           controller: controller,
           decoration: const InputDecoration(hintText: "Nome da categoria"),
           autofocus: true,
+          onSubmitted: (_) =>
+              _salvarNovaCategoria(dialogContext, controller, ref),
         ),
         actions: [
           TextButton(
@@ -544,19 +553,21 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           ),
           TextButton(
             child: Text('Salvar', style: textTheme.labelLarge),
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              final nomeCategoria = controller.text;
-              if (nomeCategoria.isNotEmpty) {
-                ref
-                    .read(gestaoControllerProvider.notifier)
-                    .criarCategoria(nomeCategoria);
-                Navigator.of(dialogContext).pop();
-              }
-            },
+            onPressed: () =>
+                _salvarNovaCategoria(dialogContext, controller, ref),
           ),
         ],
       ),
     );
+  }
+
+  void _salvarNovaCategoria(BuildContext dialogContext,
+      TextEditingController controller, WidgetRef ref) {
+    HapticFeedback.lightImpact();
+    final nomeCategoria = controller.text;
+    if (nomeCategoria.isNotEmpty) {
+      ref.read(gestaoControllerProvider.notifier).criarCategoria(nomeCategoria);
+      Navigator.of(dialogContext).pop();
+    }
   }
 }

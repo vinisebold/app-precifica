@@ -1,14 +1,18 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:precifica/domain/usecases/produto/update_produto_status.dart';
 
-// Dependências das outras camadas
 import 'package:precifica/data/repositories/gestao_repository_impl.dart';
 import 'package:precifica/domain/entities/categoria.dart';
 import 'package:precifica/domain/entities/produto.dart';
 import 'package:precifica/domain/repositories/i_gestao_repository.dart';
 
-// Importando todos os UseCases
 import 'package:precifica/domain/usecases/categoria/create_categoria.dart';
 import 'package:precifica/domain/usecases/categoria/delete_categoria.dart';
 import 'package:precifica/domain/usecases/categoria/get_categorias.dart';
@@ -22,23 +26,19 @@ import 'package:precifica/domain/usecases/produto/undo_delete_produto.dart';
 import 'package:precifica/domain/usecases/produto/update_produto_name.dart';
 import 'package:precifica/domain/usecases/produto/update_produto_price.dart';
 
-// Importando o State
 import 'gestao_state.dart';
 
-// --- Provedores ---
-
 final gestaoRepositoryProvider = Provider<IGestaoRepository>((ref) {
-  return GestaoRepositoryImpl();
+  final repository = GestaoRepositoryImpl();
+  // Retornamos a instância que pode ser usada em `getProfileList`
+  return repository;
 });
 
-// Provider principal do nosso controller
 final gestaoControllerProvider =
     NotifierProvider<GestaoController, GestaoState>(
   () => GestaoController(),
 );
 
-/// Controller responsável por gerenciar o estado da tela de gestão.
-/// Orquestra as chamadas aos UseCases e atualiza o estado da UI.
 class GestaoController extends Notifier<GestaoState> {
   late final GetCategorias _getCategorias;
   late final CreateCategoria _createCategoria;
@@ -56,7 +56,6 @@ class GestaoController extends Notifier<GestaoState> {
 
   @override
   GestaoState build() {
-    // Inicializa todos os casos de uso com a instância do repositório
     final repository = ref.watch(gestaoRepositoryProvider);
     _getCategorias = GetCategorias(repository);
     _createCategoria = CreateCategoria(repository);
@@ -72,25 +71,152 @@ class GestaoController extends Notifier<GestaoState> {
     _getAllProdutos = GetAllProdutos(repository);
     _updateProdutoStatus = UpdateProdutoStatus(repository);
 
-    // Lógica para carregar o estado inicial
+    // O estado inicial será definido por _carregarDadosIniciais
+    state = GestaoState(isLoading: true);
+    _carregarDadosIniciais();
+    return state;
+  }
+
+  Future<void> _carregarDadosIniciais({String? nomePerfilCarregado}) async {
+    state = state.copyWith(isLoading: true);
     try {
+      final repository = ref.read(gestaoRepositoryProvider);
+      final perfis = await repository.getProfileList();
       final categorias = _getCategorias();
+
       if (categorias.isNotEmpty) {
         final primeiraCategoriaId = categorias.first.id;
         final produtos = _getProdutosByCategoria(primeiraCategoriaId);
-        return GestaoState(
+        state = state.copyWith(
           categorias: categorias,
           produtos: produtos,
           categoriaSelecionadaId: primeiraCategoriaId,
+          perfisSalvos: perfis,
+          perfilAtual: nomePerfilCarregado,
+          isLoading: false,
+        );
+      } else {
+        state = state.copyWith(
+          categorias: [],
+          produtos: [],
+          categoriaSelecionadaId: null,
+          perfisSalvos: perfis,
+          perfilAtual: nomePerfilCarregado,
+          isLoading: false,
         );
       }
     } catch (e) {
-      return GestaoState(errorMessage: "Falha ao carregar dados.");
+      state = state.copyWith(
+          errorMessage: "Falha ao carregar dados.", isLoading: false);
     }
-    return GestaoState();
   }
 
-  // --- Métodos de UI ---
+  Future<void> carregarPerfil(String nomePerfil) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final repository = ref.read(gestaoRepositoryProvider);
+      final jsonString = await repository.getProfileContent(nomePerfil);
+      final List<Map<String, dynamic>> data = List.from(jsonDecode(jsonString));
+      await repository.seedDatabase(data);
+      await _carregarDadosIniciais(nomePerfilCarregado: nomePerfil);
+    } catch (e) {
+      state = state.copyWith(
+          errorMessage: 'Falha ao carregar o perfil.', isLoading: false);
+    }
+  }
+
+  Future<void> salvarPerfilAtual(String nomePerfil) async {
+    if (nomePerfil.trim().isEmpty) {
+      state =
+          state.copyWith(errorMessage: 'O nome do perfil não pode ser vazio.');
+      return;
+    }
+    state = state.copyWith(isLoading: true);
+    try {
+      final repository = ref.read(gestaoRepositoryProvider);
+      await repository.saveCurrentDataAsProfile(nomePerfil);
+      final perfis = await repository.getProfileList();
+      state = state.copyWith(
+          perfisSalvos: perfis, perfilAtual: nomePerfil, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+          errorMessage: 'Falha ao salvar o perfil.', isLoading: false);
+    }
+  }
+
+  Future<void> excluirPerfil(String nomePerfil) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final repository = ref.read(gestaoRepositoryProvider);
+      await repository.deleteProfile(nomePerfil);
+      final perfis = await repository.getProfileList();
+
+      if (state.perfilAtual == nomePerfil) {
+        state = state.copyWith(
+            perfisSalvos: perfis, clearPerfilAtual: true, isLoading: false);
+      } else {
+        state = state.copyWith(perfisSalvos: perfis, isLoading: false);
+      }
+    } catch (e) {
+      state = state.copyWith(
+          errorMessage: 'Falha ao excluir o perfil.', isLoading: false);
+    }
+  }
+
+  Future<void> importarPerfil() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+      if (result != null && result.files.single.path != null) {
+        final file = File(result.files.single.path!);
+        final nomePerfil = p.basenameWithoutExtension(file.path);
+
+        final appDir = await getApplicationDocumentsDirectory();
+        final profilesDir = Directory(p.join(appDir.path, 'profiles'));
+        final newPath = p.join(profilesDir.path, '$nomePerfil.json');
+        await file.copy(newPath);
+
+        final perfis =
+            await ref.read(gestaoRepositoryProvider).getProfileList();
+        state = state.copyWith(perfisSalvos: perfis);
+      }
+    } catch (e) {
+      state = state.copyWith(errorMessage: 'Falha ao importar o perfil.');
+    }
+  }
+
+  Future<void> exportarPerfil(String nomePerfil) async {
+    try {
+      final repository = ref.read(gestaoRepositoryProvider);
+      final jsonString = await repository.getProfileContent(nomePerfil);
+
+      final result = await FilePicker.platform.saveFile(
+        dialogTitle: 'Exportar Perfil',
+        fileName: '$nomePerfil.json',
+      );
+
+      if (result != null) {
+        final file = File(result);
+        await file.writeAsString(jsonString);
+      }
+    } catch (e) {
+      state = state.copyWith(errorMessage: 'Falha ao exportar o perfil.');
+    }
+  }
+
+  Future<void> resetAndSeedDatabase(List<Map<String, dynamic>> seedData) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final repository = ref.read(gestaoRepositoryProvider);
+      await repository.seedDatabase(seedData);
+      await _carregarDadosIniciais();
+    } catch (e) {
+      state = state.copyWith(
+          errorMessage: 'Falha ao carregar o perfil.', isLoading: false);
+    }
+  }
 
   void selecionarCategoriaPorIndice(int index) {
     if (index >= 0 && index < state.categorias.length) {
@@ -126,13 +252,10 @@ class GestaoController extends Notifier<GestaoState> {
   void setDraggingProduto(bool value) =>
       state = state.copyWith(isDraggingProduto: value);
 
-  // --- Métodos que chamam os UseCases ---
-
   Future<void> criarCategoria(String nome) async {
     state = state.copyWith(isLoading: true);
     try {
       await _createCategoria(nome);
-      // Recarrega as categorias após a criação
       state = state.copyWith(categorias: _getCategorias(), isLoading: false);
     } catch (e) {
       state = state.copyWith(
@@ -156,7 +279,6 @@ class GestaoController extends Notifier<GestaoState> {
           isLoading: false,
         );
       } else {
-        // Se não houver mais categorias, zera o estado
         state = GestaoState(
             categorias: [],
             produtos: [],
@@ -231,7 +353,6 @@ class GestaoController extends Notifier<GestaoState> {
     } catch (e) {
       state = state.copyWith(
         produtos: _getProdutosByCategoria(categoriaDoProdutoDeletado),
-        // Restaura
         errorMessage: 'Falha ao deletar produto.',
         clearUltimoProdutoDeletado: true,
       );
@@ -321,7 +442,6 @@ class GestaoController extends Notifier<GestaoState> {
           .where((p) => p.categoriaId == categoria.id && p.isAtivo)
           .toList();
       if (produtosDaCategoria.isNotEmpty) {
-        // Adiciona o emoji no final da linha da categoria
         buffer.writeln('${categoria.nome.toUpperCase()}: ⬇️');
         for (var produto in produtosDaCategoria) {
           final precoFormatado =
@@ -341,33 +461,5 @@ class GestaoController extends Notifier<GestaoState> {
       }
     }
     return buffer.toString();
-  }
-
-  Future<void> resetAndSeedDatabase(List<Map<String, dynamic>> seedData) async {
-    state = state.copyWith(isLoading: true);
-    try {
-      final repository = ref.read(gestaoRepositoryProvider);
-      await repository.resetAndSeedDatabase(seedData);
-
-      // Recarrega o estado para refletir os dados do novo perfil.
-      final categorias = _getCategorias();
-      if (categorias.isNotEmpty) {
-        final primeiraCategoriaId = categorias.first.id;
-        final produtos = _getProdutosByCategoria(primeiraCategoriaId);
-        state = GestaoState(
-          categorias: categorias,
-          produtos: produtos,
-          categoriaSelecionadaId: primeiraCategoriaId,
-        );
-      } else {
-        // Se o perfil estiver vazio, reseta para um estado inicial.
-        state = GestaoState();
-      }
-    } catch (e) {
-      state = state.copyWith(
-          errorMessage: 'Falha ao carregar o perfil.', isLoading: false);
-    } finally {
-      state = state.copyWith(isLoading: false);
-    }
   }
 }

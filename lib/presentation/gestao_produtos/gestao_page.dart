@@ -44,110 +44,145 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     super.dispose();
   }
 
-  // O diálogo principal para gerir perfis
   void _mostrarDialogoGerenciarPerfis(BuildContext context, WidgetRef ref) {
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
+    final perfilInicial = ref.read(gestaoControllerProvider).perfilAtual;
+    String? perfilSelecionado = perfilInicial;
 
     showDialog(
       context: context,
       builder: (dialogContext) {
-        return Consumer(
-          builder: (context, ref, child) {
-            final perfis = ref
-                .watch(gestaoControllerProvider.select((s) => s.perfisSalvos));
-            final perfilAtual = ref
-                .watch(gestaoControllerProvider.select((s) => s.perfilAtual));
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Consumer(
+              builder: (context, ref, child) {
+                final perfis = ref.watch(
+                    gestaoControllerProvider.select((s) => s.perfisSalvos));
 
-            return AlertDialog(
-              title: const Text('Gerir Perfis'),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min, // Garante altura mínima
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Text(
-                        'Perfil Carregado: ${perfilAtual ?? "Nenhum (dados não salvos)"}',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ),
-                    const Divider(),
-                    if (perfis.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24.0),
-                        child: Center(child: Text('Nenhum perfil salvo.')),
-                      ),
-                    if (perfis.isNotEmpty)
-                      SizedBox(
-                        // Define uma altura máxima para a lista
-                        height: MediaQuery.of(context).size.height * 0.3,
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: perfis.length,
-                          itemBuilder: (context, index) {
-                            final nomePerfil = perfis[index];
-                            return ListTile(
-                              title: Text(nomePerfil),
+                final isProfileSelected = perfilSelecionado != null;
+
+                return AlertDialog(
+                  title: const Text('Gerir Perfis'),
+                  content: SizedBox(
+                    width: double.maxFinite,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            _ActionCard(
+                              label: 'Importar',
+                              icon: Icons.file_download_outlined,
+                              onTap: () {
+                                Navigator.of(dialogContext).pop();
+                                gestaoNotifier.importarPerfil();
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            _ActionCard(
+                              label: 'Salvar Atual',
+                              icon: Icons.save_outlined,
+                              onTap: () {
+                                Navigator.of(dialogContext).pop();
+                                _mostrarDialogoSalvarPerfil(context, ref);
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            _ActionCard(
+                              label: 'Exportar',
+                              icon: Icons.file_upload_outlined,
+                              isEnabled: isProfileSelected,
+                              onTap: () {
+                                Navigator.of(dialogContext).pop();
+                                gestaoNotifier
+                                    .exportarPerfil(perfilSelecionado!);
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            _ActionCard(
+                              label: 'Excluir',
+                              icon: Icons.delete_outline,
+                              isEnabled: isProfileSelected,
                               onTap: () {
                                 _mostrarDialogoConfirmarAcao(
                                   context: context,
-                                  titulo: 'Carregar Perfil?',
+                                  titulo: 'Excluir Perfil?',
                                   mensagem:
-                                      'Isto substituirá todos os seus dados atuais. Esta ação não pode ser desfeita.',
+                                      'O perfil "$perfilSelecionado" será excluído permanentemente.',
                                   onConfirmar: () {
-                                    Navigator.of(dialogContext)
-                                        .pop(); // Fecha o modal de perfis
-                                    gestaoNotifier.carregarPerfil(nomePerfil);
+                                    gestaoNotifier
+                                        .excluirPerfil(perfilSelecionado!);
+                                    setState(() {
+                                      perfilSelecionado = null;
+                                    });
                                   },
                                 );
                               },
-                              trailing: PopupMenuButton(
-                                itemBuilder: (context) => [
-                                  const PopupMenuItem(
-                                      value: 'export', child: Text('Exportar')),
-                                  const PopupMenuItem(
-                                      value: 'delete', child: Text('Excluir')),
-                                ],
-                                onSelected: (value) {
-                                  if (value == 'export') {
-                                    gestaoNotifier.exportarPerfil(nomePerfil);
-                                  } else if (value == 'delete') {
-                                    _mostrarDialogoConfirmarAcao(
-                                      context: context,
-                                      titulo: 'Excluir Perfil?',
-                                      mensagem:
-                                          'O perfil "$nomePerfil" será excluído permanentemente.',
-                                      onConfirmar: () {
-                                        gestaoNotifier
-                                            .excluirPerfil(nomePerfil);
-                                      },
-                                    );
-                                  }
-                                },
-                              ),
-                            );
-                          },
+                            ),
+                          ],
                         ),
-                      ),
+                        const Divider(height: 24),
+                        if (perfis.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24.0),
+                            child: Center(child: Text('Nenhum perfil salvo.')),
+                          ),
+                        if (perfis.isNotEmpty)
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.25,
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: perfis.length,
+                              itemBuilder: (context, index) {
+                                final String nomePerfil = perfis[index];
+                                return RadioListTile<String>(
+                                  title: Text(nomePerfil),
+                                  value: nomePerfil,
+                                  groupValue: perfilSelecionado,
+                                  onChanged: (String? value) {
+                                    setState(() {
+                                      perfilSelecionado = value;
+                                    });
+                                  },
+                                );
+                              },
+                            ),
+                          )
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: const Text('Cancelar'),
+                    ),
+                    FilledButton(
+                      onPressed: () {
+                        if (perfilSelecionado != null &&
+                            perfilSelecionado != perfilInicial) {
+                          _mostrarDialogoConfirmarAcao(
+                            context: context,
+                            titulo: 'Carregar Perfil?',
+                            mensagem:
+                                'Isto substituirá todos os seus dados atuais com o perfil "$perfilSelecionado".',
+                            onConfirmar: () {
+                              Navigator.of(dialogContext).pop();
+                              gestaoNotifier.carregarPerfil(perfilSelecionado!);
+                            },
+                          );
+                        } else {
+                          Navigator.of(dialogContext).pop();
+                        }
+                      },
+                      child: const Text('OK'),
+                    ),
                   ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    _mostrarDialogoSalvarPerfil(context, ref);
-                  },
-                  child: const Text('SALVAR ATUAL'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    gestaoNotifier.importarPerfil();
-                  },
-                  child: const Text('IMPORTAR'),
-                ),
-              ],
+                );
+              },
             );
           },
         );
@@ -155,7 +190,6 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     );
   }
 
-  // Diálogo de confirmação genérico para ações destrutivas
   void _mostrarDialogoConfirmarAcao({
     required BuildContext context,
     required String titulo,
@@ -345,7 +379,6 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           borderRadius: BorderRadius.circular(16.0),
           child: Stack(
             children: [
-              // A PageView agora só é construída se houver categorias
               if (gestaoState.categorias.isNotEmpty)
                 RepaintBoundary(
                   child: PageView.builder(
@@ -380,10 +413,9 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               if (gestaoState.isReordering) _buildDeleteArea(context, ref),
               if (gestaoState.isDraggingProduto)
                 _buildProdutoDeleteArea(context, ref),
-              // A tela de carregamento cobre tudo
               if (gestaoState.isLoading)
                 Container(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: Colors.black.withAlpha((255 * 0.3).round()),
                   child: const Center(child: CircularProgressIndicator()),
                 ),
             ],
@@ -444,8 +476,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             height: isHovering ? 120 : 100,
             decoration: BoxDecoration(
               color: isHovering
-                  ? colorScheme.errorContainer.withValues(alpha: 0.9)
-                  : colorScheme.errorContainer.withValues(alpha: 0.7),
+                  ? colorScheme.errorContainer.withAlpha((255 * 0.9).round())
+                  : colorScheme.errorContainer.withAlpha((255 * 0.7).round()),
               borderRadius:
                   const BorderRadius.vertical(bottom: Radius.circular(60)),
             ),
@@ -488,8 +520,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             height: isHovering ? 120 : 100,
             decoration: BoxDecoration(
               color: isHovering
-                  ? colorScheme.errorContainer.withValues(alpha: 0.9)
-                  : colorScheme.errorContainer.withValues(alpha: 0.7),
+                  ? colorScheme.errorContainer.withAlpha((255 * 0.9).round())
+                  : colorScheme.errorContainer.withAlpha((255 * 0.7).round()),
               borderRadius:
                   const BorderRadius.vertical(bottom: Radius.circular(60)),
             ),
@@ -593,5 +625,52 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       ref.read(gestaoControllerProvider.notifier).criarCategoria(nomeCategoria);
       Navigator.of(dialogContext).pop();
     }
+  }
+}
+
+class _ActionCard extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool isEnabled;
+
+  const _ActionCard({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.isEnabled = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isEnabled
+        ? Theme.of(context).colorScheme.onSurfaceVariant
+        : Theme.of(context).colorScheme.outline;
+
+    return Expanded(
+      child: Card(
+        elevation: isEnabled ? 1 : 0,
+        color: isEnabled
+            ? null
+            : Theme.of(context)
+                .colorScheme
+                .surface
+                .withAlpha((255 * 0.5).round()),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: isEnabled ? onTap : null,
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              children: [
+                Icon(icon, color: color),
+                const SizedBox(height: 4),
+                Text(label, style: TextStyle(color: color)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

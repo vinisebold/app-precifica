@@ -1,0 +1,141 @@
+[
+  {
+    "nome": "Frutas",
+    "produtos": [
+      {"nome": "Abacaxi UN"},
+      {"nome": "Laranja CX 20Kg"},
+      {"nome": "Melão KG"},
+      {"nome": "Uva Sem Semente Bandeja"},
+      {"nome": "Morango CX 4 Bandeja"},
+      {"nome": "Kiwi KG"},
+      {"nome": "Abacate KG"},
+      {"nome": "Uva Niágara KG"},
+      {"nome": "Uva Beritaca KG"},
+      {"nome": "Uva Itália KG"},
+      {"nome": "Uva Ruby KG"},
+      {"nome": "Maçã KG"},
+      {"nome": "Tangerina KG"},
+      {"nome": "Maracujá KG"},
+      {"nome": "Manga Palmer KG"},
+      {"nome": "Manga Tome KG"},
+      {"nome": "Limão Caipira KG"},
+      {"nome": "Limão Siciliano KG"},
+      {"nome": "Limão Comum KG"},
+      {"nome": "Manga Espada KG"},
+      {"nome": "Mamão Formosa KG"},
+      {"nome": "Mamão Havaí KG"},
+      {"nome": "Pêssego Nectarina KG"},
+      {"nome": "Ameixa KG"},
+      {"nome": "Caqui KG"},
+      {"nome": "Poção KG"},
+      {"nome": "Maçã Fuji KG"},
+      {"nome": "Maçã Gala KG"},
+      {"nome": "Maçã Verde KG"},
+      {"nome": "Maçã Argentina KG"},
+      {"nome": "Maçã Pink KG"},
+      {"nome": "Uva sem Semente Preta Bandeja"},
+      {"nome": "Uva sem Semente Verde Bandeja"}
+    ]
+  },
+  {
+    "nome": "Verduras",
+    "produtos": [
+      {"nome": "Agrião UN"},
+      {"nome": "Alface Americana UN"},
+      {"nome": "Alface Crespa UN"},
+      {"nome": "Repolho Roxo UN"},
+      {"nome": "Repolho Verde UN"},
+      {"nome": "Rúcula UN"},
+      {"nome": "Alface Lisa UN"},
+      {"nome": "Alface Roxa UN"},
+      {"nome": "Chicória UN"},
+      {"nome": "Acelga UN"}
+    ]
+  },
+  {
+    "nome": "Legumes",
+    "produtos": [
+      {"nome": "Berinjela KG"},
+      {"nome": "Brócolis UN"},
+      {"nome": "Chuchu CX 20Kg"},
+      {"nome": "Couve Flor UN"},
+      {"nome": "Pepino CX 20Kg"},
+      {"nome": "Pepino Japonês CX 20Kg"},
+      {"nome": "Tomate Cereja KG"},
+      {"nome": "Tomate G CX 20Kg"},
+      {"nome": "Tomate Média CX 20Kg"},
+      {"nome": "Tomate Saladette CX 20Kg"},
+      {"nome": "Vagem KG"},
+      {"nome": "Pimentão Verde KG"},
+      {"nome": "Pimentão Amarelo KG"},
+      {"nome": "Pimentão Vermelho KG"},
+      {"nome": "Abóbora Moranga KG"},
+      {"nome": "Abóbora Cabotia KG"},
+      {"nome": "Abóbora Seca KG"},
+      {"nome": "Abóbora Verde KG"},
+      {"nome": "Pimenta Dedo de Moça KG"}
+    ]
+  },
+  {
+    "nome": "Raízes e Tubérculos",
+    "produtos": [
+      {"nome": "Batata Escovada SC 25Kg"},
+      {"nome": "Batata Lavada SC 25Kg"},
+      {"nome": "Batata Média SC 25Kg"},
+      {"nome": "Batata Florão SC 25Kg"},
+      {"nome": "Batata Roxa SC 25Kg"},
+      {"nome": "Batata-doce Boa CX 20Kg"},
+      {"nome": "Batata-Doce G CX 20Kg"},
+      {"nome": "Batata-Doce P CX 20Kg"},
+      {"nome": "Beterraba Boa CX 20Kg"},
+      {"nome": "Beterraba G CX 20Kg"},
+      {"nome": "Beterraba Miúda CX 20Kg"},
+      {"nome": "Cebola n2 SC 20Kg"},
+      {"nome": "Cebola n3 SC 20Kg"},
+      {"nome": "Cebola n1 SC 20Kg"},
+      {"nome": "Cebola n4 SC 20Kg"},
+      {"nome": "Cebola fraca SC 20Kg"},
+      {"nome": "Cebola Roxa SC 20Kg"},
+      {"nome": "Cenoura Boa CX 20Kg"},
+      {"nome": "Cenoura G CX 20Kg"},
+      {"nome": "Cenoura M CX 20Kg"},
+      {"nome": "Cenoura Toco CX 20Kg"},
+      {"nome": "Gengibre KG"},
+      {"nome": "Nabo KG"},
+      {"nome": "Rabanete KG"},
+      {"nome": "Alho Poró UN"}
+    ]
+  },
+  {
+    "nome": "Ervas e Temperos",
+    "produtos": [
+      {"nome": "Cebolinha UN"},
+      {"nome": "Salsa UN"},
+      {"nome": "Manjericão UN"},
+      {"nome": "Hortelã UN"},
+      {"nome": "Alecrim UN"}
+    ]
+  },
+  {
+    "nome": "Grãos",
+    "produtos": [
+      {"nome": "Feijão Preto SC 30Kg"},
+      {"nome": "Feijão Vermelho SC 30Kg"}
+    ]
+  },
+  {
+    "nome": "Ovos",
+    "produtos": [
+      {"nome": "Ovos Bandeja CX"},
+      {"nome": "Ovos Embalados CX"}
+    ]
+  },
+  {
+    "nome": "Produtos Processados",
+    "produtos": [
+      {"nome": "Batata Chips 300g"},
+      {"nome": "Batata Palha KG"},
+      {"nome": "Batata Palha Fritura SC 25Kg"}
+    ]
+  }
+]

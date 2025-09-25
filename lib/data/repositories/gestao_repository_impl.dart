@@ -1,4 +1,10 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../../data/models/categoria_model.dart';
 import '../../data/models/produto_model.dart';
@@ -6,18 +12,41 @@ import '../../domain/entities/categoria.dart';
 import '../../domain/entities/produto.dart';
 import '../../domain/repositories/i_gestao_repository.dart';
 
-/// Implementação do repositório de gestão que utiliza o Hive como banco de dados local.
-///
-/// Esta classe é responsável por traduzir as chamadas do domínio em operações
-/// específicas do Hive, manipulando os `CategoriaModel` e `ProdutoModel`.
-
 class GestaoRepositoryImpl implements IGestaoRepository {
   static const _categoriasBox = 'categorias_box';
   static const _produtosBox = 'produtos_box';
-
   static const _uuid = Uuid();
 
-  /// Inicializa o Hive, registra os adaptadores dos modelos e abre as caixas.
+  Future<Directory> _getProfilesDirectory() async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final profilesDir = Directory(p.join(appDir.path, 'profiles'));
+    if (!await profilesDir.exists()) {
+      await profilesDir.create(recursive: true);
+    }
+    return profilesDir;
+  }
+
+  Future<void> _seedInitialProfilesFromAssets() async {
+    final dir = await _getProfilesDirectory();
+    final assetManifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+
+    // Filtra para encontrar todos os ficheiros dentro de 'assets/profiles/'
+    final profileAssets = assetManifest
+        .listAssets()
+        .where((string) => string.startsWith('assets/profiles/'))
+        .toList();
+
+    for (String assetPath in profileAssets) {
+      String fileName = p.basename(assetPath);
+      final profileFile = File(p.join(dir.path, fileName));
+
+      if (!await profileFile.exists()) {
+        final jsonString = await rootBundle.loadString(assetPath);
+        await profileFile.writeAsString(jsonString);
+      }
+    }
+  }
+
   @override
   Future<void> init() async {
     Hive.registerAdapter(CategoriaModelAdapter());
@@ -25,10 +54,12 @@ class GestaoRepositoryImpl implements IGestaoRepository {
 
     await Hive.openBox<CategoriaModel>(_categoriasBox);
     await Hive.openBox<ProdutoModel>(_produtosBox);
+
+    await _seedInitialProfilesFromAssets();
   }
 
   @override
-  Future<void> resetAndSeedDatabase(List<Map<String, dynamic>> seedData) async {
+  Future<void> seedDatabase(List<Map<String, dynamic>> seedData) async {
     final catBox = Hive.box<CategoriaModel>(_categoriasBox);
     final prodBox = Hive.box<ProdutoModel>(_produtosBox);
 
@@ -48,7 +79,7 @@ class GestaoRepositoryImpl implements IGestaoRepository {
           final newProd = ProdutoModel(
             id: prodId,
             nome: prodData['nome'],
-            preco: (prodData['preco'] as double?) ?? 0.0,
+            preco: (prodData['preco'] as num?)?.toDouble() ?? 0.0,
             categoriaId: catId,
             isAtivo: (prodData['isAtivo'] as bool?) ?? true,
           );
@@ -66,7 +97,73 @@ class GestaoRepositoryImpl implements IGestaoRepository {
     }
   }
 
-  // --- Métodos para Categoria ---
+  @override
+  Future<String> exportCurrentDataToJson() async {
+    final catBox = Hive.box<CategoriaModel>(_categoriasBox);
+    final prodBox = Hive.box<ProdutoModel>(_produtosBox);
+    final List<Map<String, dynamic>> data = [];
+
+    final categorias = catBox.values.toList();
+    categorias.sort((a, b) => a.ordem.compareTo(b.ordem));
+
+    for (final categoria in categorias) {
+      final List<Map<String, dynamic>> produtosData = [];
+      for (final produtoId in categoria.produtoIds) {
+        final produto = prodBox.get(produtoId);
+        if (produto != null) {
+          produtosData.add({
+            'nome': produto.nome,
+            'preco': produto.preco,
+            'isAtivo': produto.isAtivo,
+          });
+        }
+      }
+      data.add({
+        'nome': categoria.nome,
+        'produtos': produtosData,
+      });
+    }
+    return const JsonEncoder.withIndent('  ').convert(data);
+  }
+
+  @override
+  Future<List<String>> getProfileList() async {
+    final dir = await _getProfilesDirectory();
+    final files = await dir.list().toList();
+    return files
+        .where((file) => file.path.endsWith('.json'))
+        .map((file) => p.basenameWithoutExtension(file.path))
+        .toList()
+      ..sort();
+  }
+
+  @override
+  Future<void> saveCurrentDataAsProfile(String profileName) async {
+    final dir = await _getProfilesDirectory();
+    final file = File(p.join(dir.path, '$profileName.json'));
+    final jsonString = await exportCurrentDataToJson();
+    await file.writeAsString(jsonString);
+  }
+
+  @override
+  Future<String> getProfileContent(String profileName) async {
+    final dir = await _getProfilesDirectory();
+    final file = File(p.join(dir.path, '$profileName.json'));
+    if (await file.exists()) {
+      return file.readAsString();
+    }
+    throw Exception('Perfil não encontrado');
+  }
+
+  @override
+  Future<void> deleteProfile(String profileName) async {
+    final dir = await _getProfilesDirectory();
+    final file = File(p.join(dir.path, '$profileName.json'));
+    if (await file.exists()) {
+      await file.delete();
+    }
+  }
+
   @override
   Future<void> criarCategoria(String nome) async {
     final box = Hive.box<CategoriaModel>(_categoriasBox);
@@ -91,8 +188,11 @@ class GestaoRepositoryImpl implements IGestaoRepository {
     final Map<String, CategoriaModel> updates = {};
     for (int i = 0; i < categorias.length; i++) {
       final categoria = categorias[i];
-      categoria.ordem = i;
-      updates[categoria.id] = CategoriaModel.fromEntity(categoria);
+      final model = box.get(categoria.id);
+      if (model != null) {
+        model.ordem = i;
+        updates[model.id] = model;
+      }
     }
     await box.putAll(updates);
   }
@@ -101,8 +201,8 @@ class GestaoRepositoryImpl implements IGestaoRepository {
   Future<void> deletarCategoria(String categoriaId) async {
     final categoriasBox = Hive.box<CategoriaModel>(_categoriasBox);
     final produtosBox = Hive.box<ProdutoModel>(_produtosBox);
-
     final categoria = categoriasBox.get(categoriaId);
+
     if (categoria == null) return;
 
     await produtosBox.deleteAll(categoria.produtoIds);
@@ -119,8 +219,6 @@ class GestaoRepositoryImpl implements IGestaoRepository {
       await box.put(categoriaId, categoria);
     }
   }
-
-  // --- Métodos para Produto ---
 
   @override
   Future<void> criarProduto(String nome, String categoriaId) async {
@@ -143,8 +241,8 @@ class GestaoRepositoryImpl implements IGestaoRepository {
   List<Produto> getProdutosPorCategoria(String categoriaId) {
     final produtosBox = Hive.box<ProdutoModel>(_produtosBox);
     final categoriasBox = Hive.box<CategoriaModel>(_categoriasBox);
-
     final categoria = categoriasBox.get(categoriaId);
+
     if (categoria == null) return [];
 
     return categoria.produtoIds
@@ -164,7 +262,6 @@ class GestaoRepositoryImpl implements IGestaoRepository {
   Future<void> atualizarPrecoProduto(String produtoId, double novoPreco) async {
     final box = Hive.box<ProdutoModel>(_produtosBox);
     final produto = box.get(produtoId);
-
     if (produto != null) {
       produto.preco = novoPreco;
       await box.put(produtoId, produto);

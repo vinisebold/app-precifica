@@ -12,6 +12,8 @@ class GestaoState {
   final Produto? ultimoProdutoDeletado;
   final String? idCategoriaProdutoDeletado;
   final bool isDraggingProduto;
+  final List<String> perfisSalvos;
+  final String? perfilAtual;
 
   GestaoState({
     this.categorias = const [],
@@ -23,6 +25,8 @@ class GestaoState {
     this.ultimoProdutoDeletado,
     this.idCategoriaProdutoDeletado,
     this.isDraggingProduto = false,
+    this.perfisSalvos = const [],
+    this.perfilAtual,
   });
 
   GestaoState copyWith({
@@ -37,6 +41,9 @@ class GestaoState {
     bool? isDraggingProduto,
     bool clearErrorMessage = false,
     bool clearUltimoProdutoDeletado = false,
+    List<String>? perfisSalvos,
+    String? perfilAtual,
+    bool clearPerfilAtual = false,
   }) {
     return GestaoState(
       categorias: categorias ?? this.categorias,
@@ -54,6 +61,8 @@ class GestaoState {
           ? null
           : idCategoriaProdutoDeletado ?? this.idCategoriaProdutoDeletado,
       isDraggingProduto: isDraggingProduto ?? this.isDraggingProduto,
+      perfisSalvos: perfisSalvos ?? this.perfisSalvos,
+      perfilAtual: clearPerfilAtual ? null : perfilAtual ?? this.perfilAtual,
     );
   }
 }

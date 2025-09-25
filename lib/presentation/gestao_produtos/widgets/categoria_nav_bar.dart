@@ -463,10 +463,11 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
                       details.data != categoria.id,
                   // Não aceita arrastar sobre si mesmo
                   onAcceptWithDetails: (details) {
+                    final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
                     // Aceita o item arrastado e reordena
-                    ref
-                        .read(gestaoControllerProvider.notifier)
-                        .reordenarCategoria(details.data, categoria.id);
+                    gestaoNotifier.reordenarCategoria(details.data, categoria.id);
+                    // Reverte o estado de reordenação
+                    gestaoNotifier.setReordering(false);
                   },
                 );
               }).toList(),

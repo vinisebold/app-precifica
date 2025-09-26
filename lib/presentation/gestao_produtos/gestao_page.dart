@@ -190,6 +190,22 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     );
   }
 
+  void _mostrarSheetImpressoras(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(gestaoControllerProvider.notifier);
+
+    notifier.buscarImpressoras();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (_) => const _PrinterBottomSheet(),
+    ).whenComplete(() {
+      notifier.pararBuscaImpressoras();
+      notifier.limparMensagemImpressora();
+    });
+  }
+
   void _mostrarDialogoConfirmarAcao({
     required BuildContext context,
     required String titulo,
@@ -352,6 +368,13 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.print_outlined),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              _mostrarSheetImpressoras(context, ref);
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: () {
@@ -625,6 +648,205 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       ref.read(gestaoControllerProvider.notifier).criarCategoria(nomeCategoria);
       Navigator.of(dialogContext).pop();
     }
+  }
+}
+
+class _PrinterBottomSheet extends ConsumerWidget {
+  const _PrinterBottomSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(gestaoControllerProvider);
+    final notifier = ref.read(gestaoControllerProvider.notifier);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPadding + 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: colorScheme.outlineVariant,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Impressoras Bluetooth',
+                  style: theme.textTheme.titleMedium,
+                ),
+              ),
+              IconButton(
+                tooltip: 'Buscar novamente',
+                icon: state.isBuscandoImpressoras
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+                onPressed: state.isBuscandoImpressoras
+                    ? null
+                    : () {
+                        HapticFeedback.selectionClick();
+                        notifier.buscarImpressoras();
+                      },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (state.mensagemImpressora != null)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      state.mensagemImpressora!,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 18),
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      notifier.limparMensagemImpressora();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 280),
+            child: Builder(
+              builder: (_) {
+                if (state.impressorasDisponiveis.isEmpty) {
+                  if (state.isBuscandoImpressoras) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'Nenhuma impressora encontrada.\nCertifique-se de que ela esteja ligada e próxima.',
+                        style: theme.textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                }
+
+                return ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: state.impressorasDisponiveis.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final device = state.impressorasDisponiveis[index];
+                    final isSameDevice =
+                        state.impressoraConectada?.id == device.id;
+                    final isConnected = isSameDevice &&
+                        !state.isConectandoImpressora &&
+                        state.impressoraConectada != null;
+                    final isConnecting =
+                        isSameDevice && state.isConectandoImpressora;
+
+                    return ListTile(
+                      leading: Icon(
+                        isConnected ? Icons.print : Icons.print_outlined,
+                        color: isConnected
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
+                      ),
+                      title:
+                          Text(device.name, style: theme.textTheme.bodyLarge),
+                      subtitle: Text(device.address,
+                          style: theme.textTheme.bodySmall),
+                      trailing: isConnected
+                          ? TextButton.icon(
+                              onPressed: () {
+                                HapticFeedback.selectionClick();
+                                notifier.desconectarImpressora();
+                              },
+                              icon: const Icon(Icons.link_off),
+                              label: const Text('Desconectar'),
+                            )
+                          : TextButton.icon(
+                              onPressed: state.isConectandoImpressora
+                                  ? null
+                                  : () {
+                                      HapticFeedback.selectionClick();
+                                      notifier.conectarImpressora(device);
+                                    },
+                              icon: isConnecting
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.link),
+                              label: Text(
+                                  isConnecting ? 'Conectando...' : 'Conectar'),
+                            ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: state.impressoraConectada != null && !state.isImprimindo
+                ? () {
+                    HapticFeedback.lightImpact();
+                    notifier.imprimirRelatorioAtual();
+                  }
+                : null,
+            icon: state.isImprimindo
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.print),
+            label: Text(
+              state.isImprimindo ? 'Imprimindo...' : 'Imprimir tabela',
+            ),
+          ),
+          if (state.impressoraConectada != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                'Conectado a ${state.impressoraConectada!.name}',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 

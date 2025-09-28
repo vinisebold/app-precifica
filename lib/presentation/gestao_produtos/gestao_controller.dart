@@ -1,14 +1,11 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:bluetooth_print/bluetooth_print_model.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:precifica/app/core/services/thermal_printer_service.dart';
 import 'package:precifica/domain/usecases/produto/update_produto_status.dart';
 
 import 'package:precifica/data/repositories/gestao_repository_impl.dart';
@@ -56,11 +53,6 @@ class GestaoController extends Notifier<GestaoState> {
   late final UndoDeleteProduto _undoDeleteProduto;
   late final GetAllProdutos _getAllProdutos;
   late final UpdateProdutoStatus _updateProdutoStatus;
-  late final ThermalPrinterService _printerService;
-  StreamSubscription<List<ThermalPrinterDevice>>? _printerDevicesSubscription;
-  StreamSubscription<PrinterConnectionUpdate>? _printerConnectionSubscription;
-  StreamSubscription<bool>? _printerScanningSubscription;
-  bool _printerListenersInitialized = false;
 
   @override
   GestaoState build() {
@@ -78,20 +70,9 @@ class GestaoController extends Notifier<GestaoState> {
     _undoDeleteProduto = UndoDeleteProduto(repository);
     _getAllProdutos = GetAllProdutos(repository);
     _updateProdutoStatus = UpdateProdutoStatus(repository);
-    _printerService = ref.read(thermalPrinterServiceProvider);
 
     // O estado inicial será definido por _carregarDadosIniciais
     state = GestaoState(isLoading: true);
-
-    if (!_printerListenersInitialized) {
-      _initializePrinterListeners();
-      _printerListenersInitialized = true;
-      ref.onDispose(() {
-        _printerDevicesSubscription?.cancel();
-        _printerConnectionSubscription?.cancel();
-        _printerScanningSubscription?.cancel();
-      });
-    }
     _carregarDadosIniciais();
     return state;
   }
@@ -127,65 +108,6 @@ class GestaoController extends Notifier<GestaoState> {
     } catch (e) {
       state = state.copyWith(
           errorMessage: "Falha ao carregar dados.", isLoading: false);
-    }
-  }
-
-  void _initializePrinterListeners() {
-    _printerDevicesSubscription =
-        _printerService.devicesStream.listen((devices) {
-      state = state.copyWith(impressorasDisponiveis: devices);
-    });
-
-    _printerConnectionSubscription =
-        _printerService.connectionStream.listen(_handlePrinterConnection);
-
-    _printerScanningSubscription =
-        _printerService.scanningStream.listen((isScanning) {
-      state = state.copyWith(isBuscandoImpressoras: isScanning);
-    });
-
-    final connectedDevice = _printerService.connectedDevice;
-    if (connectedDevice != null) {
-      state = state.copyWith(impressoraConectada: connectedDevice);
-    }
-  }
-
-  void _handlePrinterConnection(PrinterConnectionUpdate update) {
-    switch (update.status) {
-      case PrinterConnectionStatus.connected:
-        state = state.copyWith(
-          impressoraConectada: update.device ?? state.impressoraConectada,
-          isConectandoImpressora: false,
-          mensagemImpressora: update.message ??
-              'Conectado a ${update.device?.name ?? 'impressora'}.',
-        );
-        break;
-      case PrinterConnectionStatus.connecting:
-        state = state.copyWith(
-          impressoraConectada: update.device ?? state.impressoraConectada,
-          isConectandoImpressora: true,
-          mensagemImpressora: update.message ?? 'Conectando à impressora...',
-        );
-        break;
-      case PrinterConnectionStatus.disconnected:
-        state = state.copyWith(
-          isConectandoImpressora: false,
-          isImprimindo: false,
-          mensagemImpressora: update.message ?? 'Impressora desconectada.',
-          clearImpressoraConectada: true,
-        );
-        break;
-      case PrinterConnectionStatus.error:
-        final shouldClearConnection = update.device == null ||
-            state.impressoraConectada?.id == update.device?.id;
-        state = state.copyWith(
-          isConectandoImpressora: false,
-          isImprimindo: false,
-          mensagemImpressora:
-              update.message ?? 'Falha na conexão com a impressora.',
-          clearImpressoraConectada: shouldClearConnection,
-        );
-        break;
     }
   }
 
@@ -294,111 +216,6 @@ class GestaoController extends Notifier<GestaoState> {
       state = state.copyWith(
           errorMessage: 'Falha ao carregar o perfil.', isLoading: false);
     }
-  }
-
-  Future<void> buscarImpressoras() async {
-    final granted = await _printerService.ensurePermissions();
-    if (!granted) {
-      state = state.copyWith(
-        mensagemImpressora:
-            'Permissões de Bluetooth necessárias não foram concedidas.',
-        isBuscandoImpressoras: false,
-      );
-      return;
-    }
-
-    try {
-      state = state.copyWith(
-        mensagemImpressora: 'Buscando impressoras próximas...',
-        isBuscandoImpressoras: true,
-      );
-      await _printerService.startScan();
-    } catch (e) {
-      state = state.copyWith(
-        mensagemImpressora:
-            'Erro ao buscar impressoras: ${_mapPrinterError(e)}',
-        isBuscandoImpressoras: false,
-      );
-    }
-  }
-
-  Future<void> pararBuscaImpressoras() async {
-    try {
-      await _printerService.stopScan();
-    } finally {
-      state = state.copyWith(isBuscandoImpressoras: false);
-    }
-  }
-
-  Future<void> conectarImpressora(ThermalPrinterDevice device) async {
-    final jaConectada = state.impressoraConectada?.id == device.id;
-    final conectado = await _printerService.isConnected();
-
-    if (jaConectada && conectado) {
-      state = state.copyWith(
-        mensagemImpressora: 'Impressora já está conectada.',
-      );
-      return;
-    }
-
-    try {
-      await _printerService.connect(device);
-    } catch (e) {
-      state = state.copyWith(
-        mensagemImpressora: 'Erro ao conectar: ${_mapPrinterError(e)}',
-        isConectandoImpressora: false,
-      );
-    }
-  }
-
-  Future<void> desconectarImpressora() async {
-    try {
-      await _printerService.disconnect();
-      state = state.copyWith(
-        mensagemImpressora: 'Impressora desconectada.',
-        clearImpressoraConectada: true,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        mensagemImpressora: 'Erro ao desconectar: ${_mapPrinterError(e)}',
-      );
-    }
-  }
-
-  Future<void> imprimirRelatorioAtual() async {
-    final linhas = _buildTicketLines();
-    if (linhas.isEmpty) {
-      state = state.copyWith(
-        mensagemImpressora:
-            'Nenhum produto com preço cadastrado para imprimir.',
-      );
-      return;
-    }
-
-    state = state.copyWith(
-      isImprimindo: true,
-      mensagemImpressora: 'Enviando dados para a impressora...',
-    );
-
-    try {
-      await _printerService.printLines(linhas, config: {
-        'width': 58,
-        'gap': 2,
-      });
-      state = state.copyWith(
-        isImprimindo: false,
-        mensagemImpressora: 'Impressão enviada com sucesso!',
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isImprimindo: false,
-        mensagemImpressora: 'Falha ao imprimir: ${_mapPrinterError(e)}',
-      );
-    }
-  }
-
-  void limparMensagemImpressora() {
-    state = state.copyWith(clearMensagemImpressora: true);
   }
 
   void selecionarCategoriaPorIndice(int index) {
@@ -600,119 +417,6 @@ class GestaoController extends Notifier<GestaoState> {
       state =
           state.copyWith(errorMessage: 'Falha ao atualizar status do produto.');
     }
-  }
-
-  List<LineText> _buildTicketLines() {
-    final hoje = DateTime.now();
-    final formatoData = DateFormat('dd/MM/yy');
-    final formatoHora = DateFormat('HH:mm');
-    final formatoDiaSemana = DateFormat('EEEE', 'pt_BR');
-    final dataFormatada = formatoData.format(hoje);
-    final horaFormatada = formatoHora.format(hoje);
-    final diaSemanaBruto = formatoDiaSemana.format(hoje);
-    final diaSemanaFormatado = diaSemanaBruto.isEmpty
-        ? diaSemanaBruto
-        : '${diaSemanaBruto[0].toUpperCase()}${diaSemanaBruto.substring(1)}';
-
-    final categorias = _getCategorias();
-    final produtosValidos =
-        _getAllProdutos().where((p) => p.isAtivo && p.preco > 0).toList();
-
-    if (produtosValidos.isEmpty) {
-      return [];
-    }
-
-    final linhas = <LineText>[
-      LineText(
-        type: LineText.TYPE_TEXT,
-        content: 'PRECIFICADOR',
-        align: LineText.ALIGN_CENTER,
-        weight: 2,
-        height: 2,
-      ),
-      LineText(
-        type: LineText.TYPE_TEXT,
-        content: 'Preços: $diaSemanaFormatado',
-        align: LineText.ALIGN_CENTER,
-        weight: 1,
-      ),
-      LineText(
-        type: LineText.TYPE_TEXT,
-        content: dataFormatada,
-        align: LineText.ALIGN_CENTER,
-      ),
-      LineText(linefeed: 1),
-    ];
-
-    for (final categoria in categorias) {
-      final produtosCategoria =
-          produtosValidos.where((p) => p.categoriaId == categoria.id).toList();
-      if (produtosCategoria.isEmpty) continue;
-
-      linhas.add(
-        LineText(
-          type: LineText.TYPE_TEXT,
-          content: categoria.nome.toUpperCase(),
-          align: LineText.ALIGN_LEFT,
-          weight: 1,
-        ),
-      );
-      linhas.add(
-        LineText(
-          type: LineText.TYPE_TEXT,
-          content: '-' * 32,
-          align: LineText.ALIGN_LEFT,
-        ),
-      );
-
-      for (final produto in produtosCategoria) {
-        final precoFormatado =
-            produto.preco.toStringAsFixed(2).replaceAll('.', ',');
-        final linha = _formatTicketLine(produto.nome, precoFormatado);
-        linhas.add(
-          LineText(
-            type: LineText.TYPE_TEXT,
-            content: linha,
-            align: LineText.ALIGN_LEFT,
-          ),
-        );
-      }
-
-      linhas.add(LineText(linefeed: 1));
-    }
-
-    linhas
-      ..add(
-        LineText(
-          type: LineText.TYPE_TEXT,
-          content: 'Gerado às $horaFormatada',
-          align: LineText.ALIGN_CENTER,
-        ),
-      )
-      ..add(LineText(linefeed: 2));
-
-    return linhas;
-  }
-
-  String _formatTicketLine(String nome, String preco) {
-    const maxChars = 32;
-    final precoTexto = 'R\$ $preco';
-
-    if (nome.length + precoTexto.length + 1 <= maxChars) {
-      final spaces = maxChars - nome.length - precoTexto.length;
-      final padding = spaces > 0 ? ' ' * spaces : ' ';
-      return '$nome$padding$precoTexto';
-    }
-
-    return '$nome\n$precoTexto';
-  }
-
-  String _mapPrinterError(Object error) {
-    final message = error.toString();
-    if (message.toLowerCase().contains('permiss')) {
-      return 'Verifique as permissões de Bluetooth e localização.';
-    }
-    return message;
   }
 
   String gerarTextoRelatorio() {

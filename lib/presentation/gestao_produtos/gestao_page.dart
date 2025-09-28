@@ -709,7 +709,7 @@ class _PrinterBottomSheet extends ConsumerWidget {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
+                color: colorScheme.surfaceVariant,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(

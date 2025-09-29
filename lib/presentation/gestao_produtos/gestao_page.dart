@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:precifica/domain/entities/produto.dart';
+import 'package:precifica/app/core/toast/global_toast_controller.dart';
 
 import 'gestao_controller.dart';
 import 'gestao_state.dart';
@@ -309,14 +310,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     ref.listen<GestaoState>(
       gestaoControllerProvider,
       (previousState, newState) {
+        final toastController =
+            ref.read(globalToastControllerProvider.notifier);
+
         if (newState.errorMessage != null &&
             newState.errorMessage != previousState?.errorMessage) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(newState.errorMessage!),
-              backgroundColor: colorScheme.errorContainer,
-            ),
-          );
+          toastController.showError(newState.errorMessage!);
           ref.read(gestaoControllerProvider.notifier).clearError();
         }
 
@@ -324,17 +323,18 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             newState.ultimoProdutoDeletado !=
                 previousState?.ultimoProdutoDeletado) {
           final produtoDeletado = newState.ultimoProdutoDeletado!;
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('${produtoDeletado.nome} deletado'),
-            action: SnackBarAction(
-              label: 'DESFAZER',
+          toastController.show(
+            '${produtoDeletado.nome} deletado',
+            variant: ToastVariant.warning,
+            action: ToastAction(
+              label: 'Desfazer',
               onPressed: () {
                 ref
                     .read(gestaoControllerProvider.notifier)
                     .desfazerDeletarProduto();
               },
             ),
-          ));
+          );
         }
 
         if (previousState?.categoriaSelecionadaId !=

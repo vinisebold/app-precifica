@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:precifica/data/services/ai_service.dart';
+import 'package:precifica/domain/usecases/ai/organize_ai.dart';
 import 'package:precifica/domain/usecases/produto/update_produto_status.dart';
 
 import 'package:precifica/data/repositories/gestao_repository_impl.dart';
@@ -53,6 +55,7 @@ class GestaoController extends Notifier<GestaoState> {
   late final UndoDeleteProduto _undoDeleteProduto;
   late final GetAllProdutos _getAllProdutos;
   late final UpdateProdutoStatus _updateProdutoStatus;
+  late final OrganizeWithAI _organizeAI;
 
   @override
   GestaoState build() {
@@ -71,10 +74,26 @@ class GestaoController extends Notifier<GestaoState> {
     _getAllProdutos = GetAllProdutos(repository);
     _updateProdutoStatus = UpdateProdutoStatus(repository);
 
+    final aiService = AIService();
+    _organizeAI = OrganizeWithAI(repository, aiService);
+
     // O estado inicial será definido por _carregarDadosIniciais
     state = GestaoState(isLoading: true);
     _carregarDadosIniciais();
     return state;
+  }
+
+  Future<void> organizarComIA() async { // Remova o parâmetro apiKey
+    state = state.copyWith(isLoading: true);
+    try {
+      await _organizeAI(); // Chame sem a chave
+      await _carregarDadosIniciais();
+    } catch (e) {
+      state = state.copyWith(
+        errorMessage: 'Falha ao organizar com IA: ${e.toString()}',
+        isLoading: false,
+      );
+    }
   }
 
   Future<void> _carregarDadosIniciais({String? nomePerfilCarregado}) async {

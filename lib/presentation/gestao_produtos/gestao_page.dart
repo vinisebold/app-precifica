@@ -104,6 +104,14 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                             ),
                             const SizedBox(width: 8),
                             _ActionCard(
+                              label: 'Organizar c/ IA',
+                              icon: Icons.auto_awesome_outlined,
+                              onTap: () {
+                                Navigator.of(dialogContext).pop();
+                                ref.read(gestaoControllerProvider.notifier).organizarComIA();
+                              },
+                            ),
+                            _ActionCard(
                               label: 'Excluir',
                               icon: Icons.delete_outline,
                               isEnabled: isProfileSelected,

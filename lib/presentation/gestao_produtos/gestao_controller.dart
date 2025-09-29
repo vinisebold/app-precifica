@@ -83,10 +83,10 @@ class GestaoController extends Notifier<GestaoState> {
     return state;
   }
 
-  Future<void> organizarComIA() async { // Remova o parâmetro apiKey
+  Future<void> organizarComIA() async {
     state = state.copyWith(isLoading: true);
     try {
-      await _organizeAI(); // Chame sem a chave
+      await _organizeAI();
       await _carregarDadosIniciais();
     } catch (e) {
       state = state.copyWith(

@@ -275,7 +275,28 @@ class GestaoController extends Notifier<GestaoState> {
     state = state.copyWith(isLoading: true);
     try {
       await _createCategoria(nome);
-      state = state.copyWith(categorias: _getCategorias(), isLoading: false);
+      final categoriasAtualizadas = _getCategorias();
+      final tinhaCategoriasAntes = state.categorias.isNotEmpty;
+
+      String? categoriaSelecionadaId = state.categoriaSelecionadaId;
+      if (!tinhaCategoriasAntes ||
+          categoriaSelecionadaId == null ||
+          !categoriasAtualizadas
+              .any((categoria) => categoria.id == categoriaSelecionadaId)) {
+        categoriaSelecionadaId =
+            categoriasAtualizadas.isNotEmpty ? categoriasAtualizadas.first.id : null;
+      }
+
+      final produtosAtualizados = categoriaSelecionadaId != null
+          ? _getProdutosByCategoria(categoriaSelecionadaId)
+          : <Produto>[];
+
+      state = state.copyWith(
+        categorias: categoriasAtualizadas,
+        categoriaSelecionadaId: categoriaSelecionadaId,
+        produtos: produtosAtualizados,
+        isLoading: false,
+      );
     } catch (e) {
       state = state.copyWith(
           errorMessage: 'Falha ao criar categoria.', isLoading: false);
@@ -340,7 +361,12 @@ class GestaoController extends Notifier<GestaoState> {
   }
 
   Future<void> criarProduto(String nome) async {
-    if (state.categoriaSelecionadaId == null) return;
+    if (state.categoriaSelecionadaId == null) {
+      state = state.copyWith(
+          errorMessage:
+              'Crie ou selecione uma categoria antes de adicionar produtos.');
+      return;
+    }
     state = state.copyWith(isLoading: true);
     try {
       await _createProduto(

@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:ui';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -108,7 +112,9 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                               icon: Icons.auto_awesome_outlined,
                               onTap: () {
                                 Navigator.of(dialogContext).pop();
-                                ref.read(gestaoControllerProvider.notifier).organizarComIA();
+                                ref
+                                    .read(gestaoControllerProvider.notifier)
+                                    .organizarComIA();
                               },
                             ),
                             _ActionCard(
@@ -347,125 +353,119 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     final gestaoState = ref.watch(gestaoControllerProvider);
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
-    return Scaffold(
-      backgroundColor: colorScheme.surfaceContainerLow,
-      appBar: AppBar(
-        title: GestureDetector(
-          onLongPress: () {
-            HapticFeedback.heavyImpact();
-            _mostrarDialogoGerenciarPerfis(context, ref);
-          },
-          child: Text('Precificador', style: textTheme.titleLarge),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              final textoRelatorio = gestaoNotifier.gerarTextoRelatorio();
-              Share.share(textoRelatorio);
-            },
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: colorScheme.surfaceContainerLow,
+          appBar: AppBar(
+            title: GestureDetector(
+              onLongPress: () {
+                HapticFeedback.heavyImpact();
+                _mostrarDialogoGerenciarPerfis(context, ref);
+              },
+              child: Text('Precificador', style: textTheme.titleLarge),
+            ),
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.share),
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  final textoRelatorio = gestaoNotifier.gerarTextoRelatorio();
+                  Share.share(textoRelatorio);
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.add_box_outlined),
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  _mostrarDialogoNovaCategoria(context, ref);
+                },
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.add_box_outlined),
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              _mostrarDialogoNovaCategoria(context, ref);
-            },
-          ),
-        ],
-      ),
-      body: Container(
-        margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(16.0),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16.0),
-          child: Stack(
-            children: [
-              if (gestaoState.categorias.isNotEmpty)
-                RepaintBoundary(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: gestaoState.categorias.length,
-                    onPageChanged: (index) {
-                      gestaoNotifier.selecionarCategoriaPorIndice(index);
-                    },
-                    itemBuilder: (context, index) {
-                      return ProductListView(
-                        categoriaId: gestaoState.categorias[index].id,
-                        onProdutoDoubleTap: (produto) {
-                          _mostrarDialogoEditarNome(
+          body: Container(
+            margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(16.0),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16.0),
+              child: Stack(
+                children: [
+                  if (gestaoState.categorias.isNotEmpty)
+                    RepaintBoundary(
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: gestaoState.categorias.length,
+                        onPageChanged: (index) =>
+                            gestaoNotifier.selecionarCategoriaPorIndice(index),
+                        itemBuilder: (context, index) => ProductListView(
+                          categoriaId: gestaoState.categorias[index].id,
+                          onProdutoDoubleTap: (produto) =>
+                              _mostrarDialogoEditarNome(
                             context,
                             ref,
                             titulo: "Editar Produto",
                             valorAtual: produto.nome,
-                            onSalvar: (novoNome) {
-                              gestaoNotifier.atualizarNomeProduto(
-                                  produto.id, novoNome);
-                            },
-                          );
-                        },
-                        onProdutoTap: (produto) {
-                          gestaoNotifier.atualizarStatusProduto(
-                              produto.id, !produto.isAtivo);
-                        },
-                      );
+                            onSalvar: (novoNome) => gestaoNotifier
+                                .atualizarNomeProduto(produto.id, novoNome),
+                          ),
+                          onProdutoTap: (produto) =>
+                              gestaoNotifier.atualizarStatusProduto(
+                                  produto.id, !produto.isAtivo),
+                        ),
+                      ),
+                    ),
+                  if (gestaoState.isReordering) _buildDeleteArea(context, ref),
+                  if (gestaoState.isDraggingProduto)
+                    _buildProdutoDeleteArea(context, ref),
+                ],
+              ),
+            ),
+          ),
+          bottomNavigationBar: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: CategoriaNavBar(
+                onCategoriaDoubleTap: (categoria) {
+                  _mostrarDialogoEditarNome(
+                    context,
+                    ref,
+                    titulo: "Editar Categoria",
+                    valorAtual: categoria.nome,
+                    onSalvar: (novoNome) {
+                      gestaoNotifier.atualizarNomeCategoria(
+                          categoria.id, novoNome);
                     },
-                  ),
-                ),
-              if (gestaoState.isReordering) _buildDeleteArea(context, ref),
-              if (gestaoState.isDraggingProduto)
-                _buildProdutoDeleteArea(context, ref),
-              if (gestaoState.isLoading)
-                Container(
-                  color: Colors.black.withAlpha((255 * 0.3).round()),
-                  child: const Center(child: CircularProgressIndicator()),
-                ),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: CategoriaNavBar(
-            onCategoriaDoubleTap: (categoria) {
-              _mostrarDialogoEditarNome(
-                context,
-                ref,
-                titulo: "Editar Categoria",
-                valorAtual: categoria.nome,
-                onSalvar: (novoNome) {
-                  gestaoNotifier.atualizarNomeCategoria(categoria.id, novoNome);
+                  );
                 },
-              );
-            },
+              ),
+            ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: gestaoState.categoriaSelecionadaId != null
+                ? () {
+                    HapticFeedback.lightImpact();
+                    _mostrarDialogoNovoProduto(context, ref);
+                  }
+                : null,
+            elevation: gestaoState.categoriaSelecionadaId != null ? 6.0 : 0.0,
+            backgroundColor: gestaoState.categoriaSelecionadaId != null
+                ? colorScheme.primaryContainer
+                : colorScheme.surfaceContainer,
+            child: Icon(
+              Icons.add_shopping_cart,
+              color: gestaoState.categoriaSelecionadaId != null
+                  ? colorScheme.onPrimaryContainer
+                  : colorScheme.outline,
+            ),
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: gestaoState.categoriaSelecionadaId != null
-            ? () {
-                HapticFeedback.lightImpact();
-                _mostrarDialogoNovoProduto(context, ref);
-              }
-            : null,
-        elevation: gestaoState.categoriaSelecionadaId != null ? 6.0 : 0.0,
-        backgroundColor: gestaoState.categoriaSelecionadaId != null
-            ? colorScheme.primaryContainer
-            : colorScheme.surfaceContainer,
-        child: Icon(
-          Icons.add_shopping_cart,
-          color: gestaoState.categoriaSelecionadaId != null
-              ? colorScheme.onPrimaryContainer
-              : colorScheme.outline,
-        ),
-      ),
+        _GlobalProcessingOverlay(active: gestaoState.isLoading),
+      ],
     );
   }
 
@@ -634,6 +634,281 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       Navigator.of(dialogContext).pop();
     }
   }
+}
+
+class _GlobalProcessingOverlay extends StatefulWidget {
+  final bool active;
+
+  const _GlobalProcessingOverlay({required this.active});
+
+  @override
+  State<_GlobalProcessingOverlay> createState() =>
+      _GlobalProcessingOverlayState();
+}
+
+class _GlobalProcessingOverlayState extends State<_GlobalProcessingOverlay>
+    with TickerProviderStateMixin {
+  static const _messages = [
+    'Organizando os itens para você...',
+    'Analisando categorias e agrupamentos...',
+    'Separando os itens com carinho...',
+    'Quase pronto! Ajustando os últimos detalhes...'
+  ];
+
+  late Timer _timer;
+  int _currentMessageIndex = 0;
+  late AnimationController _glowController;
+  late AnimationController _visibilityController; // 0..1 para entrada/saída
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (!mounted) return;
+      setState(() {
+        _currentMessageIndex = (_currentMessageIndex + 1) % _messages.length;
+      });
+    });
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 14),
+    )..repeat();
+    _visibilityController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+      reverseDuration: const Duration(milliseconds: 260),
+    );
+    if (widget.active) {
+      _visibilityController.value = 1.0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    _glowController.dispose();
+    _visibilityController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant _GlobalProcessingOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.active != widget.active) {
+      if (widget.active) {
+        _visibilityController.forward();
+      } else {
+        _visibilityController.reverse();
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Positioned.fill(
+      child: AnimatedBuilder(
+        animation: _visibilityController,
+        builder: (context, _) {
+          final v = Curves.easeInOut.transform(_visibilityController.value);
+          if (v == 0) return const SizedBox.shrink();
+          return IgnorePointer(
+            ignoring: v < 0.05,
+            child: Opacity(
+              opacity: v,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(
+                          sigmaX: 18 * v,
+                          sigmaY: 18 * v,
+                        ),
+                        child: AnimatedBuilder(
+                          animation: _glowController,
+                          builder: (context, _) {
+                            return CustomPaint(
+                              painter: _GlowBackdropPainter(
+                                progress: _glowController.value,
+                                colorScheme: colorScheme,
+                              ),
+                              child: Container(
+                                color: Colors.black.withOpacity(0.02 * v),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          FadeTransition(
+                            opacity: _visibilityController,
+                            child: SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 4,
+                                valueColor: AlwaysStoppedAnimation(
+                                  colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 400),
+                            transitionBuilder: (child, animation) =>
+                                FadeTransition(
+                                    opacity: animation, child: child),
+                            child: Opacity(
+                              key: ValueKey('${_currentMessageIndex}_$v'),
+                              opacity: v.clamp(0, 1),
+                              child: Text(
+                                _messages[_currentMessageIndex],
+                                textAlign: TextAlign.center,
+                                style: textTheme.titleMedium?.copyWith(
+                                  color: colorScheme.onSurface,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.15,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black.withOpacity(0.25 * v),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Opacity(
+                            opacity: (v * 0.95).clamp(0, 1),
+                            child: Text(
+                              'Nossa IA está cuidando de tudo, só um instante.',
+                              textAlign: TextAlign.center,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant
+                                    .withOpacity(0.9 * v),
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black.withOpacity(0.2 * v),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _GlowBackdropPainter extends CustomPainter {
+  final double progress; // 0..1 loop
+  final ColorScheme colorScheme;
+
+  _GlowBackdropPainter({required this.progress, required this.colorScheme});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Three moving glow blobs (radial gradients) whose centers animate softly
+    final paints = <_GlowSpec>[
+      _GlowSpec(
+        baseOffset: const Offset(0.18, 0.22),
+        radiusFactor: 0.65,
+        // maior
+        hueShift: 0.0,
+        speed: 0.9,
+        intensity: 0.38, // mais leve
+      ),
+      _GlowSpec(
+        baseOffset: const Offset(0.88, 0.78),
+        radiusFactor: 0.80,
+        hueShift: 0.07,
+        speed: 0.55,
+        intensity: 0.30,
+      ),
+      _GlowSpec(
+        baseOffset: const Offset(0.78, 0.20),
+        radiusFactor: 0.55,
+        hueShift: -0.05,
+        speed: 1.25,
+        intensity: 0.25,
+      ),
+    ];
+
+    for (final spec in paints) {
+      final localT = (progress * spec.speed) % 1.0;
+      final wobbleX = math.sin(localT * math.pi * 2) * 0.04;
+      final wobbleY = math.cos(localT * math.pi * 2) * 0.04;
+      final center = Offset(
+        (spec.baseOffset.dx + wobbleX) * size.width,
+        (spec.baseOffset.dy + wobbleY) * size.height,
+      );
+      final radius = spec.radiusFactor * size.shortestSide;
+      final gradient = RadialGradient(
+        colors: [
+          _tint(colorScheme.primary, spec.hueShift)
+              .withOpacity(spec.intensity * 0.50),
+          _tint(colorScheme.primaryContainer, spec.hueShift)
+              .withOpacity(spec.intensity * 0.22),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.55, 1.0],
+      );
+      final rect = Rect.fromCircle(center: center, radius: radius);
+      final paint = Paint()..shader = gradient.createShader(rect);
+      canvas.drawCircle(center, radius, paint);
+    }
+  }
+
+  Color _tint(Color base, double shift) {
+    // Simple hue shift approximation by mixing with complementary/white
+    if (shift == 0) return base;
+    final hsl = HSLColor.fromColor(base);
+    final shifted = hsl.withHue((hsl.hue + shift * 360) % 360);
+    return shifted.toColor();
+  }
+
+  @override
+  bool shouldRepaint(covariant _GlowBackdropPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.colorScheme != colorScheme;
+}
+
+class _GlowSpec {
+  final Offset baseOffset; // relative 0..1
+  final double radiusFactor; // relative to shortestSide
+  final double hueShift; // -1..1 -> fraction of 360 degrees
+  final double speed; // multiplier for animation speed
+  final double intensity; // base opacity scaler
+  _GlowSpec({
+    required this.baseOffset,
+    required this.radiusFactor,
+    required this.hueShift,
+    required this.speed,
+    required this.intensity,
+  });
 }
 
 class _ActionCard extends StatelessWidget {

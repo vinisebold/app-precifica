@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Importa a entidade Categoria da camada de domínio
 import 'package:precifica/domain/entities/categoria.dart';
-
-// Importa o controller da camada de apresentação
 import '../gestao_controller.dart';
 
 class CategoriaNavBar extends ConsumerStatefulWidget {
@@ -41,8 +38,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _calculateVisuals());
     });
 
-    // Garante que a categoria inicial (se houver) esteja visível com um pulo
-    // e atualiza a visibilidade das setas após o primeiro frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _calculateVisuals();
@@ -67,7 +62,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
     super.dispose();
   }
 
-  // Método para rolar/pular para uma categoria específica
   void _ensureCategoryIsVisible(String categoriaId, {bool jump = false}) {
     if (!_scrollController.hasClients || _itemKeys[categoriaId] == null) {
       return;
@@ -80,13 +74,9 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
       Scrollable.ensureVisible(
         itemContext,
         alignment: 0.5,
-        // Centraliza o item na tela
         duration: jump ? Duration.zero : const Duration(milliseconds: 300),
-        // Pula ou anima
-        curve: Curves.easeInOut, // Curva padrão para animação
+        curve: Curves.easeInOut,
       );
-      // Atualiza a visibilidade das setas após o scroll/pulo.
-      // Usar addPostFrameCallback garante que aconteça após as mudanças de layout.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _calculateVisuals();
@@ -212,7 +202,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
       newRotations[categoria.id] = rotation;
     }
 
-    // Calcula paddings assimétricos para centralização perfeita das extremidades
     double newLeftPadding = (screenWidth / 2) - 48.0; // Fallback
     double newRightPadding = (screenWidth / 2) - 48.0; // Fallback
 
@@ -287,13 +276,10 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    // Ouve as mudanças no ID da categoria selecionada no controller.
-    // Quando mudar, garante que a nova categoria selecionada pule para a visão.
     ref.listen<String?>(
       gestaoControllerProvider.select((state) => state.categoriaSelecionadaId),
       (previousSelectedId, newSelectedId) {
         if (newSelectedId != null && newSelectedId != previousSelectedId) {
-          // Agenda o pulo para depois do frame atual para evitar conflitos de build.
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               _ensureCategoryIsVisible(newSelectedId, jump: false);
@@ -306,7 +292,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
     final state = ref.watch(gestaoControllerProvider);
     final categorias = state.categorias;
 
-    // Garante atualização dos visuais e padding após o build quando há categorias
     if (categorias.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -315,23 +300,18 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
       });
     }
 
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    // Gerencia as chaves dos itens para o scroll e drag
     for (var cat in categorias) {
       _itemKeys.putIfAbsent(cat.id, () => GlobalKey());
     }
     _itemKeys
         .removeWhere((key, value) => !categorias.any((cat) => cat.id == key));
 
-    if (categorias.isEmpty) {
-      return const SizedBox(height: 48); // Altura padrão da barra
-    }
+    if (categorias.isEmpty) return const SizedBox(height: 48);
 
     return Container(
       height: 48,
-      color: Colors.transparent, // Cor de fundo da barra
-      clipBehavior: Clip.none, // Permite overflow visual para escalas >1
+      color: Colors.transparent,
+      clipBehavior: Clip.none,
       child: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
           if (notification is ScrollEndNotification) {
@@ -367,9 +347,7 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
                           : Matrix4.identity(),
                       child: LongPressDraggable<String>(
                         key: ValueKey(categoria.id),
-                        // Chave para o Draggable
                         data: categoria.id,
-                        // Dado a ser arrastado
                         onDragStarted: () {
                           HapticFeedback.lightImpact();
                           ref
@@ -377,7 +355,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
                               .setReordering(true);
                         },
                         onDragEnd: (details) {
-                          // Se não foi aceito no target, reverte o estado de reordenação
                           if (!details.wasAccepted) {
                             ref
                                 .read(gestaoControllerProvider.notifier)
@@ -385,11 +362,9 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
                           }
                         },
                         onDraggableCanceled: (velocity, dragOffset) {
-                          // Animação para reverter ao local original se o drag for cancelado
                           _revertDragAnimation(categoria, itemKey, dragOffset);
                         },
                         feedback: Material(
-                          // Visual do item sendo arrastado
                           color: Colors.transparent,
                           elevation: 2.0,
                           shadowColor:
@@ -400,36 +375,30 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
                           child: _CategoriaItem(
                             categoria: categoria,
                             isSelected: true,
-                            // Feedback visual como selecionado
                             onTap: () {},
                             onDoubleTap: () {},
                             isDragFeedback: true,
                           ),
                         ),
                         childWhenDragging: Opacity(
-                          // Aparência do item original enquanto arrasta
-                          opacity: 0.0, // Torna o item original invisível
+                          opacity: 0.0,
                           child: _CategoriaItem(
                             key: itemKey,
-                            // Chave global para o item
                             categoria: categoria,
                             isSelected:
                                 state.categoriaSelecionadaId == categoria.id,
                             onTap: () {},
-                            // Tap é tratado no child
-                            onDoubleTap: () {}, // DoubleTap é tratado no child
+                            onDoubleTap: () {},
                           ),
                         ),
                         child: Opacity(
-                          // Item visível normal
                           opacity: (_revertingCategoria?.id == categoria.id)
-                              ? 0.0 // Torna invisível se estiver na animação de reversão
+                              ? 0.0
                               : 1.0,
                           child: Transform(
                             alignment: Alignment.center,
                             transform: Matrix4.identity()
-                              ..setEntry(
-                                  3, 2, 0.002) // Perspectiva para profundidade
+                              ..setEntry(3, 2, 0.002)
                               ..rotateY(rotation),
                             child: Transform.scale(
                               scale: scale,
@@ -442,7 +411,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
                                   isSelected: state.categoriaSelecionadaId ==
                                       categoria.id,
                                   onTap: () {
-                                    // Removido a seleção por tap simples
                                   },
                                   onDoubleTap: () {
                                     if (!ref
@@ -461,12 +429,9 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
                   },
                   onWillAcceptWithDetails: (details) =>
                       details.data != categoria.id,
-                  // Não aceita arrastar sobre si mesmo
                   onAcceptWithDetails: (details) {
                     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
-                    // Aceita o item arrastado e reordena
                     gestaoNotifier.reordenarCategoria(details.data, categoria.id);
-                    // Reverte o estado de reordenação
                     gestaoNotifier.setReordering(false);
                   },
                 );
@@ -479,8 +444,6 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
   }
 }
 
-// Widget interno para cada item da categoria.
-// Este widget não precisou de alterações significativas para o "pulo".
 class _CategoriaItem extends StatefulWidget {
   final Categoria categoria;
   final bool isSelected;
@@ -502,20 +465,15 @@ class _CategoriaItem extends StatefulWidget {
 }
 
 class _CategoriaItemState extends State<_CategoriaItem> {
-  bool _isActivated = false; // Para feedback visual no onTapDown/Up
+  bool _isActivated = false;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isSelected = widget.isSelected;
-    const duration =
-        Duration(milliseconds: 200); // Duração para animações internas
-
-    // Raio da borda animado com base no estado _isActivated
+  const duration = Duration(milliseconds: 200);
     final double cornerRadius = _isActivated ? 16.0 : 28.0;
-
-    // Visual especial para o feedback de arrastar
     if (widget.isDragFeedback) {
       final pillColor = colorScheme.secondaryContainer;
       final contentColor = colorScheme.onSecondaryContainer;
@@ -524,7 +482,7 @@ class _CategoriaItemState extends State<_CategoriaItem> {
         decoration: BoxDecoration(
           color: pillColor,
           borderRadius:
-              BorderRadius.circular(28.0), // Borda padrão para feedback
+              BorderRadius.circular(28.0),
         ),
         child: Center(
           child: Text(
@@ -537,7 +495,6 @@ class _CategoriaItemState extends State<_CategoriaItem> {
       );
     }
 
-    // Cores e preenchimento baseados no estado de seleção
     final Color pillColor =
         isSelected ? colorScheme.secondaryContainer : Colors.transparent;
     final Color contentColor = isSelected
@@ -547,16 +504,12 @@ class _CategoriaItemState extends State<_CategoriaItem> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      // Espaçamento entre itens aumentado para evitar overlap em escalas >1
       child: GestureDetector(
         onTap: widget.onTap,
         onDoubleTap: widget.onDoubleTap,
-        onTapDown: (_) => setState(() => _isActivated = true),
-        // Ativa feedback visual
-        onTapUp: (_) => setState(() => _isActivated = false),
-        // Desativa feedback
-        onTapCancel: () => setState(() => _isActivated = false),
-        // Cancela feedback
+  onTapDown: (_) => setState(() => _isActivated = true),
+  onTapUp: (_) => setState(() => _isActivated = false),
+  onTapCancel: () => setState(() => _isActivated = false),
         child: AnimatedContainer(
           duration: duration,
           curve: Curves.easeInOut,

@@ -1,46 +1,79 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:precifica/data/api_key.dart';
 
 class AIService {
   final String _apiUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=$apiKey';
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
-  /// Envia os dados JSON para a IA e retorna a versão reorganizada.
+  /// Envia os dados JSON para a IA (Gemini) e retorna a versão reorganizada.
   ///
   /// Lança uma exceção se a chamada de API falhar ou retornar um status de erro.
   Future<String> organizarCategorias({required String jsonAtual}) async {
+    if (!isApiKeyConfigured) {
+      throw Exception(
+        'GEMINI_API_KEY não configurada. Defina via --dart-define=GEMINI_API_KEY=SUACHAVE ou variável de ambiente no pipeline.',
+      );
+    }
+    final headers = {
+      'x-goog-api-key': apiKey,
+      'Content-Type': 'application/json',
+    };
+
+    // Monta o corpo da requisição no formato aceito pelo Gemini
+    final body = jsonEncode({
+      'contents': [
+        {
+          'parts': [
+            {
+              'text': 'Você é um especialista global em categorização e taxonomia de produtos. '
+                  'Objetivo: reorganize o JSON enviado pelo usuário em grupos coerentes de categorias, '
+                  'preparados para qualquer tipo de item (varejo físico ou digital). Use o arquivo assets/profiles/Hortifruti.json '
+                  'apenas como referência de excelência para a organização e nomenclatura, mas adapte-se a todos os contextos.\n\n'
+                  'Dados de entrada:\n$jsonAtual\n\n'
+                  'Regras:\n'
+                  '1. Analise os itens e agrupe-os por similaridade funcional, uso ou segmento (não restringir a alimentos).\n'
+                  '2. Crie novas categorias quando necessário; renomeie ou una categorias para evitar sobreposições.\n'
+                  '3. Mantenha para cada produto todas as propriedades originais recebidas (nome, códigos, medidas, descrições, etc.).\n'
+                  '4. Certifique-se de que cada categoria siga o formato: {"nome": "<nome da categoria>", "produtos": [{...}]}.\n'
+                  '5. Remova duplicidades e normalize espaçamentos, mantendo a grafia já existente (inclusive maiúsculas/minúsculas) sempre que fizer sentido.\n'
+                  '6. Não deixe categorias vazias; se um item não se encaixar, crie uma categoria "Outros" ou similar e explique brevemente no campo "nome" (ex.: "Outros / Itens Especiais").\n'
+                  '7. Ordene categorias e os produtos dentro de cada categoria em ordem alfabética pelo campo "nome".\n'
+                  '8. Preserve metadados adicionais presentes no JSON original em cada produto ou categoria.\n\n'
+                  'Checklist antes de responder:\n'
+                  '- Todas as categorias possuem produtos.\n'
+                  '- Nenhum item foi perdido ou alterado indevidamente.\n'
+                  '- A estrutura final é JSON válido (aspas duplas, sem comentários).\n\n'
+                  'Saída: retorne APENAS o JSON reorganizado, sem nenhum texto adicional, comentários ou formatação markdown.'
+            }
+          ]
+        }
+      ]
+    });
+
     try {
       final response = await http.post(
         Uri.parse(_apiUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "contents": [
-            {
-              "parts": [
-                {
-                  "text": '''
-                    Você é um especialista em categorização de produtos de mercado.
-                    Analise o seguinte JSON e reorganize os produtos em categorias mais lógicas e otimizadas.
-                    Você pode criar, fundir ou renomear categorias conforme necessário. O JSON de entrada é:
-                    $jsonAtual
-
-                    Retorne APENAS o novo JSON reorganizado, sem nenhum texto, explicação ou formatação de markdown como ```json ```.
-                  '''
-                }
-              ]
-            }
-          ]
-        }),
+        headers: headers,
+        body: body,
       );
 
       if (response.statusCode == 200) {
-        final body = jsonDecode(response.body);
-        // 5. Extração da resposta no formato do Gemini
-        return body['candidates'][0]['content']['parts'][0]['text'].trim();
+        final Map<String, dynamic> responseBody = jsonDecode(response.body);
+
+        if (responseBody.containsKey('candidates') &&
+            responseBody['candidates'].isNotEmpty) {
+          final text =
+              responseBody['candidates'][0]['content']['parts'][0]['text'];
+          return text.trim();
+        } else {
+          throw Exception(
+              'Resposta da API em formato inesperado: ${response.body}');
+        }
       } else {
         throw Exception(
-            'Erro na API de IA: ${response.statusCode} - ${response.body}');
+            'Erro na API do Gemini: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
       throw Exception('Falha ao comunicar com o serviço de IA: $e');

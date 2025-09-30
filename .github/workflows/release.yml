@@ -43,6 +43,7 @@ jobs:
           flutter build apk --release
           --build-name=${{ github.ref_name }}
           --build-number=${{ github.run_number }}
+          --dart-define=GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
         env:
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}

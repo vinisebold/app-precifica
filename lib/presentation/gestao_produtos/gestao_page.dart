@@ -90,7 +90,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                       width: 48,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: colorScheme.outlineVariant.withOpacity(.6),
+                        color: colorScheme.outlineVariant.withValues(alpha: .6),
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
@@ -179,12 +179,16 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                   itemCount: perfis.length,
                                   itemBuilder: (context, index) {
                                     final nomePerfil = perfis[index];
-                                    return RadioListTile<String>(
+                                    return ListTile(
                                       title: Text(nomePerfil),
-                                      value: nomePerfil,
-                                      groupValue: perfilSelecionado,
-                                      onChanged: (value) => setState(
-                                          () => perfilSelecionado = value),
+                                      leading: Radio<String>(
+                                        value: nomePerfil,
+                                        groupValue: perfilSelecionado,
+                                        onChanged: (value) => setState(
+                                            () => perfilSelecionado = value),
+                                      ),
+                                      onTap: () => setState(
+                                          () => perfilSelecionado = nomePerfil),
                                     );
                                   },
                                 ),
@@ -595,12 +599,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           ),
           // Navigation items
           NavigationDrawerDestination(
-            icon: Icon(Icons.auto_awesome_outlined),
-            selectedIcon: Icon(Icons.auto_awesome),
-            label: Text('Organizar com IA'),
+            icon: const Icon(Icons.auto_awesome_outlined),
+            selectedIcon: const Icon(Icons.auto_awesome),
+            label: const Text('Organizar com IA'),
             enabled: !gestaoState.isLoading,
           ),
-          NavigationDrawerDestination(
+          const NavigationDrawerDestination(
             icon: Icon(Icons.settings_outlined),
             selectedIcon: Icon(Icons.settings),
             label: Text('Configurações'),
@@ -655,17 +659,17 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 end: Alignment.bottomCenter,
                 colors: isHovering
                     ? [
-                        colorScheme.error.withOpacity(0.75),
-                        colorScheme.errorContainer.withOpacity(0.60),
-                        colorScheme.errorContainer.withOpacity(0.30),
-                        colorScheme.errorContainer.withOpacity(0.08),
+                        colorScheme.error.withValues(alpha: 0.75),
+                        colorScheme.errorContainer.withValues(alpha: 0.60),
+                        colorScheme.errorContainer.withValues(alpha: 0.30),
+                        colorScheme.errorContainer.withValues(alpha: 0.08),
                         Colors.transparent,
                       ]
                     : [
-                        colorScheme.error.withOpacity(0.50),
-                        colorScheme.errorContainer.withOpacity(0.40),
-                        colorScheme.errorContainer.withOpacity(0.20),
-                        colorScheme.errorContainer.withOpacity(0.05),
+                        colorScheme.error.withValues(alpha: 0.50),
+                        colorScheme.errorContainer.withValues(alpha: 0.40),
+                        colorScheme.errorContainer.withValues(alpha: 0.20),
+                        colorScheme.errorContainer.withValues(alpha: 0.05),
                         Colors.transparent,
                       ],
                 stops: const [0.0, 0.35, 0.65, 0.88, 1.0],
@@ -681,7 +685,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isHovering
-                          ? colorScheme.error.withOpacity(0.15)
+                          ? colorScheme.error.withValues(alpha: 0.15)
                           : Colors.transparent,
                       shape: BoxShape.circle,
                     ),
@@ -726,17 +730,17 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 end: Alignment.bottomCenter,
                 colors: isHovering
                     ? [
-                        colorScheme.error.withOpacity(0.75),
-                        colorScheme.errorContainer.withOpacity(0.60),
-                        colorScheme.errorContainer.withOpacity(0.30),
-                        colorScheme.errorContainer.withOpacity(0.08),
+                        colorScheme.error.withValues(alpha: 0.75),
+                        colorScheme.errorContainer.withValues(alpha: 0.60),
+                        colorScheme.errorContainer.withValues(alpha: 0.30),
+                        colorScheme.errorContainer.withValues(alpha: 0.08),
                         Colors.transparent,
                       ]
                     : [
-                        colorScheme.error.withOpacity(0.50),
-                        colorScheme.errorContainer.withOpacity(0.40),
-                        colorScheme.errorContainer.withOpacity(0.20),
-                        colorScheme.errorContainer.withOpacity(0.05),
+                        colorScheme.error.withValues(alpha: 0.50),
+                        colorScheme.errorContainer.withValues(alpha: 0.40),
+                        colorScheme.errorContainer.withValues(alpha: 0.20),
+                        colorScheme.errorContainer.withValues(alpha: 0.05),
                         Colors.transparent,
                       ],
                 stops: const [0.0, 0.35, 0.65, 0.88, 1.0],
@@ -752,7 +756,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isHovering
-                          ? colorScheme.error.withOpacity(0.15)
+                          ? colorScheme.error.withValues(alpha: 0.15)
                           : Colors.transparent,
                       shape: BoxShape.circle,
                     ),
@@ -957,7 +961,7 @@ class _GlobalProcessingOverlayState extends State<_GlobalProcessingOverlay>
                                 colorScheme: colorScheme,
                               ),
                               child: Container(
-                                color: Colors.black.withOpacity(0.02 * v),
+                                color: Colors.black.withValues(alpha: 0.02 * v),
                               ),
                             );
                           },
@@ -1002,7 +1006,7 @@ class _GlobalProcessingOverlayState extends State<_GlobalProcessingOverlay>
                                   letterSpacing: 0.15,
                                   shadows: [
                                     Shadow(
-                                      color: Colors.black.withOpacity(0.25 * v),
+                                      color: Colors.black.withValues(alpha: 0.25 * v),
                                       blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     ),
@@ -1019,10 +1023,10 @@ class _GlobalProcessingOverlayState extends State<_GlobalProcessingOverlay>
                               textAlign: TextAlign.center,
                               style: textTheme.bodyMedium?.copyWith(
                                 color: colorScheme.onSurfaceVariant
-                                    .withOpacity(0.9 * v),
+                                    .withValues(alpha: 0.9 * v),
                                 shadows: [
                                   Shadow(
-                                    color: Colors.black.withOpacity(0.2 * v),
+                                    color: Colors.black.withValues(alpha: 0.2 * v),
                                     blurRadius: 6,
                                     offset: const Offset(0, 1),
                                   ),
@@ -1090,9 +1094,9 @@ class _GlowBackdropPainter extends CustomPainter {
       final gradient = RadialGradient(
         colors: [
           _tint(colorScheme.primary, spec.hueShift)
-              .withOpacity(spec.intensity * 0.50),
+              .withValues(alpha: spec.intensity * 0.50),
           _tint(colorScheme.primaryContainer, spec.hueShift)
-              .withOpacity(spec.intensity * 0.22),
+              .withValues(alpha: spec.intensity * 0.22),
           Colors.transparent,
         ],
         stops: const [0.0, 0.55, 1.0],
@@ -1205,7 +1209,7 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                 child: Container(
-                  color: Colors.black.withOpacity(0.02),
+                  color: Colors.black.withValues(alpha: 0.02),
                 ),
               ),
             ),

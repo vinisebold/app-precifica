@@ -5,16 +5,16 @@ part 'categoria_model.g.dart';
 
 @HiveType(typeId: 0)
 class CategoriaModel extends Categoria {
-  @override
   @HiveField(0)
+  @override
   final String id;
 
-  @override
   @HiveField(1)
+  @override
   String nome;
 
-  @override
   @HiveField(2)
+  @override
   int ordem;
 
   @HiveField(3, defaultValue: [])

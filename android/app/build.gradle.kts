@@ -27,26 +27,45 @@ android {
         versionName = flutter.versionName
     }
 
+    // Verifica se as credenciais do keystore estão disponíveis (CI/CD)
+    val keystorePath = System.getenv("KEY_STORE_FILE")
+    val storePass = System.getenv("KEY_STORE_PASSWORD")
+    val alias = System.getenv("KEY_ALIAS")
+    val keyPass = System.getenv("KEY_PASSWORD")
+    
+    val hasKeystoreConfig = !keystorePath.isNullOrBlank() && 
+                            !storePass.isNullOrBlank() && 
+                            !alias.isNullOrBlank() && 
+                            !keyPass.isNullOrBlank()
+
     signingConfigs {
-        // Release signing fed by environment variables in CI (GitHub Actions)
-        create("release") {
-            val keystorePath = System.getenv("KEY_STORE_FILE")
-            if (!keystorePath.isNullOrBlank()) {
-                storeFile = file(keystorePath)
-                storePassword = System.getenv("KEY_STORE_PASSWORD")
-                keyAlias = System.getenv("KEY_ALIAS")
-                keyPassword = System.getenv("KEY_PASSWORD")
-            } else {
-                // Fallback to debug config if not provided (e.g. local fast build)
-                println("[gradle] KEY_STORE_FILE não definido - usando debug keystore para release build (APENAS PARA DESENVOLVIMENTO)")
+        if (hasKeystoreConfig) {
+            // Release signing fed by environment variables in CI (GitHub Actions)
+            create("release") {
+                val keystoreFile = file(keystorePath!!)
+                if (keystoreFile.exists()) {
+                    storeFile = keystoreFile
+                    storePassword = storePass
+                    keyAlias = alias
+                    keyPassword = keyPass
+                    println("[gradle] ✓ Usando release keystore para produção: $keystorePath")
+                } else {
+                    throw GradleException("ERRO: Keystore não encontrado em $keystorePath")
+                }
             }
+        } else {
+            println("[gradle] ⚠ Variáveis de keystore não definidas - build de desenvolvimento (usando debug keystore)")
         }
     }
 
     buildTypes {
         release {
-            // Usa release se configurado, senão continua com debug (fallback acima)
-            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+            // Usa release signing apenas se configurado, senão usa debug (desenvolvimento local)
+            signingConfig = if (hasKeystoreConfig) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
         }

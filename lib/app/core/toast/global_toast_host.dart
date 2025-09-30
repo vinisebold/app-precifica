@@ -15,8 +15,8 @@ class GlobalToastHost extends ConsumerWidget {
     final toastState = ref.watch(globalToastControllerProvider);
     final toast = toastState.toast;
     final mediaQuery = MediaQuery.of(context);
-    final width = mediaQuery.size.width * 0.75;
-    const fabHeight = 112.0;
+    final width = mediaQuery.size.width * 0.72;
+    const fabHeight = 128.0;
     const toastHeight = _ToastCardState.toastHeight;
     final baseBottomPadding = math.max(16.0, mediaQuery.padding.bottom + 16.0);
     final toastBottom =

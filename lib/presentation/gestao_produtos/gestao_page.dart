@@ -53,33 +53,59 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
     final perfilInicial = ref.read(gestaoControllerProvider).perfilAtual;
     String? perfilSelecionado = perfilInicial;
-
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (dialogContext) {
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) {
+        final media = MediaQuery.of(sheetContext);
+        final maxHeight = media.size.height * 0.85;
         return StatefulBuilder(
           builder: (context, setState) {
-            return Consumer(
-              builder: (context, ref, child) {
-                final perfis = ref.watch(
-                    gestaoControllerProvider.select((s) => s.perfisSalvos));
-
-                final isProfileSelected = perfilSelecionado != null;
-
-                return AlertDialog(
-                  title: const Text('Gerir Perfis'),
-                  content: SizedBox(
-                    width: double.maxFinite,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
+            return Consumer(builder: (context, ref, child) {
+              final perfis = ref.watch(
+                  gestaoControllerProvider.select((s) => s.perfisSalvos));
+              final isProfileSelected = perfilSelecionado != null;
+              final colorScheme = Theme.of(context).colorScheme;
+              final textTheme = Theme.of(context).textTheme;
+              return AnimatedPadding(
+                duration: const Duration(milliseconds: 250),
+                padding: EdgeInsets.only(
+                  bottom: media.viewInsets.bottom,
+                ),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: maxHeight),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 10),
+                      Container(
+                        width: 48,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: colorScheme.outlineVariant.withOpacity(.6),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Gerir Perfis',
+                          style: textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          )),
+                      const SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
                           children: [
                             _ActionCard(
                               label: 'Importar',
                               icon: Icons.file_download_outlined,
                               onTap: () {
-                                Navigator.of(dialogContext).pop();
+                                Navigator.of(sheetContext).pop();
                                 gestaoNotifier.importarPerfil();
                               },
                             ),
@@ -88,23 +114,25 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                               label: 'Salvar Atual',
                               icon: Icons.save_outlined,
                               onTap: () {
-                                Navigator.of(dialogContext).pop();
+                                Navigator.of(sheetContext).pop();
                                 _mostrarDialogoSalvarPerfil(context, ref);
                               },
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Row(
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
                           children: [
                             _ActionCard(
                               label: 'Exportar',
                               icon: Icons.file_upload_outlined,
                               isEnabled: isProfileSelected,
                               onTap: () {
-                                Navigator.of(dialogContext).pop();
-                                gestaoNotifier
-                                    .exportarPerfil(perfilSelecionado!);
+                                Navigator.of(sheetContext).pop();
+                                gestaoNotifier.exportarPerfil(perfilSelecionado!);
                               },
                             ),
                             const SizedBox(width: 8),
@@ -119,8 +147,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                   mensagem:
                                       'O perfil "$perfilSelecionado" será excluído permanentemente.',
                                   onConfirmar: () {
-                                    gestaoNotifier
-                                        .excluirPerfil(perfilSelecionado!);
+                                    gestaoNotifier.excluirPerfil(perfilSelecionado!);
                                     setState(() {
                                       perfilSelecionado = null;
                                     });
@@ -130,65 +157,76 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                             ),
                           ],
                         ),
-                        const Divider(height: 24),
-                        if (perfis.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 24.0),
-                            child: Center(child: Text('Nenhum perfil salvo.')),
-                          ),
-                        if (perfis.isNotEmpty)
-                          SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.25,
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: perfis.length,
-                              itemBuilder: (context, index) {
-                                final String nomePerfil = perfis[index];
-                                return RadioListTile<String>(
-                                  title: Text(nomePerfil),
-                                  value: nomePerfil,
-                                  groupValue: perfilSelecionado,
-                                  onChanged: (String? value) {
-                                    setState(() {
-                                      perfilSelecionado = value;
-                                    });
-                                  },
-                                );
-                              },
+                      ),
+                      const SizedBox(height: 20),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: perfis.isEmpty
+                              ? const Center(
+                                  child: Text('Nenhum perfil salvo.'),
+                                )
+                              : Scrollbar(
+                                  thumbVisibility: true,
+                                  child: ListView.builder(
+                                    itemCount: perfis.length,
+                                    itemBuilder: (context, index) {
+                                      final nomePerfil = perfis[index];
+                                      return RadioListTile<String>(
+                                        title: Text(nomePerfil),
+                                        value: nomePerfil,
+                                        groupValue: perfilSelecionado,
+                                        onChanged: (value) {
+                                          setState(() => perfilSelecionado = value);
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => Navigator.of(sheetContext).pop(),
+                                child: const Text('Cancelar'),
+                              ),
                             ),
-                          )
-                      ],
-                    ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: FilledButton(
+                                onPressed: () {
+                                  if (perfilSelecionado != null &&
+                                      perfilSelecionado != perfilInicial) {
+                                    _mostrarDialogoConfirmarAcao(
+                                      context: context,
+                                      titulo: 'Carregar Perfil?',
+                                      mensagem:
+                                          'Isto substituirá todos os seus dados atuais com o perfil "$perfilSelecionado".',
+                                      onConfirmar: () {
+                                        Navigator.of(sheetContext).pop();
+                                        gestaoNotifier.carregarPerfil(perfilSelecionado!);
+                                      },
+                                    );
+                                  } else {
+                                    Navigator.of(sheetContext).pop();
+                                  }
+                                },
+                                child: const Text('OK'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(),
-                      child: const Text('Cancelar'),
-                    ),
-                    FilledButton(
-                      onPressed: () {
-                        if (perfilSelecionado != null &&
-                            perfilSelecionado != perfilInicial) {
-                          _mostrarDialogoConfirmarAcao(
-                            context: context,
-                            titulo: 'Carregar Perfil?',
-                            mensagem:
-                                'Isto substituirá todos os seus dados atuais com o perfil "$perfilSelecionado".',
-                            onConfirmar: () {
-                              Navigator.of(dialogContext).pop();
-                              gestaoNotifier.carregarPerfil(perfilSelecionado!);
-                            },
-                          );
-                        } else {
-                          Navigator.of(dialogContext).pop();
-                        }
-                      },
-                      child: const Text('OK'),
-                    ),
-                  ],
-                );
-              },
-            );
+                ),
+              );
+            });
           },
         );
       },

@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Necessário para chamadas HTTP em builds de release (antes só existia em debug/profile) -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="Precifica"
         android:name="${applicationName}"

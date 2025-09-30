@@ -109,16 +109,6 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                             ),
                             const SizedBox(width: 8),
                             _ActionCard(
-                              label: 'Organizar c/ IA',
-                              icon: Icons.auto_awesome_outlined,
-                              onTap: () {
-                                Navigator.of(dialogContext).pop();
-                                ref
-                                    .read(gestaoControllerProvider.notifier)
-                                    .organizarComIA();
-                              },
-                            ),
-                            _ActionCard(
                               label: 'Excluir',
                               icon: Icons.delete_outline,
                               isEnabled: isProfileSelected,
@@ -306,6 +296,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+  // Organize FAB removed (now accessible only via overflow menu)
 
     ref.listen<GestaoState>(
       gestaoControllerProvider,
@@ -368,20 +359,71 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             elevation: 0,
             backgroundColor: Colors.transparent,
             actions: [
-              IconButton(
-                icon: const Icon(Icons.share),
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  final textoRelatorio = gestaoNotifier.gerarTextoRelatorio();
-                  Share.share(textoRelatorio);
-                },
+              const SizedBox(width: 6),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: IconButton(
+                  icon: const Icon(Icons.share),
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    final textoRelatorio = gestaoNotifier.gerarTextoRelatorio();
+                    Share.share(textoRelatorio);
+                  },
+                  splashRadius: 26,
+                ),
               ),
-              IconButton(
-                icon: const Icon(Icons.add_box_outlined),
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  _mostrarDialogoNovaCategoria(context, ref);
-                },
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: IconButton(
+                  icon: const Icon(Icons.add_box_outlined),
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    _mostrarDialogoNovaCategoria(context, ref);
+                  },
+                  splashRadius: 26,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 6, left: 2),
+                child: PopupMenuButton<_OverflowAction>(
+                  tooltip: 'Mais',
+                  position: PopupMenuPosition.under,
+                  elevation: 3,
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.more_vert),
+                  splashRadius: 26,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  onSelected: (value) {
+                    switch (value) {
+                      case _OverflowAction.organizarIA:
+                        _confirmarOrganizarComIA(context, ref);
+                        break;
+                      case _OverflowAction.configuracoes:
+                        _abrirConfiguracoes(context);
+                        break;
+                    }
+                  },
+                  itemBuilder: (context) => <PopupMenuEntry<_OverflowAction>>[
+                    PopupMenuItem<_OverflowAction>(
+                      value: _OverflowAction.organizarIA,
+                      enabled: !gestaoState.isLoading,
+                      child: const _PopupRow(
+                        icon: Icons.auto_awesome,
+                        label: 'Organizar com IA',
+                      ),
+                    ),
+                    const PopupMenuDivider(height: 4),
+                    const PopupMenuItem<_OverflowAction>(
+                      value: _OverflowAction.configuracoes,
+                      child: _PopupRow(
+                        icon: Icons.settings_outlined,
+                        label: 'Configurações',
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -446,13 +488,14 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             ),
           ),
           floatingActionButton: FloatingActionButton(
+            heroTag: 'add-product-fab',
             onPressed: gestaoState.categoriaSelecionadaId != null
                 ? () {
                     HapticFeedback.lightImpact();
                     _mostrarDialogoNovoProduto(context, ref);
                   }
                 : null,
-            elevation: gestaoState.categoriaSelecionadaId != null ? 6.0 : 0.0,
+            elevation: gestaoState.categoriaSelecionadaId != null ? 3.0 : 0.0,
             backgroundColor: gestaoState.categoriaSelecionadaId != null
                 ? colorScheme.primaryContainer
                 : colorScheme.surfaceContainer,
@@ -466,6 +509,26 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         ),
         _GlobalProcessingOverlay(active: gestaoState.isLoading),
       ],
+    );
+  }
+
+  void _confirmarOrganizarComIA(BuildContext context, WidgetRef ref) {
+    HapticFeedback.mediumImpact();
+    _mostrarDialogoConfirmarAcao(
+      context: context,
+      titulo: 'Organizar com IA?',
+      mensagem:
+          'Tem certeza que deseja reorganizar seus produtos automaticamente?',
+      onConfirmar: () {
+        ref.read(gestaoControllerProvider.notifier).organizarComIA();
+      },
+    );
+  }
+
+  void _abrirConfiguracoes(BuildContext context) {
+    // Placeholder: abrir uma tela futura de configurações
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Configurações (em breve)')),
     );
   }
 
@@ -911,6 +974,33 @@ class _GlowSpec {
   });
 }
 
+class _GradientIcon extends StatelessWidget {
+  final IconData icon;
+  final double size;
+
+  const _GradientIcon({
+    required this.icon,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      shaderCallback: (rect) => const LinearGradient(
+        colors: [
+          Color(0xFF7C4DFF),
+          Color(0xFF5C6BC0),
+          Color(0xFF26C6DA),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(rect),
+      blendMode: BlendMode.srcIn,
+      child: Icon(icon, size: size, color: Colors.white),
+    );
+  }
+}
+
 class _ActionCard extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -954,6 +1044,27 @@ class _ActionCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// Material 3 native overflow actions
+enum _OverflowAction { organizarIA, configuracoes }
+
+class _PopupRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _PopupRow({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final textStyle = Theme.of(context).textTheme.labelLarge;
+    return Row(
+      children: [
+        Icon(icon, size: 20),
+        const SizedBox(width: 12),
+        Expanded(child: Text(label, style: textStyle)),
+      ],
     );
   }
 }

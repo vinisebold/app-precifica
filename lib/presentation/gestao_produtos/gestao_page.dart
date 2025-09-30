@@ -473,8 +473,26 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                       ),
                     ),
                   if (gestaoState.isReordering) _buildDeleteArea(context, ref),
-                  if (gestaoState.isDraggingProduto)
-                    _buildProdutoDeleteArea(context, ref),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, -0.3),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: gestaoState.isDraggingProduto
+                        ? _buildProdutoDeleteArea(context, ref)
+                        : const SizedBox.shrink(),
+                  ),
                 ],
               ),
             ),
@@ -620,34 +638,61 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
   Widget _buildProdutoDeleteArea(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     return Positioned(
-      top: 0,
+      top: -60,
       left: 0,
       right: 0,
       child: DragTarget<Produto>(
         builder: (context, candidateData, rejectedData) {
           final isHovering = candidateData.isNotEmpty;
           return AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            height: isHovering ? 120 : 100,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            height: isHovering ? 140 : 130,
             decoration: BoxDecoration(
-              color: isHovering
-                  ? colorScheme.errorContainer.withAlpha((255 * 0.9).round())
-                  : colorScheme.errorContainer.withAlpha((255 * 0.7).round()),
-              borderRadius:
-                  const BorderRadius.vertical(bottom: Radius.circular(60)),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isHovering
+                    ? [
+                        colorScheme.error.withOpacity(0.75),
+                        colorScheme.errorContainer.withOpacity(0.60),
+                        colorScheme.errorContainer.withOpacity(0.30),
+                        colorScheme.errorContainer.withOpacity(0.08),
+                        Colors.transparent,
+                      ]
+                    : [
+                        colorScheme.error.withOpacity(0.50),
+                        colorScheme.errorContainer.withOpacity(0.40),
+                        colorScheme.errorContainer.withOpacity(0.20),
+                        colorScheme.errorContainer.withOpacity(0.05),
+                        Colors.transparent,
+                      ],
+                stops: const [0.0, 0.35, 0.65, 0.88, 1.0],
+              ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.delete_outline,
-                    color: colorScheme.onErrorContainer, size: 32),
-                const SizedBox(height: 8),
-                Text('Arraste o produto aqui para apagar',
-                    style: textTheme.bodyMedium
-                        ?.copyWith(color: colorScheme.onErrorContainer)),
-              ],
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 60),
+                child: AnimatedScale(
+                  duration: const Duration(milliseconds: 250),
+                  scale: isHovering ? 1.15 : 1.0,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isHovering
+                          ? colorScheme.error.withOpacity(0.15)
+                          : Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.delete_outline,
+                      color: colorScheme.onErrorContainer,
+                      size: 40,
+                    ),
+                  ),
+                ),
+              ),
             ),
           );
         },
@@ -664,34 +709,61 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
   Widget _buildDeleteArea(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     return Positioned(
-      top: 0,
+      top: -60,
       left: 0,
       right: 0,
       child: DragTarget<String>(
         builder: (context, candidateData, rejectedData) {
           final isHovering = candidateData.isNotEmpty;
           return AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            height: isHovering ? 120 : 100,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            height: isHovering ? 140 : 130,
             decoration: BoxDecoration(
-              color: isHovering
-                  ? colorScheme.errorContainer.withAlpha((255 * 0.9).round())
-                  : colorScheme.errorContainer.withAlpha((255 * 0.7).round()),
-              borderRadius:
-                  const BorderRadius.vertical(bottom: Radius.circular(60)),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isHovering
+                    ? [
+                        colorScheme.error.withOpacity(0.75),
+                        colorScheme.errorContainer.withOpacity(0.60),
+                        colorScheme.errorContainer.withOpacity(0.30),
+                        colorScheme.errorContainer.withOpacity(0.08),
+                        Colors.transparent,
+                      ]
+                    : [
+                        colorScheme.error.withOpacity(0.50),
+                        colorScheme.errorContainer.withOpacity(0.40),
+                        colorScheme.errorContainer.withOpacity(0.20),
+                        colorScheme.errorContainer.withOpacity(0.05),
+                        Colors.transparent,
+                      ],
+                stops: const [0.0, 0.35, 0.65, 0.88, 1.0],
+              ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.delete_outline,
-                    color: colorScheme.onErrorContainer, size: 32),
-                const SizedBox(height: 8),
-                Text('Arraste aqui para apagar',
-                    style: textTheme.bodyMedium
-                        ?.copyWith(color: colorScheme.onErrorContainer)),
-              ],
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 60),
+                child: AnimatedScale(
+                  duration: const Duration(milliseconds: 250),
+                  scale: isHovering ? 1.15 : 1.0,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isHovering
+                          ? colorScheme.error.withOpacity(0.15)
+                          : Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.delete_outline,
+                      color: colorScheme.onErrorContainer,
+                      size: 40,
+                    ),
+                  ),
+                ),
+              ),
             ),
           );
         },

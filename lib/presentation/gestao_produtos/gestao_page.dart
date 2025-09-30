@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:precifica/domain/entities/produto.dart';
 import 'package:precifica/app/core/toast/global_toast_controller.dart';
@@ -24,21 +25,25 @@ class GestaoPage extends ConsumerStatefulWidget {
 }
 
 class _GestaoPageState extends ConsumerState<GestaoPage> {
-  late PageController _pageController;
+  late PageController _pageController; // safely initialized in initState
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        final selectedId =
-            ref.read(gestaoControllerProvider).categoriaSelecionadaId;
-        final categorias = ref.read(gestaoControllerProvider).categorias;
-        final initialPage = selectedId != null
-            ? categorias.indexWhere((c) => c.id == selectedId)
-            : 0;
-        _pageController =
-            PageController(initialPage: initialPage > -1 ? initialPage : 0);
+      if (!mounted) return;
+      final selectedId =
+          ref.read(gestaoControllerProvider).categoriaSelecionadaId;
+      final categorias = ref.read(gestaoControllerProvider).categorias;
+      final initialPage = selectedId != null
+          ? categorias.indexWhere((c) => c.id == selectedId)
+          : 0;
+      if (initialPage >= 0) {
+        try {
+          _pageController.jumpToPage(initialPage);
+        } catch (_) {}
       }
     });
   }
@@ -53,6 +58,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
     final perfilInicial = ref.read(gestaoControllerProvider).perfilAtual;
     String? perfilSelecionado = perfilInicial;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -63,170 +69,169 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       ),
       builder: (sheetContext) {
         final media = MediaQuery.of(sheetContext);
-        final maxHeight = media.size.height * 0.85;
+        final maxHeight = media.size.height * 0.86;
         return StatefulBuilder(
           builder: (context, setState) {
-            return Consumer(builder: (context, ref, child) {
-              final perfis = ref.watch(
-                  gestaoControllerProvider.select((s) => s.perfisSalvos));
-              final isProfileSelected = perfilSelecionado != null;
-              final colorScheme = Theme.of(context).colorScheme;
-              final textTheme = Theme.of(context).textTheme;
-              return AnimatedPadding(
-                duration: const Duration(milliseconds: 250),
-                padding: EdgeInsets.only(
-                  bottom: media.viewInsets.bottom,
-                ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: maxHeight),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(height: 10),
-                      Container(
-                        width: 48,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: colorScheme.outlineVariant.withOpacity(.6),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+            final perfis = ref.watch(
+                gestaoControllerProvider.select((s) => s.perfisSalvos));
+            final colorScheme = Theme.of(context).colorScheme;
+            final textTheme = Theme.of(context).textTheme;
+            return AnimatedPadding(
+              duration: const Duration(milliseconds: 250),
+              padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: maxHeight),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 10),
+                    Container(
+                      width: 48,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: colorScheme.outlineVariant.withOpacity(.6),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(height: 16),
-                      Text('Gerir Perfis',
-                          style: textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          )),
-                      const SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: [
-                            _ActionCard(
-                              label: 'Importar',
-                              icon: Icons.file_download_outlined,
-                              onTap: () {
-                                Navigator.of(sheetContext).pop();
-                                gestaoNotifier.importarPerfil();
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                            _ActionCard(
-                              label: 'Salvar Atual',
-                              icon: Icons.save_outlined,
-                              onTap: () {
-                                Navigator.of(sheetContext).pop();
-                                _mostrarDialogoSalvarPerfil(context, ref);
-                              },
-                            ),
-                          ],
-                        ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Gerir Perfis',
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: [
-                            _ActionCard(
-                              label: 'Exportar',
-                              icon: Icons.file_upload_outlined,
-                              isEnabled: isProfileSelected,
-                              onTap: () {
-                                Navigator.of(sheetContext).pop();
-                                gestaoNotifier.exportarPerfil(perfilSelecionado!);
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                            _ActionCard(
-                              label: 'Excluir',
-                              icon: Icons.delete_outline,
-                              isEnabled: isProfileSelected,
-                              onTap: () {
-                                _mostrarDialogoConfirmarAcao(
-                                  context: context,
-                                  titulo: 'Excluir Perfil?',
-                                  mensagem:
-                                      'O perfil "$perfilSelecionado" será excluído permanentemente.',
-                                  onConfirmar: () {
-                                    gestaoNotifier.excluirPerfil(perfilSelecionado!);
-                                    setState(() {
-                                      perfilSelecionado = null;
-                                    });
-                                  },
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: perfis.isEmpty
-                              ? const Center(
-                                  child: Text('Nenhum perfil salvo.'),
-                                )
-                              : Scrollbar(
-                                  thumbVisibility: true,
-                                  child: ListView.builder(
-                                    itemCount: perfis.length,
-                                    itemBuilder: (context, index) {
-                                      final nomePerfil = perfis[index];
-                                      return RadioListTile<String>(
-                                        title: Text(nomePerfil),
-                                        value: nomePerfil,
-                                        groupValue: perfilSelecionado,
-                                        onChanged: (value) {
-                                          setState(() => perfilSelecionado = value);
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ),
-                        ),
-                      ),
-                      const Divider(height: 1),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () => Navigator.of(sheetContext).pop(),
-                                child: const Text('Cancelar'),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: FilledButton(
-                                onPressed: () {
-                                  if (perfilSelecionado != null &&
-                                      perfilSelecionado != perfilInicial) {
-                                    _mostrarDialogoConfirmarAcao(
-                                      context: context,
-                                      titulo: 'Carregar Perfil?',
-                                      mensagem:
-                                          'Isto substituirá todos os seus dados atuais com o perfil "$perfilSelecionado".',
-                                      onConfirmar: () {
-                                        Navigator.of(sheetContext).pop();
-                                        gestaoNotifier.carregarPerfil(perfilSelecionado!);
-                                      },
-                                    );
-                                  } else {
-                                    Navigator.of(sheetContext).pop();
-                                  }
+                    ),
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              _ActionCard(
+                                label: 'Importar',
+                                icon: Icons.file_download_outlined,
+                                onTap: () {
+                                  Navigator.of(sheetContext).pop();
+                                  gestaoNotifier.importarPerfil();
                                 },
-                                child: const Text('OK'),
                               ),
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: 8),
+                              _ActionCard(
+                                label: 'Salvar',
+                                icon: Icons.save_outlined,
+                                onTap: () => _mostrarDialogoSalvarPerfil(
+                                    sheetContext, ref),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              _ActionCard(
+                                label: 'Exportar',
+                                icon: Icons.file_upload_outlined,
+                                isEnabled: perfilInicial != null,
+                                onTap: () {
+                                  if (perfilInicial == null) return;
+                                  Navigator.of(sheetContext).pop();
+                                  gestaoNotifier.exportarPerfil(perfilInicial);
+                                },
+                              ),
+                              const SizedBox(width: 8),
+                              _ActionCard(
+                                label: 'Excluir',
+                                icon: Icons.delete_outline,
+                                isEnabled: perfilInicial != null,
+                                onTap: () {
+                                  if (perfilInicial == null) return;
+                                  _mostrarDialogoConfirmarAcao(
+                                    context: sheetContext,
+                                    titulo: 'Excluir Perfil?',
+                                    mensagem:
+                                        'O perfil "$perfilInicial" será excluído permanentemente.',
+                                    onConfirmar: () {
+                                      gestaoNotifier.excluirPerfil(
+                                          perfilInicial);
+                                      setState(() {
+                                        perfilSelecionado = null;
+                                      });
+                                    },
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 20),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: perfis.isEmpty
+                            ? const Center(
+                                child: Text('Nenhum perfil salvo.'),
+                              )
+                            : Scrollbar(
+                                thumbVisibility: true,
+                                child: ListView.builder(
+                                  itemCount: perfis.length,
+                                  itemBuilder: (context, index) {
+                                    final nomePerfil = perfis[index];
+                                    return RadioListTile<String>(
+                                      title: Text(nomePerfil),
+                                      value: nomePerfil,
+                                      groupValue: perfilSelecionado,
+                                      onChanged: (value) => setState(
+                                          () => perfilSelecionado = value),
+                                    );
+                                  },
+                                ),
+                              ),
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.of(sheetContext).pop(),
+                              child: const Text('Cancelar'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: () {
+                                if (perfilSelecionado != null &&
+                                    perfilSelecionado != perfilInicial) {
+                                  _mostrarDialogoConfirmarAcao(
+                                    context: sheetContext,
+                                    titulo: 'Carregar Perfil?',
+                                    mensagem:
+                                        'Isto substituirá todos os seus dados atuais com o perfil "$perfilSelecionado".',
+                                    onConfirmar: () {
+                                      Navigator.of(sheetContext).pop();
+                                      gestaoNotifier.carregarPerfil(
+                                          perfilSelecionado!);
+                                    },
+                                  );
+                                } else {
+                                  Navigator.of(sheetContext).pop();
+                                }
+                              },
+                              child: const Text('OK'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            });
+              ),
+            );
           },
         );
       },
@@ -334,7 +339,6 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-  // Organize FAB removed (now accessible only via overflow menu)
 
     ref.listen<GestaoState>(
       gestaoControllerProvider,
@@ -385,8 +389,19 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     return Stack(
       children: [
         Scaffold(
+          key: _scaffoldKey,
           backgroundColor: colorScheme.surfaceContainerLow,
+          drawer: Builder(
+            builder: (context) {
+              return _buildSidebarMenu(context, gestaoState, ref, gestaoNotifier);
+            },
+          ),
+          onDrawerChanged: (isOpened) {
+            // Handle drawer state if needed
+          },
           appBar: AppBar(
+            elevation: 0,
+            backgroundColor: Colors.transparent,
             title: GestureDetector(
               onLongPress: () {
                 HapticFeedback.heavyImpact();
@@ -394,8 +409,6 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               },
               child: Text('Precificador', style: textTheme.titleLarge),
             ),
-            elevation: 0,
-            backgroundColor: Colors.transparent,
             actions: [
               const SizedBox(width: 6),
               Padding(
@@ -404,14 +417,15 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                   icon: const Icon(Icons.share),
                   onPressed: () {
                     HapticFeedback.lightImpact();
-                    final textoRelatorio = gestaoNotifier.gerarTextoRelatorio();
+                    final textoRelatorio =
+                        gestaoNotifier.gerarTextoRelatorio();
                     Share.share(textoRelatorio);
                   },
                   splashRadius: 26,
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
+                padding: const EdgeInsets.only(right: 8, left: 2),
                 child: IconButton(
                   icon: const Icon(Icons.add_box_outlined),
                   onPressed: () {
@@ -419,48 +433,6 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                     _mostrarDialogoNovaCategoria(context, ref);
                   },
                   splashRadius: 26,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 6, left: 2),
-                child: PopupMenuButton<_OverflowAction>(
-                  tooltip: 'Mais',
-                  position: PopupMenuPosition.under,
-                  elevation: 3,
-                  padding: EdgeInsets.zero,
-                  icon: const Icon(Icons.more_vert),
-                  splashRadius: 26,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  onSelected: (value) {
-                    switch (value) {
-                      case _OverflowAction.organizarIA:
-                        _confirmarOrganizarComIA(context, ref);
-                        break;
-                      case _OverflowAction.configuracoes:
-                        _abrirConfiguracoes(context);
-                        break;
-                    }
-                  },
-                  itemBuilder: (context) => <PopupMenuEntry<_OverflowAction>>[
-                    PopupMenuItem<_OverflowAction>(
-                      value: _OverflowAction.organizarIA,
-                      enabled: !gestaoState.isLoading,
-                      child: const _PopupRow(
-                        icon: Icons.auto_awesome,
-                        label: 'Organizar com IA',
-                      ),
-                    ),
-                    const PopupMenuDivider(height: 4),
-                    const PopupMenuItem<_OverflowAction>(
-                      value: _OverflowAction.configuracoes,
-                      child: _PopupRow(
-                        icon: Icons.settings_outlined,
-                        label: 'Configurações',
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ],
@@ -480,26 +452,27 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                       child: PageView.builder(
                         controller: _pageController,
                         itemCount: gestaoState.categorias.length,
-                        onPageChanged: (index) =>
-                            gestaoNotifier.selecionarCategoriaPorIndice(index),
+                        onPageChanged: (index) => gestaoNotifier
+                            .selecionarCategoriaPorIndice(index),
                         itemBuilder: (context, index) => ProductListView(
                           categoriaId: gestaoState.categorias[index].id,
                           onProdutoDoubleTap: (produto) =>
                               _mostrarDialogoEditarNome(
                             context,
                             ref,
-                            titulo: "Editar Produto",
+                            titulo: 'Editar Produto',
                             valorAtual: produto.nome,
                             onSalvar: (novoNome) => gestaoNotifier
                                 .atualizarNomeProduto(produto.id, novoNome),
                           ),
-                          onProdutoTap: (produto) =>
-                              gestaoNotifier.atualizarStatusProduto(
+                          onProdutoTap: (produto) => gestaoNotifier
+                              .atualizarStatusProduto(
                                   produto.id, !produto.isAtivo),
                         ),
                       ),
                     ),
-                  if (gestaoState.isReordering) _buildDeleteArea(context, ref),
+                  if (gestaoState.isReordering)
+                    _buildDeleteArea(context, ref),
                   if (gestaoState.isDraggingProduto)
                     _buildProdutoDeleteArea(context, ref),
                 ],
@@ -514,12 +487,10 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                   _mostrarDialogoEditarNome(
                     context,
                     ref,
-                    titulo: "Editar Categoria",
+                    titulo: 'Editar Categoria',
                     valorAtual: categoria.nome,
-                    onSalvar: (novoNome) {
-                      gestaoNotifier.atualizarNomeCategoria(
-                          categoria.id, novoNome);
-                    },
+                    onSalvar: (novoNome) => gestaoNotifier
+                        .atualizarNomeCategoria(categoria.id, novoNome),
                   );
                 },
               ),
@@ -560,6 +531,75 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       onConfirmar: () {
         ref.read(gestaoControllerProvider.notifier).organizarComIA();
       },
+    );
+  }
+
+  Widget _buildSidebarMenu(BuildContext context, GestaoState gestaoState,
+      WidgetRef ref, GestaoController gestaoNotifier) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return SafeArea(
+      child: NavigationDrawer(
+        elevation: 0,
+        backgroundColor: cs.surface,
+        selectedIndex: null,
+        onDestinationSelected: (index) {
+          Navigator.of(context).pop();
+          switch (index) {
+            case 0:
+              if (!gestaoState.isLoading) {
+                _confirmarOrganizarComIA(context, ref);
+              }
+              break;
+            case 1:
+              _abrirConfiguracoes(context);
+              break;
+          }
+        },
+        children: [
+          // App header - mais clean
+          Padding(
+            padding: const EdgeInsets.fromLTRB(28, 28, 28, 16),
+            child: Text(
+              'Precificador',
+              style: tt.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w400,
+                color: cs.onSurface,
+              ),
+            ),
+          ),
+          // Navigation items
+          NavigationDrawerDestination(
+            icon: Icon(Icons.auto_awesome_outlined),
+            selectedIcon: Icon(Icons.auto_awesome),
+            label: Text('Organizar com IA'),
+            enabled: !gestaoState.isLoading,
+          ),
+          NavigationDrawerDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: Text('Configurações'),
+          ),
+          const SizedBox(height: 12),
+          // Version footer - minimalista
+          FutureBuilder<PackageInfo>(
+            future: PackageInfo.fromPlatform(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(28, 0, 28, 24),
+                child: Text(
+                  'v${snapshot.data!.version}',
+                  style: tt.labelSmall?.copyWith(
+                    color: cs.outline,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -1012,33 +1052,6 @@ class _GlowSpec {
   });
 }
 
-class _GradientIcon extends StatelessWidget {
-  final IconData icon;
-  final double size;
-
-  const _GradientIcon({
-    required this.icon,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ShaderMask(
-      shaderCallback: (rect) => const LinearGradient(
-        colors: [
-          Color(0xFF7C4DFF),
-          Color(0xFF5C6BC0),
-          Color(0xFF26C6DA),
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ).createShader(rect),
-      blendMode: BlendMode.srcIn,
-      child: Icon(icon, size: size, color: Colors.white),
-    );
-  }
-}
-
 class _ActionCard extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -1086,23 +1099,5 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-// Material 3 native overflow actions
-enum _OverflowAction { organizarIA, configuracoes }
+// Navigation Drawer using Material You 3 native components
 
-class _PopupRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _PopupRow({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final textStyle = Theme.of(context).textTheme.labelLarge;
-    return Row(
-      children: [
-        Icon(icon, size: 20),
-        const SizedBox(width: 12),
-        Expanded(child: Text(label, style: textStyle)),
-      ],
-    );
-  }
-}

@@ -5,24 +5,24 @@ part 'produto_model.g.dart';
 
 @HiveType(typeId: 1)
 class ProdutoModel extends Produto {
-  @override
   @HiveField(0)
+  @override
   final String id;
 
-  @override
   @HiveField(1)
+  @override
   String nome;
 
-  @override
   @HiveField(2)
+  @override
   double preco;
 
-  @override
   @HiveField(3)
+  @override
   String categoriaId;
 
-  @override
   @HiveField(4, defaultValue: true)
+  @override
   bool isAtivo;
 
   ProdutoModel({

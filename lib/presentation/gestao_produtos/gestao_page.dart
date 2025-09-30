@@ -14,6 +14,7 @@ import 'package:precifica/app/core/toast/global_toast_controller.dart';
 import 'gestao_controller.dart';
 import 'gestao_state.dart';
 
+import '../configuracoes/configuracoes_page.dart';
 import 'widgets/categoria_nav_bar.dart';
 import 'widgets/product_list_view.dart';
 
@@ -609,9 +610,11 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   }
 
   void _abrirConfiguracoes(BuildContext context) {
-    // Placeholder: abrir uma tela futura de configurações
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Configurações (em breve)')),
+    final navigatorContext = _scaffoldKey.currentContext ?? context;
+    Navigator.of(navigatorContext).push(
+      MaterialPageRoute(
+        builder: (_) => const ConfiguracoesPage(),
+      ),
     );
   }
 

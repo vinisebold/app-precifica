@@ -306,10 +306,11 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
     _itemKeys
         .removeWhere((key, value) => !categorias.any((cat) => cat.id == key));
 
-    if (categorias.isEmpty) return const SizedBox(height: 48);
+    if (categorias.isEmpty) return const SizedBox(height: 28);
 
     return Container(
       height: 48,
+      margin: const EdgeInsets.only(top: 8.0, bottom: 8.0),
       color: Colors.transparent,
       clipBehavior: Clip.none,
       child: NotificationListener<ScrollNotification>(

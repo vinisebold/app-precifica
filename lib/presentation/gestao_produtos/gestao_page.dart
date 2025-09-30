@@ -72,8 +72,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         final maxHeight = media.size.height * 0.86;
         return StatefulBuilder(
           builder: (context, setState) {
-            final perfis = ref.watch(
-                gestaoControllerProvider.select((s) => s.perfisSalvos));
+            final perfis = ref
+                .watch(gestaoControllerProvider.select((s) => s.perfisSalvos));
             final colorScheme = Theme.of(context).colorScheme;
             final textTheme = Theme.of(context).textTheme;
             return AnimatedPadding(
@@ -150,8 +150,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                     mensagem:
                                         'O perfil "$perfilInicial" será excluído permanentemente.',
                                     onConfirmar: () {
-                                      gestaoNotifier.excluirPerfil(
-                                          perfilInicial);
+                                      gestaoNotifier
+                                          .excluirPerfil(perfilInicial);
                                       setState(() {
                                         perfilSelecionado = null;
                                       });
@@ -214,8 +214,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                         'Isto substituirá todos os seus dados atuais com o perfil "$perfilSelecionado".',
                                     onConfirmar: () {
                                       Navigator.of(sheetContext).pop();
-                                      gestaoNotifier.carregarPerfil(
-                                          perfilSelecionado!);
+                                      gestaoNotifier
+                                          .carregarPerfil(perfilSelecionado!);
                                     },
                                   );
                                 } else {
@@ -393,7 +393,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           backgroundColor: colorScheme.surfaceContainerLow,
           drawer: Builder(
             builder: (context) {
-              return _buildSidebarMenu(context, gestaoState, ref, gestaoNotifier);
+              return _buildSidebarMenu(
+                  context, gestaoState, ref, gestaoNotifier);
             },
           ),
           onDrawerChanged: (isOpened) {
@@ -417,8 +418,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                   icon: const Icon(Icons.share),
                   onPressed: () {
                     HapticFeedback.lightImpact();
-                    final textoRelatorio =
-                        gestaoNotifier.gerarTextoRelatorio();
+                    final textoRelatorio = gestaoNotifier.gerarTextoRelatorio();
                     Share.share(textoRelatorio);
                   },
                   splashRadius: 26,
@@ -452,8 +452,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                       child: PageView.builder(
                         controller: _pageController,
                         itemCount: gestaoState.categorias.length,
-                        onPageChanged: (index) => gestaoNotifier
-                            .selecionarCategoriaPorIndice(index),
+                        onPageChanged: (index) =>
+                            gestaoNotifier.selecionarCategoriaPorIndice(index),
                         itemBuilder: (context, index) => ProductListView(
                           categoriaId: gestaoState.categorias[index].id,
                           onProdutoDoubleTap: (produto) =>
@@ -465,14 +465,13 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                             onSalvar: (novoNome) => gestaoNotifier
                                 .atualizarNomeProduto(produto.id, novoNome),
                           ),
-                          onProdutoTap: (produto) => gestaoNotifier
-                              .atualizarStatusProduto(
+                          onProdutoTap: (produto) =>
+                              gestaoNotifier.atualizarStatusProduto(
                                   produto.id, !produto.isAtivo),
                         ),
                       ),
                     ),
-                  if (gestaoState.isReordering)
-                    _buildDeleteArea(context, ref),
+                  if (gestaoState.isReordering) _buildDeleteArea(context, ref),
                   if (gestaoState.isDraggingProduto)
                     _buildProdutoDeleteArea(context, ref),
                 ],
@@ -523,14 +522,20 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
   void _confirmarOrganizarComIA(BuildContext context, WidgetRef ref) {
     HapticFeedback.mediumImpact();
-    _mostrarDialogoConfirmarAcao(
+    _mostrarDialogoConfirmacaoIA(context, ref);
+  }
+
+  void _mostrarDialogoConfirmacaoIA(BuildContext context, WidgetRef ref) {
+    showDialog(
       context: context,
-      titulo: 'Organizar com IA?',
-      mensagem:
-          'Tem certeza que deseja reorganizar seus produtos automaticamente?',
-      onConfirmar: () {
-        ref.read(gestaoControllerProvider.notifier).organizarComIA();
-      },
+      barrierDismissible: false,
+      builder: (dialogContext) => _ConfirmacaoIAOverlay(
+        onConfirmar: () {
+          Navigator.of(dialogContext).pop();
+          ref.read(gestaoControllerProvider.notifier).organizarComIA();
+        },
+        onCancelar: () => Navigator.of(dialogContext).pop(),
+      ),
     );
   }
 
@@ -1101,3 +1106,113 @@ class _ActionCard extends StatelessWidget {
 
 // Navigation Drawer using Material You 3 native components
 
+class _ConfirmacaoIAOverlay extends StatelessWidget {
+  final VoidCallback onConfirmar;
+  final VoidCallback onCancelar;
+
+  const _ConfirmacaoIAOverlay({
+    required this.onConfirmar,
+    required this.onCancelar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: Stack(
+        children: [
+          // Blur backdrop similar to processing overlay
+          Positioned.fill(
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: Container(
+                  color: Colors.black.withOpacity(0.02),
+                ),
+              ),
+            ),
+          ),
+          // Content dialog
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 340),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // AI Icon - sem fundo
+                      Icon(
+                        Icons.auto_awesome,
+                        color: colorScheme.primary,
+                        size: 56,
+                      ),
+                      const SizedBox(height: 20),
+                      // Title
+                      Text(
+                        'Organizar com IA?',
+                        style: textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      // Message
+                      Text(
+                        'Tem certeza que deseja reorganizar seus produtos automaticamente?',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      // Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: onCancelar,
+                              style: OutlinedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: const Text('Cancelar'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: onConfirmar,
+                              style: FilledButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: const Text('Confirmar'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

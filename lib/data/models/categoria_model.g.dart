@@ -20,7 +20,7 @@ class CategoriaModelAdapter extends TypeAdapter<CategoriaModel> {
       id: fields[0] as String,
       nome: fields[1] as String,
       ordem: fields[2] as int,
-      produtoIds: fields[3] == null ? [] : (fields[3] as List).cast<String>(),
+      produtoIds: fields[3] == null ? [] : (fields[3] as List?)?.cast<String>(),
     );
   }
 

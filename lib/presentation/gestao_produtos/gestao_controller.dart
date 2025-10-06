@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:precifica/data/services/ai_service.dart';
+import 'package:precifica/domain/entities/report_template.dart';
+import 'package:precifica/domain/services/report_generator_service.dart';
 import 'package:precifica/domain/usecases/ai/organize_ai.dart';
 import 'package:precifica/domain/usecases/produto/update_produto_status.dart';
 
@@ -465,53 +467,20 @@ class GestaoController extends Notifier<GestaoState> {
   }
 
   String gerarTextoRelatorio() {
-    final hoje = DateTime.now();
-    final formatoData = DateFormat('dd/MM/yy');
-    final formatoDiaSemana = DateFormat('EEEE', 'pt_BR');
-    final dataFormatada = formatoData.format(hoje);
-    final diaSemanaFormatado = formatoDiaSemana.format(hoje);
+    // Usa o modelo padrão para manter compatibilidade com código existente
+    final templatePadrao = ReportTemplate.padrao();
+    return gerarTextoRelatorioComTemplate(templatePadrao);
+  }
+
+  String gerarTextoRelatorioComTemplate(ReportTemplate template) {
     final categorias = _getCategorias();
     final todosProdutos = _getAllProdutos();
+    final reportGenerator = ReportGeneratorService();
 
-    if (todosProdutos.isEmpty) {
-      return 'Nenhum produto cadastrado para gerar relatório.';
-    }
-
-    final buffer = StringBuffer();
-    buffer.writeln('*Preços: $diaSemanaFormatado*');
-    buffer.writeln(dataFormatada);
-    buffer.writeln();
-
-    for (var categoria in categorias) {
-      final produtosDaCategoria = todosProdutos
-          .where(
-              (p) => p.categoriaId == categoria.id && p.isAtivo && p.preco > 0)
-          .toList();
-      if (produtosDaCategoria.isNotEmpty) {
-        buffer.writeln('${categoria.nome.toUpperCase()}: ⬇️');
-        for (var produto in produtosDaCategoria) {
-          final precoFormatado =
-              produto.preco.toStringAsFixed(2).replaceAll('.', ',');
-
-          final palavras = produto.nome.split(' ');
-          final primeiraPalavra = palavras.first;
-          final restoDoNome = palavras.skip(1).join(' ');
-
-          if (restoDoNome.isEmpty) {
-            buffer.writeln(' *$primeiraPalavra*: $precoFormatado');
-          } else {
-            buffer.writeln(' *$primeiraPalavra* $restoDoNome: $precoFormatado');
-          }
-        }
-        buffer.writeln();
-      }
-    }
-
-    final report = buffer.toString();
-    if (report.split('\n').where((line) => line.isNotEmpty).length <= 2) {
-      return 'Nenhum produto com preço cadastrado para gerar relatório.';
-    }
-
-    return report;
+    return reportGenerator.gerarRelatorio(
+      template: template,
+      categorias: categorias,
+      todosProdutos: todosProdutos,
+    );
   }
 }

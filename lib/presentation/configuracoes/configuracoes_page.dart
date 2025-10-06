@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'template_list_page.dart';
 
 class ConfiguracoesPage extends StatelessWidget {
   const ConfiguracoesPage({super.key});
@@ -6,39 +7,29 @@ class ConfiguracoesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Configurações'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.settings_outlined,
-              size: 56,
-              color: colorScheme.outline,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Nada por aqui ainda',
-              style: textTheme.titleMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Em breve você poderá personalizar sua experiência.',
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant.withOpacity(0.8),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+      body: ListView(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.description),
+            title: const Text('Personalizar Relatório'),
+            subtitle: const Text('Crie modelos personalizados de relatório'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TemplateListPage(),
+                ),
+              );
+            },
+          ),
+          const Divider(),
+        ],
       ),
     );
   }

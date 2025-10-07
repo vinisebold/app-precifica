@@ -12,6 +12,11 @@ abstract class ISettingsRepository {
   // Template padrão para novos usuários
   Future<void> ensureDefaultTemplate();
   
+  // Template selecionado (modelo ativo)
+  Future<void> setTemplateSelecionado(String? templateId);
+  String? getTemplateSelecionado();
+  ReportTemplate? getTemplateSelecionadoObjeto();
+  
   // Preferências
   Future<void> setNaoPerguntarTemplate(bool valor);
   bool getNaoPerguntarTemplate();

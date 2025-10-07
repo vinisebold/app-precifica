@@ -9,7 +9,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:precifica/domain/entities/produto.dart';
-import 'package:precifica/domain/entities/report_template.dart';
 import 'package:precifica/app/core/toast/global_toast_controller.dart';
 
 import 'gestao_controller.dart';
@@ -419,7 +418,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                   icon: const Icon(Icons.share),
                   onPressed: () {
                     HapticFeedback.lightImpact();
-                    _mostrarDialogoSelecionarTemplate(context, ref);
+                    _compartilharRelatorio(context, ref);
                   },
                   splashRadius: 26,
                 ),
@@ -1299,158 +1298,20 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
   }
 }
 
-void _mostrarDialogoSelecionarTemplate(BuildContext context, WidgetRef ref) {
+void _compartilharRelatorio(BuildContext context, WidgetRef ref) {
   final settingsNotifier = ref.read(settingsControllerProvider.notifier);
+  final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
   
-  // Verifica se o usuário pediu para não mostrar mais
-  if (settingsNotifier.getNaoPerguntarTemplate()) {
-    // Usa o modelo padrão direto
-    final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
+  // Obtém o template selecionado (ou padrão se nenhum estiver selecionado)
+  final template = settingsNotifier.getTemplateSelecionadoObjeto();
+  
+  if (template == null) {
+    // Fallback: usar geração padrão
     final textoRelatorio = gestaoNotifier.gerarTextoRelatorio();
     Share.share(textoRelatorio);
-    return;
+  } else {
+    // Usar o template selecionado
+    final textoRelatorio = gestaoNotifier.gerarTextoRelatorioComTemplate(template);
+    Share.share(textoRelatorio);
   }
-
-  final settingsState = ref.read(settingsControllerProvider);
-  final templates = settingsState.templates;
-  final colorScheme = Theme.of(context).colorScheme;
-  final textTheme = Theme.of(context).textTheme;
-
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (sheetContext) => StatefulBuilder(
-      builder: (context, setState) {
-        String? templateSelecionado;
-
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.7,
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(28),
-              topRight: Radius.circular(28),
-            ),
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 16),
-              Container(
-                height: 4,
-                width: 40,
-                decoration: BoxDecoration(
-                  color: colorScheme.outlineVariant.withValues(alpha: .6),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Selecionar Modelo',
-                style: textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: templates.isEmpty
-                      ? const Center(
-                          child: Text('Nenhum modelo disponível'),
-                        )
-                      : Scrollbar(
-                          thumbVisibility: true,
-                          child: ListView.builder(
-                            itemCount: templates.length,
-                            itemBuilder: (context, index) {
-                              final template = templates[index];
-                              return ListTile(
-                                title: Text(template.nome),
-                                subtitle: template.isPadrao
-                                    ? const Text('Padrão')
-                                    : null,
-                                leading: Radio<String>(
-                                  value: template.id,
-                                  groupValue: templateSelecionado,
-                                  onChanged: (value) => setState(
-                                      () => templateSelecionado = value),
-                                ),
-                                trailing: template.isPadrao
-                                    ? Icon(
-                                        Icons.star,
-                                        color: colorScheme.primary,
-                                        size: 20,
-                                      )
-                                    : null,
-                                onTap: () => setState(
-                                    () => templateSelecionado = template.id),
-                              );
-                            },
-                          ),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(sheetContext),
-                        child: const Text('Cancelar'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: FilledButton(
-                        onPressed: templateSelecionado == null
-                            ? null
-                            : () {
-                                Navigator.pop(sheetContext);
-                                final template = templates.firstWhere(
-                                  (t) => t.id == templateSelecionado,
-                                );
-                                final gestaoNotifier =
-                                    ref.read(gestaoControllerProvider.notifier);
-                                final textoRelatorio = gestaoNotifier
-                                    .gerarTextoRelatorioComTemplate(template);
-                                Share.share(textoRelatorio);
-                              },
-                        child: const Text('Compartilhar'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: TextButton.icon(
-                    onPressed: () {
-                      settingsNotifier.setNaoPerguntarTemplate(true);
-                      Navigator.pop(sheetContext);
-                      final gestaoNotifier =
-                          ref.read(gestaoControllerProvider.notifier);
-                      final textoRelatorio = gestaoNotifier.gerarTextoRelatorio();
-                      Share.share(textoRelatorio);
-                    },
-                    icon: const Icon(Icons.block, size: 18),
-                    label: const Text('Não perguntar novamente'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: colorScheme.outline,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: MediaQuery.of(context).padding.bottom),
-            ],
-          ),
-        );
-      },
-    ),
-  );
 }

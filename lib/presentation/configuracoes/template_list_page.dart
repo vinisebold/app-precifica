@@ -143,7 +143,13 @@ class _TemplateCard extends ConsumerWidget {
         ),
         subtitle: Text(_buildSubtitle(template)),
         trailing: template.isPadrao
-            ? null
+            ? Tooltip(
+                message: 'Modelo padrão (não editável)',
+                child: Icon(
+                  Icons.lock_outline,
+                  color: colorScheme.outline,
+                ),
+              )
             : PopupMenuButton(
                 itemBuilder: (context) => [
                   const PopupMenuItem(
@@ -182,7 +188,9 @@ class _TemplateCard extends ConsumerWidget {
                   }
                 },
               ),
-        onTap: () {
+        onTap: template.isPadrao
+            ? null
+            : () {
           Navigator.push(
             context,
             MaterialPageRoute(

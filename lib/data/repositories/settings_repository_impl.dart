@@ -8,6 +8,7 @@ class SettingsRepositoryImpl implements ISettingsRepository {
   static const _preferencesBox = 'preferences_box';
   static const _keyNaoPerguntarTemplate = 'nao_perguntar_template';
   static const _keyModoCompacto = 'modo_compacto';
+  static const _keyTemplateSelecionado = 'template_selecionado';
 
   @override
   Future<void> init() async {
@@ -19,6 +20,12 @@ class SettingsRepositoryImpl implements ISettingsRepository {
     await Hive.openBox<ReportTemplateModel>(_templatesBox);
     await Hive.openBox(_preferencesBox);
     await ensureDefaultTemplate();
+    
+    // Garante que há um template selecionado
+    final prefsBox = Hive.box(_preferencesBox);
+    if (prefsBox.get(_keyTemplateSelecionado) == null) {
+      await prefsBox.put(_keyTemplateSelecionado, 'default');
+    }
   }
 
   @override
@@ -96,6 +103,42 @@ class SettingsRepositoryImpl implements ISettingsRepository {
   bool getModoCompacto() {
     final box = Hive.box(_preferencesBox);
     return box.get(_keyModoCompacto, defaultValue: false) as bool;
+  }
+
+  @override
+  Future<void> setTemplateSelecionado(String? templateId) async {
+    final box = Hive.box(_preferencesBox);
+    if (templateId == null) {
+      await box.delete(_keyTemplateSelecionado);
+    } else {
+      await box.put(_keyTemplateSelecionado, templateId);
+    }
+  }
+
+  @override
+  String? getTemplateSelecionado() {
+    final box = Hive.box(_preferencesBox);
+    return box.get(_keyTemplateSelecionado) as String?;
+  }
+
+  @override
+  ReportTemplate? getTemplateSelecionadoObjeto() {
+    final templateId = getTemplateSelecionado();
+    if (templateId == null) {
+      // Se não há template selecionado, retorna o padrão
+      final box = Hive.box<ReportTemplateModel>(_templatesBox);
+      return box.get('default');
+    }
+    
+    final box = Hive.box<ReportTemplateModel>(_templatesBox);
+    final template = box.get(templateId);
+    
+    // Se o template selecionado não existe mais, retorna o padrão
+    if (template == null) {
+      return box.get('default');
+    }
+    
+    return template;
   }
 }
 

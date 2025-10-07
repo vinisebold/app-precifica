@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:precifica/domain/entities/produto.dart';
 
 import '../gestao_controller.dart';
+import '../../shared/providers/modo_compacto_provider.dart';
 
 import 'package:precifica/app/core/utils/currency_formatter.dart';
 import 'package:precifica/app/core/utils/final_cursor_text_input_formatter.dart';
@@ -113,19 +114,32 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     final colorScheme = Theme.of(context).colorScheme;
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
     final isAtivo = widget.produto.isAtivo;
+    final modoCompacto = ref.watch(modoCompactoProvider);
+
+    // Define os valores de padding e altura baseado no modo compacto
+    final double verticalPadding = modoCompacto ? 4.0 : 8.0;
+    final double horizontalPadding = modoCompacto ? 8.0 : 12.0;
+    final double fontSize = modoCompacto ? 14.0 : 16.0;
+    final double inputWidth = modoCompacto ? 100.0 : 120.0;
 
     // A construção do conteúdo do item (ListTile)
     final itemContent = ListTile(
+      dense: modoCompacto,
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: verticalPadding * 0.5,
+      ),
       title: Text(
         widget.produto.nome,
         style: TextStyle(
           decoration:
           isAtivo ? TextDecoration.none : TextDecoration.lineThrough,
           color: isAtivo ? null : colorScheme.outline,
+          fontSize: fontSize,
         ),
       ),
       trailing: SizedBox(
-        width: 120,
+        width: inputWidth,
         child: TextField(
           controller: _precoController,
           focusNode: widget.focusNode,
@@ -139,16 +153,21 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
                   widget.produto.id, novoPrecoFormatado);
             });
           },
+          style: TextStyle(fontSize: fontSize),
           decoration: InputDecoration(
             prefixText: 'R\$ ',
+            prefixStyle: TextStyle(fontSize: fontSize),
             filled: true,
             fillColor: colorScheme.surfaceContainerLow,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.0),
+              borderRadius: BorderRadius.circular(modoCompacto ? 8.0 : 12.0),
               borderSide: BorderSide.none,
             ),
-            contentPadding:
-            const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: modoCompacto ? 6.0 : 8.0,
+              vertical: modoCompacto ? 6.0 : 8.0,
+            ),
+            isDense: modoCompacto,
           ),
           keyboardType: TextInputType.number,
           inputFormatters: [

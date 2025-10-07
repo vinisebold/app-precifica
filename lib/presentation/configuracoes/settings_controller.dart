@@ -115,5 +115,15 @@ class SettingsController extends Notifier<SettingsState> {
     return repository.getNaoPerguntarTemplate();
   }
 
+  Future<void> setModoCompacto(bool valor) async {
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setModoCompacto(valor);
+  }
+
+  bool getModoCompacto() {
+    final repository = ref.read(settingsRepositoryProvider);
+    return repository.getModoCompacto();
+  }
+
   void clearError() => state = state.copyWith(clearErrorMessage: true);
 }

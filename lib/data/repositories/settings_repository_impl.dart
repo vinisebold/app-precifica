@@ -7,6 +7,7 @@ class SettingsRepositoryImpl implements ISettingsRepository {
   static const _templatesBox = 'report_templates_box';
   static const _preferencesBox = 'preferences_box';
   static const _keyNaoPerguntarTemplate = 'nao_perguntar_template';
+  static const _keyModoCompacto = 'modo_compacto';
 
   @override
   Future<void> init() async {
@@ -83,6 +84,18 @@ class SettingsRepositoryImpl implements ISettingsRepository {
   bool getNaoPerguntarTemplate() {
     final box = Hive.box(_preferencesBox);
     return box.get(_keyNaoPerguntarTemplate, defaultValue: false) as bool;
+  }
+
+  @override
+  Future<void> setModoCompacto(bool valor) async {
+    final box = Hive.box(_preferencesBox);
+    await box.put(_keyModoCompacto, valor);
+  }
+
+  @override
+  bool getModoCompacto() {
+    final box = Hive.box(_preferencesBox);
+    return box.get(_keyModoCompacto, defaultValue: false) as bool;
   }
 }
 

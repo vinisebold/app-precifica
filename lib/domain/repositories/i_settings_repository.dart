@@ -15,4 +15,8 @@ abstract class ISettingsRepository {
   // Preferências
   Future<void> setNaoPerguntarTemplate(bool valor);
   bool getNaoPerguntarTemplate();
+  
+  // Modo compacto/densidade
+  Future<void> setModoCompacto(bool valor);
+  bool getModoCompacto();
 }

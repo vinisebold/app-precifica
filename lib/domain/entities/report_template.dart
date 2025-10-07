@@ -38,6 +38,7 @@ class ReportTemplate {
   ProductNameFormatting formatoNomeProduto;
   bool ocultarPrecos;
   String textoPrecoZero; // Texto para produtos com preço zerado (ex: "Consulte")
+  bool mostrarCifraoPreco; // Se true, mostra "R$ 10,00"; se false, mostra "10,00"
 
   // Controle
   bool isPadrao; // Indica se é o modelo padrão (não pode ser excluído)
@@ -56,6 +57,7 @@ class ReportTemplate {
     this.formatoNomeProduto = ProductNameFormatting.firstWordBold,
     this.ocultarPrecos = false,
     this.textoPrecoZero = 'Consulte',
+    this.mostrarCifraoPreco = false,
     this.isPadrao = false,
   });
 
@@ -73,6 +75,7 @@ class ReportTemplate {
     ProductNameFormatting? formatoNomeProduto,
     bool? ocultarPrecos,
     String? textoPrecoZero,
+    bool? mostrarCifraoPreco,
     bool? isPadrao,
   }) {
     return ReportTemplate(
@@ -89,6 +92,7 @@ class ReportTemplate {
       formatoNomeProduto: formatoNomeProduto ?? this.formatoNomeProduto,
       ocultarPrecos: ocultarPrecos ?? this.ocultarPrecos,
       textoPrecoZero: textoPrecoZero ?? this.textoPrecoZero,
+      mostrarCifraoPreco: mostrarCifraoPreco ?? this.mostrarCifraoPreco,
       isPadrao: isPadrao ?? this.isPadrao,
     );
   }
@@ -108,6 +112,7 @@ class ReportTemplate {
       'formatoNomeProduto': formatoNomeProduto.index,
       'ocultarPrecos': ocultarPrecos,
       'textoPrecoZero': textoPrecoZero,
+      'mostrarCifraoPreco': mostrarCifraoPreco,
       'isPadrao': isPadrao,
     };
   }
@@ -127,6 +132,7 @@ class ReportTemplate {
       formatoNomeProduto: ProductNameFormatting.values[json['formatoNomeProduto'] as int? ?? 0],
       ocultarPrecos: json['ocultarPrecos'] as bool? ?? false,
       textoPrecoZero: json['textoPrecoZero'] as String? ?? 'Consulte',
+      mostrarCifraoPreco: json['mostrarCifraoPreco'] as bool? ?? false,
       isPadrao: json['isPadrao'] as bool? ?? false,
     );
   }
@@ -147,6 +153,7 @@ class ReportTemplate {
       formatoNomeProduto: ProductNameFormatting.firstWordBold,
       ocultarPrecos: false,
       textoPrecoZero: 'Consulte',
+      mostrarCifraoPreco: false,
       isPadrao: true,
     );
   }

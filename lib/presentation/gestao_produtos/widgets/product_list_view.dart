@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:precifica/domain/entities/produto.dart';
 import '../gestao_controller.dart';
+import '../../shared/providers/modo_compacto_provider.dart';
 import 'item_produto.dart';
 
 class ProductListView extends ConsumerStatefulWidget {
@@ -160,9 +161,11 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    final modoCompacto = ref.watch(modoCompactoProvider);
+    final dividerHeight = modoCompacto ? 8.0 : 14.0;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: EdgeInsets.symmetric(vertical: modoCompacto ? 4.0 : 8.0),
       child: ListView.separated(
         controller: _scrollController,
         itemCount: produtos.length,
@@ -186,8 +189,8 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
             },
           );
         },
-        separatorBuilder: (context, index) => const Divider(
-          height: 14,
+        separatorBuilder: (context, index) => Divider(
+          height: dividerHeight,
           thickness: 1,
           indent: 16,
           endIndent: 16,

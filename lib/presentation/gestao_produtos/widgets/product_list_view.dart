@@ -24,6 +24,8 @@ class ProductListView extends ConsumerStatefulWidget {
 class _ProductListViewState extends ConsumerState<ProductListView> {
   late List<FocusNode> _focusNodes;
   late List<Produto> _produtos;
+  final ScrollController _scrollController = ScrollController();
+  bool _isRestoringScroll = false;
 
   @override
   void initState() {
@@ -31,6 +33,44 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
     _produtos =
         ref.read(gestaoControllerProvider.select((state) => state.produtos));
     _focusNodes = List.generate(_produtos.length, (index) => FocusNode());
+    
+    // Adiciona listener para salvar a posição de rolagem
+    _scrollController.addListener(_onScroll);
+    
+    // Restaura a posição de rolagem após o build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _restoreScrollPosition();
+    });
+  }
+
+  void _onScroll() {
+    // Só salva se não estiver restaurando
+    if (!_isRestoringScroll && _scrollController.hasClients) {
+      final position = _scrollController.offset;
+      ref.read(gestaoControllerProvider.notifier)
+          .saveScrollPosition(widget.categoriaId, position);
+    }
+  }
+
+  Future<void> _restoreScrollPosition() async {
+    if (!mounted || !_scrollController.hasClients) return;
+    
+    _isRestoringScroll = true;
+    final savedPosition = await ref.read(gestaoControllerProvider.notifier)
+        .getScrollPosition(widget.categoriaId);
+    
+    if (mounted && _scrollController.hasClients && savedPosition > 0) {
+      // Aguarda um frame para garantir que a lista foi renderizada
+      await Future.delayed(const Duration(milliseconds: 100));
+      
+      if (mounted && _scrollController.hasClients) {
+        final maxScroll = _scrollController.position.maxScrollExtent;
+        final targetPosition = savedPosition > maxScroll ? maxScroll : savedPosition;
+        
+        _scrollController.jumpTo(targetPosition);
+      }
+    }
+    _isRestoringScroll = false;
   }
 
   @override
@@ -38,6 +78,11 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
     super.didUpdateWidget(oldWidget);
     final newProdutos =
     ref.watch(gestaoControllerProvider.select((state) => state.produtos));
+
+    // Se mudou de categoria, salva a posição da anterior e restaura a nova
+    if (oldWidget.categoriaId != widget.categoriaId) {
+      _restoreScrollPosition();
+    }
 
     // Apenas recria os FocusNodes se o número de produtos mudar
     if (_produtos.length != newProdutos.length) {
@@ -55,6 +100,8 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _disposeFocusNodes();
     super.dispose();
   }
@@ -117,6 +164,7 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: ListView.separated(
+        controller: _scrollController,
         itemCount: produtos.length,
         itemBuilder: (context, index) {
           final produto = produtos[index];

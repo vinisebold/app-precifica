@@ -13,6 +13,7 @@ import 'package:precifica/domain/usecases/ai/organize_ai.dart';
 import 'package:precifica/domain/usecases/produto/update_produto_status.dart';
 
 import 'package:precifica/data/repositories/gestao_repository_impl.dart';
+import 'package:precifica/data/services/preferences_service.dart';
 import 'package:precifica/domain/entities/categoria.dart';
 import 'package:precifica/domain/entities/produto.dart';
 import 'package:precifica/domain/repositories/i_gestao_repository.dart';
@@ -58,6 +59,7 @@ class GestaoController extends Notifier<GestaoState> {
   late final GetAllProdutos _getAllProdutos;
   late final UpdateProdutoStatus _updateProdutoStatus;
   late final OrganizeWithAI _organizeAI;
+  final PreferencesService _preferencesService = PreferencesService();
 
   @override
   GestaoState build() {
@@ -106,12 +108,23 @@ class GestaoController extends Notifier<GestaoState> {
       final categorias = _getCategorias();
 
       if (categorias.isNotEmpty) {
-        final primeiraCategoriaId = categorias.first.id;
-        final produtos = _getProdutosByCategoria(primeiraCategoriaId);
+        // Tenta recuperar a última categoria visualizada
+        final lastCategoryId = await _preferencesService.getLastCategoryId();
+        
+        // Verifica se a categoria salva ainda existe
+        String categoriaSelecionadaId;
+        if (lastCategoryId != null && 
+            categorias.any((cat) => cat.id == lastCategoryId)) {
+          categoriaSelecionadaId = lastCategoryId;
+        } else {
+          categoriaSelecionadaId = categorias.first.id;
+        }
+        
+        final produtos = _getProdutosByCategoria(categoriaSelecionadaId);
         state = state.copyWith(
           categorias: categorias,
           produtos: produtos,
-          categoriaSelecionadaId: primeiraCategoriaId,
+          categoriaSelecionadaId: categoriaSelecionadaId,
           perfisSalvos: perfis,
           perfilAtual: nomePerfilCarregado,
           isLoading: false,
@@ -254,6 +267,9 @@ class GestaoController extends Notifier<GestaoState> {
       clearUltimoProdutoDeletado: true,
     );
     _refreshProdutosDaCategoriaAtual();
+    
+    // Salva a categoria selecionada nas preferências
+    _preferencesService.saveLastCategoryId(categoriaId);
   }
 
   void _refreshProdutosDaCategoriaAtual() {
@@ -464,6 +480,16 @@ class GestaoController extends Notifier<GestaoState> {
       state =
           state.copyWith(errorMessage: 'Falha ao atualizar status do produto.');
     }
+  }
+
+  /// Salva a posição de rolagem da categoria atual.
+  Future<void> saveScrollPosition(String categoryId, double position) async {
+    await _preferencesService.saveScrollPosition(categoryId, position);
+  }
+
+  /// Recupera a posição de rolagem salva para uma categoria.
+  Future<double> getScrollPosition(String categoryId) async {
+    return await _preferencesService.getScrollPosition(categoryId);
   }
 
   String gerarTextoRelatorio() {

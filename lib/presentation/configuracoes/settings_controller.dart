@@ -41,8 +41,15 @@ class SettingsController extends Notifier<SettingsState> {
   Future<void> _carregarTemplates() async {
     state = state.copyWith(isLoading: true);
     try {
+      final repository = ref.read(settingsRepositoryProvider);
       final templates = _getTemplates();
-      state = state.copyWith(templates: templates, isLoading: false);
+      final templateSelecionadoId = repository.getTemplateSelecionado();
+      
+      state = state.copyWith(
+        templates: templates,
+        templateSelecionadoId: templateSelecionadoId,
+        isLoading: false,
+      );
     } catch (e) {
       state = state.copyWith(
         errorMessage: 'Falha ao carregar modelos: ${e.toString()}',
@@ -123,6 +130,23 @@ class SettingsController extends Notifier<SettingsState> {
   bool getModoCompacto() {
     final repository = ref.read(settingsRepositoryProvider);
     return repository.getModoCompacto();
+  }
+
+  Future<void> setTemplateSelecionado(String? templateId) async {
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setTemplateSelecionado(templateId);
+    // Recarrega os templates para atualizar o estado
+    await _carregarTemplates();
+  }
+
+  String? getTemplateSelecionado() {
+    final repository = ref.read(settingsRepositoryProvider);
+    return repository.getTemplateSelecionado();
+  }
+
+  ReportTemplate? getTemplateSelecionadoObjeto() {
+    final repository = ref.read(settingsRepositoryProvider);
+    return repository.getTemplateSelecionadoObjeto();
   }
 
   void clearError() => state = state.copyWith(clearErrorMessage: true);

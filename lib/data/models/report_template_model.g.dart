@@ -30,14 +30,15 @@ class ReportTemplateModelAdapter extends TypeAdapter<ReportTemplateModel> {
       formatoNomeProduto: fields[10] as ProductNameFormatting,
       ocultarPrecos: fields[11] as bool,
       textoPrecoZero: fields[12] as String,
-      isPadrao: fields[13] as bool,
+      mostrarCifraoPreco: fields[13] as bool,
+      isPadrao: fields[14] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, ReportTemplateModel obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -65,6 +66,8 @@ class ReportTemplateModelAdapter extends TypeAdapter<ReportTemplateModel> {
       ..writeByte(12)
       ..write(obj.textoPrecoZero)
       ..writeByte(13)
+      ..write(obj.mostrarCifraoPreco)
+      ..writeByte(14)
       ..write(obj.isPadrao);
   }
 

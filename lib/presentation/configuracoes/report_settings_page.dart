@@ -351,6 +351,15 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
 
         if (!template.ocultarPrecos) ...[
           const SizedBox(height: 12),
+          SwitchListTile(
+            title: const Text('Mostrar "R\$" nos Preços'),
+            subtitle: const Text('Se desabilitado, mostra apenas os valores numéricos'),
+            value: template.mostrarCifraoPreco,
+            onChanged: (value) {
+              _atualizarTemplate(template.copyWith(mostrarCifraoPreco: value));
+            },
+          ),
+          const SizedBox(height: 12),
           TextField(
             controller: _textoPrecoZeroController,
             decoration: const InputDecoration(

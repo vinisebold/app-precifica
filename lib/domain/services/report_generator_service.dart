@@ -202,6 +202,12 @@ class ReportGeneratorService {
       return template.textoPrecoZero;
     }
     
-    return preco.toStringAsFixed(2).replaceAll('.', ',');
+    final valorFormatado = preco.toStringAsFixed(2).replaceAll('.', ',');
+    
+    if (template.mostrarCifraoPreco) {
+      return 'R\$ $valorFormatado';
+    } else {
+      return valorFormatado;
+    }
   }
 }

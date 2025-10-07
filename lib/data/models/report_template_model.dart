@@ -59,6 +59,10 @@ class ReportTemplateModel extends ReportTemplate {
 
   @HiveField(13)
   @override
+  bool mostrarCifraoPreco;
+
+  @HiveField(14)
+  @override
   bool isPadrao;
 
   ReportTemplateModel({
@@ -75,6 +79,7 @@ class ReportTemplateModel extends ReportTemplate {
     required this.formatoNomeProduto,
     required this.ocultarPrecos,
     required this.textoPrecoZero,
+    required this.mostrarCifraoPreco,
     required this.isPadrao,
   }) : super(
           id: id,
@@ -90,6 +95,7 @@ class ReportTemplateModel extends ReportTemplate {
           formatoNomeProduto: formatoNomeProduto,
           ocultarPrecos: ocultarPrecos,
           textoPrecoZero: textoPrecoZero,
+          mostrarCifraoPreco: mostrarCifraoPreco,
           isPadrao: isPadrao,
         );
 
@@ -108,6 +114,7 @@ class ReportTemplateModel extends ReportTemplate {
       formatoNomeProduto: template.formatoNomeProduto,
       ocultarPrecos: template.ocultarPrecos,
       textoPrecoZero: template.textoPrecoZero,
+      mostrarCifraoPreco: template.mostrarCifraoPreco,
       isPadrao: template.isPadrao,
     );
   }

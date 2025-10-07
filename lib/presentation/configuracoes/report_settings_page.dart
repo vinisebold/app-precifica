@@ -176,8 +176,6 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
   }
 
   Widget _buildConfigPanel(BuildContext context, ReportTemplate template) {
-    final colorScheme = Theme.of(context).colorScheme;
-    
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [

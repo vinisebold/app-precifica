@@ -245,11 +245,16 @@ class GestaoRepositoryImpl implements IGestaoRepository {
 
     if (categoria == null) return [];
 
-    return categoria.produtoIds
+    final produtos = categoria.produtoIds
         .map((id) => produtosBox.get(id))
         .where((produto) => produto != null)
         .cast<Produto>()
         .toList();
+    
+    // Ordenar alfabeticamente por nome (case-insensitive)
+    produtos.sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
+    
+    return produtos;
   }
 
   @override
@@ -292,17 +297,30 @@ class GestaoRepositoryImpl implements IGestaoRepository {
     final categoria = categoriasBox.get(produto.categoriaId);
     if (categoria != null && !categoria.produtoIds.contains(produto.id)) {
       categoria.produtoIds.add(produto.id);
+      
+      // Ordenar produtos alfabeticamente
+      _ordenarProdutosPorNome(categoria.produtoIds, produtosBox);
+      
       await categoriasBox.put(produto.categoriaId, categoria);
     }
   }
 
   @override
   Future<void> atualizarNomeProduto(String produtoId, String novoNome) async {
-    final box = Hive.box<ProdutoModel>(_produtosBox);
-    final produto = box.get(produtoId);
+    final produtosBox = Hive.box<ProdutoModel>(_produtosBox);
+    final categoriasBox = Hive.box<CategoriaModel>(_categoriasBox);
+    final produto = produtosBox.get(produtoId);
+    
     if (produto != null) {
       produto.nome = novoNome;
-      await box.put(produtoId, produto);
+      await produtosBox.put(produtoId, produto);
+      
+      // Reordenar produtos na categoria após alterar o nome
+      final categoria = categoriasBox.get(produto.categoriaId);
+      if (categoria != null) {
+        _ordenarProdutosPorNome(categoria.produtoIds, produtosBox);
+        await categoriasBox.put(produto.categoriaId, categoria);
+      }
     }
   }
 
@@ -314,5 +332,17 @@ class GestaoRepositoryImpl implements IGestaoRepository {
       produto.isAtivo = isAtivo;
       await box.put(produtoId, produto);
     }
+  }
+
+  /// Ordena uma lista de IDs de produtos alfabeticamente baseado nos nomes
+  void _ordenarProdutosPorNome(List<String> produtoIds, Box<ProdutoModel> produtosBox) {
+    produtoIds.sort((idA, idB) {
+      final produtoA = produtosBox.get(idA);
+      final produtoB = produtosBox.get(idB);
+      
+      if (produtoA == null || produtoB == null) return 0;
+      
+      return produtoA.nome.toLowerCase().compareTo(produtoB.nome.toLowerCase());
+    });
   }
 }

@@ -28,25 +28,7 @@ Principais cuidados no prompt:
 - **Perfis:** Persistidos/exportados como JSON (import/export manual + compartilhamento externo).
 - **Serviço de IA:** `AIService` (HTTP + Gemini API).
 
-
-## 🔄 Fluxos Principais
-| Fluxo | Descrição |
-|-------|-----------|
-| Criar categoria | Botão + dialogo → adiciona e seleciona |
-| Criar produto | FAB quando há categoria ativa |
-| Editar nomes | Duplo toque em produto/categoria |
-| Reordenar | Pressiona e arrasta; área superior para deletar |
-| Perfis | Long press no título (AppBar) abre gerenciamento |
-| Organizar com IA | Através do diálogo de perfis (“Organizar c/ IA”) |
-| Compartilhar | Ícone de compartilhamento gera texto formatado |
-
-## 🖌️ UI / UX
-- Overlay global com blur + brilhos dinâmicos durante processamento de IA.
-- Mensagens rotativas para reduzir ansiedade do usuário.
-- Loader minimalista (spinner nativo) com transição suave de entrada/saída.
-- Drag targets visuais para exclusão segura.
-
-## 🚀 Executando localmente
+## Executando localmente
 Antes de rodar com IA, defina a chave via `--dart-define`.
 
 Rodar em debug:

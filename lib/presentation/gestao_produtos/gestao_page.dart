@@ -29,6 +29,7 @@ class GestaoPage extends ConsumerStatefulWidget {
 class _GestaoPageState extends ConsumerState<GestaoPage> {
   late PageController _pageController; // safely initialized in initState
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _hasScheduledPageSnap = false;
 
   @override
   void initState() {
@@ -341,6 +342,33 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     );
   }
 
+  bool _handlePageViewScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollStartNotification) {
+      _hasScheduledPageSnap = false;
+    } else if (notification is ScrollUpdateNotification &&
+        notification.metrics is PageMetrics &&
+        notification.dragDetails == null) {
+      final page = (notification.metrics as PageMetrics).page;
+      if (page != null) {
+        final targetPage = page.round();
+        final delta = (page - targetPage).abs();
+        if (!_hasScheduledPageSnap && delta > 0.0001 && delta <= 0.045) {
+          _hasScheduledPageSnap = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted || !_pageController.hasClients) return;
+            final currentPage = _pageController.page;
+            if (currentPage != null && (currentPage - targetPage).abs() > 0.0001) {
+              _pageController.jumpToPage(targetPage);
+            }
+          });
+        }
+      }
+    } else if (notification is ScrollEndNotification) {
+      _hasScheduledPageSnap = false;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -448,25 +476,29 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 children: [
                   if (gestaoState.categorias.isNotEmpty)
                     RepaintBoundary(
-                      child: PageView.builder(
-                        controller: _pageController,
-                        itemCount: gestaoState.categorias.length,
-                        onPageChanged: (index) =>
-                            gestaoNotifier.selecionarCategoriaPorIndice(index),
-                        itemBuilder: (context, index) => ProductListView(
-                          categoriaId: gestaoState.categorias[index].id,
-                          onProdutoDoubleTap: (produto) =>
-                              _mostrarDialogoEditarNome(
-                            context,
-                            ref,
-                            titulo: 'Editar Produto',
-                            valorAtual: produto.nome,
-                            onSalvar: (novoNome) => gestaoNotifier
-                                .atualizarNomeProduto(produto.id, novoNome),
+                      child: NotificationListener<ScrollNotification>(
+                        onNotification: _handlePageViewScrollNotification,
+                        child: PageView.builder(
+                          controller: _pageController,
+                          itemCount: gestaoState.categorias.length,
+                          onPageChanged: (index) =>
+                              gestaoNotifier
+                                  .selecionarCategoriaPorIndice(index),
+                          itemBuilder: (context, index) => ProductListView(
+                            categoriaId: gestaoState.categorias[index].id,
+                            onProdutoDoubleTap: (produto) =>
+                                _mostrarDialogoEditarNome(
+                              context,
+                              ref,
+                              titulo: 'Editar Produto',
+                              valorAtual: produto.nome,
+                              onSalvar: (novoNome) => gestaoNotifier
+                                  .atualizarNomeProduto(produto.id, novoNome),
+                            ),
+                            onProdutoTap: (produto) =>
+                                gestaoNotifier.atualizarStatusProduto(
+                                    produto.id, !produto.isAtivo),
                           ),
-                          onProdutoTap: (produto) =>
-                              gestaoNotifier.atualizarStatusProduto(
-                                  produto.id, !produto.isAtivo),
                         ),
                       ),
                     ),

@@ -25,76 +25,41 @@ class TemplateListPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Modelos de Relatório'),
       ),
-      body: Column(
-        children: [
-          // Banner informativo se "não perguntar" estiver ativo
-          if (naoPerguntarAtivo)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: colorScheme.tertiaryContainer,
-                borderRadius: BorderRadius.circular(8),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: Column(
+          children: [
+            if (naoPerguntarAtivo)
+              _BannerCard(
+                icon: Icons.info_outline,
+                message: 'Usando sempre o Modelo Padrão ao compartilhar',
+                actionLabel: 'Alterar',
+                onActionPressed: () async {
+                  await settingsNotifier.setNaoPerguntarTemplate(false);
+                  ref.invalidate(settingsControllerProvider);
+                },
               ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: colorScheme.onTertiaryContainer,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Usando sempre o Modelo Padrão ao compartilhar',
-                      style: TextStyle(
-                        color: colorScheme.onTertiaryContainer,
-                        fontSize: 13,
+            if (naoPerguntarAtivo) const SizedBox(height: 16),
+            Expanded(
+              child: settingsState.templates.isEmpty
+                  ? _EmptyState(colorScheme: colorScheme)
+                  : ListView.separated(
+                      itemCount: settingsState.templates.length,
+                      separatorBuilder: (_, __) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Divider(
+                          color: colorScheme.outlineVariant.withOpacity(0.5),
+                          thickness: 1,
+                        ),
                       ),
+                      itemBuilder: (context, index) {
+                        final template = settingsState.templates[index];
+                        return _TemplateCard(template: template);
+                      },
                     ),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      await settingsNotifier.setNaoPerguntarTemplate(false);
-                      // Força rebuild para atualizar o banner
-                      ref.invalidate(settingsControllerProvider);
-                    },
-                    child: const Text('Alterar'),
-                  ),
-                ],
-              ),
             ),
-          
-          Expanded(
-            child: settingsState.templates.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.description_outlined,
-                          size: 64,
-                          color: colorScheme.outline,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Nenhum modelo encontrado',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(8),
-                    itemCount: settingsState.templates.length,
-                    itemBuilder: (context, index) {
-                      final template = settingsState.templates[index];
-                      return _TemplateCard(template: template);
-                    },
-                  ),
-          ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
@@ -120,61 +85,41 @@ class _TemplateCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
+    final settingsState = ref.watch(settingsControllerProvider);
+    final selectedId = settingsState.templateSelecionadoId ?? 'default';
+    final isSelecionado = selectedId == template.id;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: template.isPadrao
-              ? colorScheme.primaryContainer
-              : colorScheme.secondaryContainer,
-          child: Icon(
-            template.isPadrao ? Icons.star : Icons.description,
-            color: template.isPadrao
-                ? colorScheme.onPrimaryContainer
-                : colorScheme.onSecondaryContainer,
-          ),
-        ),
-        title: Text(
-          template.nome,
-          style: TextStyle(
-            fontWeight: template.isPadrao ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        subtitle: Text(_buildSubtitle(template)),
-        trailing: template.isPadrao
-            ? Tooltip(
-                message: 'Modelo padrão (não editável)',
-                child: Icon(
-                  Icons.lock_outline,
-                  color: colorScheme.outline,
+    return Card.outlined(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: InkWell(
+        onTap: () => _selecionarTemplate(context, ref),
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          child: Row(
+            children: [
+              Icon(
+                isSelecionado
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
+                color:
+                    isSelecionado ? colorScheme.primary : colorScheme.outline,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  template.nome,
+                  style: Theme.of(context).textTheme.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              )
-            : PopupMenuButton(
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit),
-                        SizedBox(width: 8),
-                        Text('Editar'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Excluir', style: TextStyle(color: Colors.red)),
-                      ],
-                    ),
-                  ),
-                ],
-                onSelected: (value) {
-                  if (value == 'edit') {
+              ),
+              if (!template.isPadrao) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.settings_outlined),
+                  onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -183,77 +128,156 @@ class _TemplateCard extends ConsumerWidget {
                         ),
                       ),
                     );
-                  } else if (value == 'delete') {
-                    _showDeleteDialog(context, ref);
-                  }
-                },
-              ),
-        onTap: template.isPadrao
-            ? null
-            : () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ReportSettingsPage(
-                templateId: template.id,
-              ),
-            ),
-          );
-        },
+                  },
+                  tooltip: 'Editar',
+                ),
+              ] else ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(
+                    Icons.lock,
+                    color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                  ),
+                  onPressed: null,
+                  tooltip: 'Não editável',
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  String _buildSubtitle(ReportTemplate template) {
-    final parts = <String>[];
-    
-    if (!template.agruparPorCategoria) {
-      parts.add('Lista única');
-    }
-    
-    if (template.ocultarPrecos) {
-      parts.add('Sem preços');
-    }
-    
-    switch (template.filtroProdutos) {
-      case ProductFilter.activeWithPrice:
-        parts.add('Apenas com preço');
-        break;
-      case ProductFilter.allActive:
-        parts.add('Todos ativos');
-        break;
-      case ProductFilter.all:
-        parts.add('Incluindo inativos');
-        break;
-    }
+  Future<void> _selecionarTemplate(BuildContext context, WidgetRef ref) async {
+    final settingsState = ref.read(settingsControllerProvider);
+    final selectedId = settingsState.templateSelecionadoId ?? 'default';
+    if (selectedId == template.id) return;
 
-    return parts.isEmpty ? 'Toque para editar' : parts.join(' • ');
+    await ref
+        .read(settingsControllerProvider.notifier)
+        .setTemplateSelecionado(template.id);
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('Modelo "${template.nome}" selecionado'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
   }
+}
 
-  void _showDeleteDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Excluir Modelo'),
-        content: Text('Deseja realmente excluir o modelo "${template.nome}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () {
-              ref.read(settingsControllerProvider.notifier)
-                  .deletarTemplate(template.id);
-              Navigator.pop(context);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Excluir'),
-          ),
-        ],
+class _StatusChip extends StatelessWidget {
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  const _StatusChip({
+    required this.label,
+    required this.backgroundColor,
+    required this.foregroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text(
+        label,
+        style: TextStyle(
+          color: foregroundColor,
+          fontWeight: FontWeight.w600,
+        ),
       ),
+      backgroundColor: backgroundColor,
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+    );
+  }
+}
+
+class _BannerCard extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  final String actionLabel;
+  final VoidCallback onActionPressed;
+
+  const _BannerCard({
+    required this.icon,
+    required this.message,
+    required this.actionLabel,
+    required this.onActionPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Card(
+      color: colorScheme.tertiaryContainer,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Icon(icon, color: colorScheme.onTertiaryContainer),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                message,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onTertiaryContainer,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            FilledButton.tonal(
+              onPressed: onActionPressed,
+              child: Text(actionLabel),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final ColorScheme colorScheme;
+
+  const _EmptyState({required this.colorScheme});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.description_outlined,
+          size: 72,
+          color: colorScheme.outline,
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'Nenhum modelo encontrado',
+          style: textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Crie seu primeiro modelo para personalizar relatórios.',
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }

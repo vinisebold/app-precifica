@@ -89,10 +89,29 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
       Categoria categoria, GlobalKey itemKey, Offset dragEndOffset) {
     final RenderBox? itemRenderBox =
         itemKey.currentContext?.findRenderObject() as RenderBox?;
-    if (itemRenderBox == null || !itemRenderBox.attached) return;
+    if (itemRenderBox == null || !itemRenderBox.attached) {
+      // Se não conseguir obter o renderBox, apenas limpa o estado
+      if (mounted) {
+        setState(() => _revertingCategoria = null);
+      }
+      ref.read(gestaoControllerProvider.notifier).setReordering(false);
+      return;
+    }
 
     final Offset targetPosition = itemRenderBox.localToGlobal(Offset.zero);
     final size = itemRenderBox.size;
+
+    // Verifica se a posição de drag é muito próxima da posição original
+    // Se for, não precisa animar, apenas finaliza
+    final distance = (dragEndOffset - targetPosition).distance;
+    if (distance < 10) {
+      // Praticamente não moveu, finaliza direto
+      if (mounted) {
+        setState(() => _revertingCategoria = null);
+      }
+      ref.read(gestaoControllerProvider.notifier).setReordering(false);
+      return;
+    }
 
     final dragEndTop = dragEndOffset.dy;
     final dragEndLeft = dragEndOffset.dx;
@@ -479,16 +498,19 @@ class _CategoriaItemState extends State<_CategoriaItem> {
       final pillColor = colorScheme.secondaryContainer;
       final contentColor = colorScheme.onSecondaryContainer;
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 14.0),
+        padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
         decoration: BoxDecoration(
           color: pillColor,
           borderRadius:
-              BorderRadius.circular(28.0),
+              BorderRadius.circular(20.0),
         ),
         child: Center(
           child: Text(
             widget.categoria.nome,
-            style: textTheme.labelLarge?.copyWith(color: contentColor),
+            style: textTheme.titleMedium?.copyWith(
+              color: contentColor,
+              fontWeight: FontWeight.w600,
+            ),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),

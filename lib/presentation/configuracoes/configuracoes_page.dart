@@ -36,8 +36,10 @@ class ConfiguracoesPage extends ConsumerWidget {
                 ),
               ),
               trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {
-                Navigator.push(
+              enableFeedback: true,
+              splashColor: Colors.transparent,
+              onTap: () async {
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const TemplateListPage(),
@@ -160,7 +162,7 @@ class _SwitchSettingTile extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       child: Row(
         children: [
           Icon(icon, color: colorScheme.primary),

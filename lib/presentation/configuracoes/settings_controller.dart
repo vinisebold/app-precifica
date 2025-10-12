@@ -62,13 +62,35 @@ class SettingsController extends Notifier<SettingsState> {
     if (template != null) {
       state = state.copyWith(templateEmEdicao: template);
     } else {
-      // Criar novo template
-      final novoTemplate = ReportTemplate(
+      // Criar novo template baseado no modelo padrão
+      final modeloPadrao = ReportTemplate.padrao();
+      final nomeAutomatico = _gerarNomeNovoModelo();
+      final novoTemplate = modeloPadrao.copyWith(
         id: _uuid.v4(),
-        nome: 'Novo Modelo',
+        nome: nomeAutomatico,
+        isPadrao: false,
       );
       state = state.copyWith(templateEmEdicao: novoTemplate);
     }
+  }
+
+  String _gerarNomeNovoModelo() {
+    final templates = state.templates;
+    
+    // Verifica se "Novo Modelo" já existe
+    final nomesExistentes = templates.map((t) => t.nome).toSet();
+    
+    if (!nomesExistentes.contains('Novo Modelo')) {
+      return 'Novo Modelo';
+    }
+    
+    // Encontra o próximo número disponível
+    int numero = 2;
+    while (nomesExistentes.contains('Novo Modelo $numero')) {
+      numero++;
+    }
+    
+    return 'Novo Modelo $numero';
   }
 
   void cancelarEdicao() {
@@ -96,7 +118,6 @@ class SettingsController extends Notifier<SettingsState> {
   }
 
   Future<void> deletarTemplate(String templateId) async {
-    state = state.copyWith(isLoading: true);
     try {
       await _deleteTemplate(templateId);
       await _carregarTemplates();
@@ -105,6 +126,7 @@ class SettingsController extends Notifier<SettingsState> {
         errorMessage: e.toString(),
         isLoading: false,
       );
+      rethrow; // Propaga o erro para o UI poder tratar
     }
   }
 

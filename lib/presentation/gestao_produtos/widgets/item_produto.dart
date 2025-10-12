@@ -36,8 +36,10 @@ class ItemProduto extends ConsumerStatefulWidget {
 class _ItemProdutoState extends ConsumerState<ItemProduto> {
   late final InputCursorFinalController _precoController;
   Timer? _debounce;
-  OverlayEntry? _revertingOverlayEntry;
-  bool _isReverting = false;
+  OverlayEntry? _overlayEntry;
+  bool _isDragging = false;
+  bool _showPopAnimation = false;
+  bool _showPressAnimation = false;
 
   @override
   void initState() {
@@ -58,55 +60,182 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
   void dispose() {
     _precoController.dispose();
     _debounce?.cancel();
-    _revertingOverlayEntry?.remove();
+    _removeOverlay();
     super.dispose();
   }
 
-  void _revertDragAnimation(Offset dragEndOffset, Widget feedback) {
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  void _startDrag() {
+    if (mounted) {
+      setState(() {
+        _isDragging = true;
+        _showPressAnimation = true;
+      });
+      HapticFeedback.lightImpact();
+      ref.read(gestaoControllerProvider.notifier).setDraggingProduto(true);
+      
+      // Reseta a animação de pressão após completar
+      Future.delayed(const Duration(milliseconds: 250), () {
+        if (mounted) {
+          setState(() => _showPressAnimation = false);
+        }
+      });
+    }
+  }
+
+  void _endDrag(DraggableDetails details) {
+    if (!details.wasAccepted) {
+      _animateBack(details.offset);
+    } else {
+      _finalizeDrag();
+    }
+  }
+
+  void _cancelDrag(Velocity velocity, Offset offset) {
+    _animateBack(offset);
+  }
+
+  void _finalizeDrag() {
+    if (mounted) {
+      // Ativa a animação de pop no item original
+      setState(() {
+        _isDragging = false;
+        _showPopAnimation = true;
+      });
+      
+      ref.read(gestaoControllerProvider.notifier).setDraggingProduto(false);
+      
+      // Reseta a animação de pop após completar
+      Future.delayed(const Duration(milliseconds: 250), () {
+        if (mounted) {
+          setState(() => _showPopAnimation = false);
+        }
+      });
+    }
+  }
+
+  void _animateBack(Offset dragEndOffset) {
+    // Remove qualquer overlay existente primeiro
+    _removeOverlay();
+
+    // Verifica se o widget ainda está montado
+    if (!mounted) {
+      _finalizeDrag();
+      return;
+    }
+
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null || !renderBox.attached) return;
+    if (renderBox == null || !renderBox.attached) {
+      _finalizeDrag();
+      return;
+    }
 
-    final Offset targetPosition = renderBox.localToGlobal(Offset.zero);
+    final targetPosition = renderBox.localToGlobal(Offset.zero);
     final size = renderBox.size;
-    bool isAnimationStarted = false;
 
-    _revertingOverlayEntry?.remove();
-    _revertingOverlayEntry = null;
+    // Verifica se a posição de drag é muito próxima da posição original
+    // Se for, não precisa animar, apenas finaliza
+    final distance = (dragEndOffset - targetPosition).distance;
+    if (distance < 10) {
+      // Praticamente não moveu, finaliza direto
+      _finalizeDrag();
+      return;
+    }
 
-    _revertingOverlayEntry = OverlayEntry(builder: (context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!isAnimationStarted) {
-              setState(() => isAnimationStarted = true);
+    bool fadeOut = false;
+
+    _overlayEntry = OverlayEntry(
+      builder: (overlayContext) {
+        return StatefulBuilder(
+          builder: (_, setOverlayState) {
+            if (!fadeOut) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_overlayEntry != null && mounted) {
+                  setOverlayState(() => fadeOut = true);
+                }
+              });
             }
-          });
 
-          return AnimatedPositioned(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            top: isAnimationStarted ? targetPosition.dy : dragEndOffset.dy,
-            left: isAnimationStarted ? targetPosition.dx : dragEndOffset.dx,
-            width: size.width,
-            height: size.height,
-            onEnd: () {
-              if (mounted) {
-                _revertingOverlayEntry?.remove();
-                _revertingOverlayEntry = null;
-                this.setState(() => _isReverting = false);
-                ref
-                    .read(gestaoControllerProvider.notifier)
-                    .setDraggingProduto(false);
-              }
-            },
-            child: feedback,
-          );
-        },
-      );
+            return Positioned(
+              top: dragEndOffset.dy,
+              left: dragEndOffset.dx,
+              width: size.width,
+              height: size.height,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 100),
+                opacity: fadeOut ? 0.0 : 1.0,
+                curve: Curves.easeOut,
+                onEnd: () {
+                  if (mounted) {
+                    _removeOverlay();
+                    _finalizeDrag();
+                  }
+                },
+                child: _buildFeedback(),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    // Insere o overlay de forma segura
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _overlayEntry != null) {
+        try {
+          Overlay.of(context).insert(_overlayEntry!);
+        } catch (e) {
+          // Se falhar ao inserir, limpa e finaliza
+          _removeOverlay();
+          _finalizeDrag();
+        }
+      }
     });
+  }
 
-    setState(() => _isReverting = true);
-    Overlay.of(context).insert(_revertingOverlayEntry!);
+  Widget _buildFeedback() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final modoCompacto = ref.read(modoCompactoProvider);
+    
+    final double verticalPadding = modoCompacto ? 4.0 : 8.0;
+    final double horizontalPadding = modoCompacto ? 8.0 : 12.0;
+    final double fontSize = modoCompacto ? 14.0 : 16.0;
+    final double inputWidth = modoCompacto ? 100.0 : 120.0;
+
+    final itemContent = ListTile(
+      dense: modoCompacto,
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: verticalPadding * 0.5,
+      ),
+      title: Text(
+        widget.produto.nome,
+        style: TextStyle(fontSize: fontSize),
+      ),
+      trailing: SizedBox(
+        width: inputWidth,
+        // Espaço vazio para manter o layout, mas sem mostrar o preço
+      ),
+    );
+
+    return _FadeInFeedback(
+      child: Material(
+        elevation: 4.0,
+        borderRadius: BorderRadius.circular(12.0),
+        child: Container(
+          width: MediaQuery.of(context).size.width - 16,
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          child: itemContent,
+        ),
+      ),
+    );
   }
 
   @override
@@ -178,58 +307,83 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
       ),
     );
 
-    final feedbackWidget = Material(
-      elevation: 4.0,
-      borderRadius: BorderRadius.circular(12.0),
-      child: Container(
-        width: MediaQuery.of(context).size.width - 16,
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        child: itemContent,
-      ),
-    );
-
     // O GestureDetector para onTap (reativar) agora envolve tudo.
     return GestureDetector(
       onTap: widget.onTap,
-      // Passa o comportamento de toque para os filhos se não houver conflito.
       behavior: HitTestBehavior.translucent,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 300),
         opacity: isAtivo ? 1.0 : 0.4,
         child: IgnorePointer(
           ignoring: !isAtivo,
-          child: Opacity(
-            opacity: _isReverting ? 0.0 : 1.0,
-            child: LongPressDraggable<Produto>(
-              data: widget.produto,
-              onDragStarted: () {
-                HapticFeedback.lightImpact();
-                gestaoNotifier.setDraggingProduto(true);
-              },
-              onDragEnd: (details) {
-                if (!details.wasAccepted && !_isReverting) {
-                  gestaoNotifier.setDraggingProduto(false);
-                }
-              },
-              onDraggableCanceled: (velocity, offset) {
-                _revertDragAnimation(offset, feedbackWidget);
-              },
-              feedback: feedbackWidget,
-              childWhenDragging: Opacity(
-                opacity: 0.3,
-                child: itemContent,
-              ),
-              // O GestureDetector interno agora só lida com o doubleTap.
-              child: GestureDetector(
-                onDoubleTap: widget.onDoubleTap,
-                child: itemContent,
+          child: AnimatedScale(
+            duration: const Duration(milliseconds: 250),
+            scale: _showPopAnimation 
+                ? 1.03 
+                : (_showPressAnimation ? 0.97 : 1.0),
+            curve: Curves.easeOutBack,
+            child: Opacity(
+              opacity: _isDragging ? 0.0 : 1.0,
+              child: LongPressDraggable<Produto>(
+                data: widget.produto,
+                onDragStarted: _startDrag,
+                onDragEnd: _endDrag,
+                onDraggableCanceled: _cancelDrag,
+                feedback: _buildFeedback(),
+                childWhenDragging: Opacity(
+                  opacity: 0.3,
+                  child: itemContent,
+                ),
+                child: GestureDetector(
+                  onDoubleTap: widget.onDoubleTap,
+                  child: itemContent,
+                ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _FadeInFeedback extends StatefulWidget {
+  final Widget child;
+
+  const _FadeInFeedback({required this.child});
+
+  @override
+  State<_FadeInFeedback> createState() => _FadeInFeedbackState();
+}
+
+class _FadeInFeedbackState extends State<_FadeInFeedback> {
+  double _opacity = 0.0;
+  double _scale = 0.95;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicia o fade in e scale após o primeiro frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _opacity = 1.0;
+          _scale = 1.0;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 200),
+      scale: _scale,
+      curve: Curves.easeOutBack,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 150),
+        opacity: _opacity,
+        child: widget.child,
       ),
     );
   }

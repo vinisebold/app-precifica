@@ -818,6 +818,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   void _mostrarDialogoNovoProduto(BuildContext pageContext, WidgetRef ref) {
     final controller = TextEditingController();
     final textTheme = Theme.of(pageContext).textTheme;
+    final colorScheme = Theme.of(pageContext).colorScheme;
 
     showDialog(
       context: pageContext,
@@ -825,7 +826,26 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         title: Text('Novo Produto', style: textTheme.headlineSmall),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(hintText: "Nome do produto"),
+          decoration: InputDecoration(
+            labelText: "Nome do produto",
+            filled: true,
+            fillColor: colorScheme.surfaceContainerHighest,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: colorScheme.primary,
+                width: 2,
+              ),
+            ),
+          ),
           autofocus: true,
           onSubmitted: (_) =>
               _salvarNovoProduto(dialogContext, controller, ref),
@@ -857,6 +877,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   void _mostrarDialogoNovaCategoria(BuildContext pageContext, WidgetRef ref) {
     final controller = TextEditingController();
     final textTheme = Theme.of(pageContext).textTheme;
+    final colorScheme = Theme.of(pageContext).colorScheme;
 
     showDialog(
       context: pageContext,
@@ -864,7 +885,26 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         title: Text('Nova Categoria', style: textTheme.headlineSmall),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(hintText: "Nome da categoria"),
+          decoration: InputDecoration(
+            labelText: "Nome da categoria",
+            filled: true,
+            fillColor: colorScheme.surfaceContainerHighest,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: colorScheme.primary,
+                width: 2,
+              ),
+            ),
+          ),
           autofocus: true,
           onSubmitted: (_) =>
               _salvarNovaCategoria(dialogContext, controller, ref),

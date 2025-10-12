@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:precifica/domain/entities/produto.dart';
+import 'package:precificador/domain/entities/produto.dart';
 
 part 'produto_model.g.dart';
 

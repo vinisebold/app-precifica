@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:precifica/domain/entities/categoria.dart';
+import 'package:precificador/domain/entities/categoria.dart';
 
 part 'categoria_model.g.dart';
 

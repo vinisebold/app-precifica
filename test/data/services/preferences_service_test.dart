@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:precifica/data/services/preferences_service.dart';
+import 'package:precificador/data/services/preferences_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

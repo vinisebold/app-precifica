@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:precifica/data/api_key.dart';
+import 'package:precificador/data/api_key.dart';
 
 class AIService {
   final String _apiUrl =

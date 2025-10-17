@@ -65,7 +65,9 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
   }
 
   void _removeOverlay() {
-    _overlayEntry?.remove();
+    if (_overlayEntry != null && _overlayEntry!.mounted) {
+      _overlayEntry!.remove();
+    }
     _overlayEntry = null;
   }
 
@@ -146,46 +148,81 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
       return;
     }
 
-    bool fadeOut = false;
+    // Captura os valores necessários ANTES de criar o overlay
+    // para evitar acessar context quando o widget for desmontado
+    final capturedTheme = Theme.of(context);
+    final capturedColorScheme = capturedTheme.colorScheme;
+    final capturedTextTheme = capturedTheme.textTheme;
+    final modoCompacto = ref.read(modoCompactoProvider);
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    final double verticalPadding = modoCompacto ? 4.0 : 8.0;
+    final double horizontalPadding = modoCompacto ? 8.0 : 12.0;
+    final double fontSize = modoCompacto ? 14.0 : 16.0;
+    final double inputWidth = modoCompacto ? 100.0 : 120.0;
 
+    // Constrói o widget feedback com valores capturados (sem usar context)
+    final feedbackWidget = Material(
+      elevation: 4.0,
+      borderRadius: BorderRadius.circular(12.0),
+      child: Container(
+        width: screenWidth - 16,
+        decoration: BoxDecoration(
+          color: capturedColorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        child: ListTile(
+          dense: modoCompacto,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: verticalPadding * 0.5,
+          ),
+          title: Text(
+            widget.produto.nome,
+            style: capturedTextTheme.bodyMedium?.copyWith(fontSize: fontSize),
+          ),
+          trailing: SizedBox(
+            width: inputWidth,
+            // Espaço vazio para manter o layout, mas sem mostrar o preço
+          ),
+        ),
+      ),
+    );
+
+    // Cria o overlay
     _overlayEntry = OverlayEntry(
       builder: (overlayContext) {
-        return StatefulBuilder(
-          builder: (_, setOverlayState) {
-            if (!fadeOut) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (_overlayEntry != null && mounted) {
-                  setOverlayState(() => fadeOut = true);
-                }
-              });
+        return TweenAnimationBuilder<double>(
+          duration: const Duration(milliseconds: 200),
+          tween: Tween(begin: 1.0, end: 0.0),
+          curve: Curves.easeOut,
+          onEnd: () {
+            // Verifica mounted antes de remover
+            if (mounted) {
+              _removeOverlay();
+              _finalizeDrag();
             }
-
+          },
+          builder: (context, opacity, child) {
             return Positioned(
               top: dragEndOffset.dy,
               left: dragEndOffset.dx,
               width: size.width,
               height: size.height,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 100),
-                opacity: fadeOut ? 0.0 : 1.0,
-                curve: Curves.easeOut,
-                onEnd: () {
-                  if (mounted) {
-                    _removeOverlay();
-                    _finalizeDrag();
-                  }
-                },
-                child: _buildFeedback(),
+              child: Opacity(
+                opacity: opacity,
+                child: child!,
               ),
             );
           },
+          child: feedbackWidget,
         );
       },
     );
 
     // Insere o overlay de forma segura
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _overlayEntry != null) {
+      if (mounted && _overlayEntry != null && !_overlayEntry!.mounted) {
         try {
           Overlay.of(context).insert(_overlayEntry!);
         } catch (e) {
@@ -197,7 +234,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     });
   }
 
-  Widget _buildFeedback() {
+  Widget _buildDraggableFeedback() {
     final colorScheme = Theme.of(context).colorScheme;
     final modoCompacto = ref.read(modoCompactoProvider);
     
@@ -205,22 +242,6 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     final double horizontalPadding = modoCompacto ? 8.0 : 12.0;
     final double fontSize = modoCompacto ? 14.0 : 16.0;
     final double inputWidth = modoCompacto ? 100.0 : 120.0;
-
-    final itemContent = ListTile(
-      dense: modoCompacto,
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: horizontalPadding,
-        vertical: verticalPadding * 0.5,
-      ),
-      title: Text(
-        widget.produto.nome,
-        style: TextStyle(fontSize: fontSize),
-      ),
-      trailing: SizedBox(
-        width: inputWidth,
-        // Espaço vazio para manter o layout, mas sem mostrar o preço
-      ),
-    );
 
     return _FadeInFeedback(
       child: Material(
@@ -232,7 +253,21 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
             color: colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(12.0),
           ),
-          child: itemContent,
+          child: ListTile(
+            dense: modoCompacto,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: verticalPadding * 0.5,
+            ),
+            title: Text(
+              widget.produto.nome,
+              style: TextStyle(fontSize: fontSize),
+            ),
+            trailing: SizedBox(
+              width: inputWidth,
+              // Espaço vazio para manter o layout, mas sem mostrar o preço
+            ),
+          ),
         ),
       ),
     );
@@ -329,7 +364,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
                 onDragStarted: _startDrag,
                 onDragEnd: _endDrag,
                 onDraggableCanceled: _cancelDrag,
-                feedback: _buildFeedback(),
+                feedback: _buildDraggableFeedback(),
                 childWhenDragging: Opacity(
                   opacity: 0.3,
                   child: itemContent,

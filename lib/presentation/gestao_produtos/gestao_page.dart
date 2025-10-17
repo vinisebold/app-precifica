@@ -503,26 +503,32 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                       ),
                     ),
                   if (gestaoState.isReordering) _buildDeleteArea(context, ref),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    transitionBuilder: (child, animation) {
-                      return FadeTransition(
-                        opacity: animation,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0, -0.3),
-                            end: Offset.zero,
-                          ).animate(animation),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: gestaoState.isDraggingProduto
-                        ? _buildProdutoDeleteArea(context, ref)
-                        : const SizedBox.shrink(),
-                  ),
+                  if (gestaoState.isDraggingProduto)
+                    Positioned(
+                      top: -60,
+                      left: 0,
+                      right: 0,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        switchInCurve: Curves.easeOutCubic,
+                        switchOutCurve: Curves.easeInCubic,
+                        transitionBuilder: (child, animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0, -0.3),
+                                end: Offset.zero,
+                              ).animate(animation),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: gestaoState.isDraggingProduto
+                            ? _buildProdutoDeleteArea(context, ref)
+                            : const SizedBox.shrink(),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -676,72 +682,67 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
   Widget _buildProdutoDeleteArea(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Positioned(
-      top: -60,
-      left: 0,
-      right: 0,
-      child: DragTarget<Produto>(
-        builder: (context, candidateData, rejectedData) {
-          final isHovering = candidateData.isNotEmpty;
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            height: isHovering ? 140 : 130,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isHovering
-                    ? [
-                        colorScheme.error.withValues(alpha: 0.75),
-                        colorScheme.errorContainer.withValues(alpha: 0.60),
-                        colorScheme.errorContainer.withValues(alpha: 0.30),
-                        colorScheme.errorContainer.withValues(alpha: 0.08),
-                        Colors.transparent,
-                      ]
-                    : [
-                        colorScheme.error.withValues(alpha: 0.50),
-                        colorScheme.errorContainer.withValues(alpha: 0.40),
-                        colorScheme.errorContainer.withValues(alpha: 0.20),
-                        colorScheme.errorContainer.withValues(alpha: 0.05),
-                        Colors.transparent,
-                      ],
-                stops: const [0.0, 0.35, 0.65, 0.88, 1.0],
-              ),
+    return DragTarget<Produto>(
+      builder: (context, candidateData, rejectedData) {
+        final isHovering = candidateData.isNotEmpty;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          height: isHovering ? 140 : 130,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: isHovering
+                  ? [
+                      colorScheme.error.withValues(alpha: 0.75),
+                      colorScheme.errorContainer.withValues(alpha: 0.60),
+                      colorScheme.errorContainer.withValues(alpha: 0.30),
+                      colorScheme.errorContainer.withValues(alpha: 0.08),
+                      Colors.transparent,
+                    ]
+                  : [
+                      colorScheme.error.withValues(alpha: 0.50),
+                      colorScheme.errorContainer.withValues(alpha: 0.40),
+                      colorScheme.errorContainer.withValues(alpha: 0.20),
+                      colorScheme.errorContainer.withValues(alpha: 0.05),
+                      Colors.transparent,
+                    ],
+              stops: const [0.0, 0.35, 0.65, 0.88, 1.0],
             ),
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 60),
-                child: AnimatedScale(
-                  duration: const Duration(milliseconds: 250),
-                  scale: isHovering ? 1.15 : 1.0,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isHovering
-                          ? colorScheme.error.withValues(alpha: 0.15)
-                          : Colors.transparent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.delete_outline,
-                      color: colorScheme.onErrorContainer,
-                      size: 40,
-                    ),
+          ),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 60),
+              child: AnimatedScale(
+                duration: const Duration(milliseconds: 250),
+                scale: isHovering ? 1.15 : 1.0,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isHovering
+                        ? colorScheme.error.withValues(alpha: 0.15)
+                        : Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: colorScheme.onErrorContainer,
+                    size: 40,
                   ),
                 ),
               ),
             ),
-          );
-        },
-        onAcceptWithDetails: (details) {
-          HapticFeedback.lightImpact();
-          ref
-              .read(gestaoControllerProvider.notifier)
-              .deletarProduto(details.data.id);
-          ref.read(gestaoControllerProvider.notifier).setDraggingProduto(false);
-        },
-      ),
+          ),
+        );
+      },
+      onAcceptWithDetails: (details) {
+        HapticFeedback.lightImpact();
+        ref
+            .read(gestaoControllerProvider.notifier)
+            .deletarProduto(details.data.id);
+        ref.read(gestaoControllerProvider.notifier).setDraggingProduto(false);
+      },
     );
   }
 

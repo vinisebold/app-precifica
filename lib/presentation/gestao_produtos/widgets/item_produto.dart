@@ -91,14 +91,18 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
 
   void _endDrag(DraggableDetails details) {
     if (!details.wasAccepted) {
-      _animateBack(details.offset);
+      // Não usar animateBack com overlay customizado
+      // Deixar Flutter gerenciar
+      _finalizeDrag();
     } else {
       _finalizeDrag();
     }
   }
 
   void _cancelDrag(Velocity velocity, Offset offset) {
-    _animateBack(offset);
+    // Não usar animateBack com overlay customizado
+    // Deixar Flutter gerenciar
+    _finalizeDrag();
   }
 
   void _finalizeDrag() {
@@ -120,119 +124,13 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     }
   }
 
+  // MÉTODO DESABILITADO - estava causando problemas de overlay travado e scroll
+  // O Flutter gerencia o feedback automaticamente sem precisar de overlay customizado
+  /*
   void _animateBack(Offset dragEndOffset) {
-    // Remove qualquer overlay existente primeiro
-    _removeOverlay();
-
-    // Verifica se o widget ainda está montado
-    if (!mounted) {
-      _finalizeDrag();
-      return;
-    }
-
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null || !renderBox.attached) {
-      _finalizeDrag();
-      return;
-    }
-
-    final targetPosition = renderBox.localToGlobal(Offset.zero);
-    final size = renderBox.size;
-
-    // Verifica se a posição de drag é muito próxima da posição original
-    // Se for, não precisa animar, apenas finaliza
-    final distance = (dragEndOffset - targetPosition).distance;
-    if (distance < 10) {
-      // Praticamente não moveu, finaliza direto
-      _finalizeDrag();
-      return;
-    }
-
-    // Captura os valores necessários ANTES de criar o overlay
-    // para evitar acessar context quando o widget for desmontado
-    final capturedTheme = Theme.of(context);
-    final capturedColorScheme = capturedTheme.colorScheme;
-    final capturedTextTheme = capturedTheme.textTheme;
-    final modoCompacto = ref.read(modoCompactoProvider);
-    final screenWidth = MediaQuery.of(context).size.width;
-    
-    final double verticalPadding = modoCompacto ? 4.0 : 8.0;
-    final double horizontalPadding = modoCompacto ? 8.0 : 12.0;
-    final double fontSize = modoCompacto ? 14.0 : 16.0;
-    final double inputWidth = modoCompacto ? 100.0 : 120.0;
-
-    // Constrói o widget feedback com valores capturados (sem usar context)
-    final feedbackWidget = Material(
-      elevation: 4.0,
-      borderRadius: BorderRadius.circular(12.0),
-      child: Container(
-        width: screenWidth - 16,
-        decoration: BoxDecoration(
-          color: capturedColorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        child: ListTile(
-          dense: modoCompacto,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: horizontalPadding,
-            vertical: verticalPadding * 0.5,
-          ),
-          title: Text(
-            widget.produto.nome,
-            style: capturedTextTheme.bodyMedium?.copyWith(fontSize: fontSize),
-          ),
-          trailing: SizedBox(
-            width: inputWidth,
-            // Espaço vazio para manter o layout, mas sem mostrar o preço
-          ),
-        ),
-      ),
-    );
-
-    // Cria o overlay
-    _overlayEntry = OverlayEntry(
-      builder: (overlayContext) {
-        return TweenAnimationBuilder<double>(
-          duration: const Duration(milliseconds: 200),
-          tween: Tween(begin: 1.0, end: 0.0),
-          curve: Curves.easeOut,
-          onEnd: () {
-            // Verifica mounted antes de remover
-            if (mounted) {
-              _removeOverlay();
-              _finalizeDrag();
-            }
-          },
-          builder: (context, opacity, child) {
-            return Positioned(
-              top: dragEndOffset.dy,
-              left: dragEndOffset.dx,
-              width: size.width,
-              height: size.height,
-              child: Opacity(
-                opacity: opacity,
-                child: child!,
-              ),
-            );
-          },
-          child: feedbackWidget,
-        );
-      },
-    );
-
-    // Insere o overlay de forma segura
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _overlayEntry != null && !_overlayEntry!.mounted) {
-        try {
-          Overlay.of(context).insert(_overlayEntry!);
-        } catch (e) {
-          // Se falhar ao inserir, limpa e finaliza
-          _removeOverlay();
-          _finalizeDrag();
-        }
-      }
-    });
+    _finalizeDrag();
   }
+  */
 
   Widget _buildDraggableFeedback() {
     final colorScheme = Theme.of(context).colorScheme;
@@ -349,18 +247,19 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 300),
         opacity: isAtivo ? 1.0 : 0.4,
-        child: IgnorePointer(
-          ignoring: !isAtivo,
-          child: AnimatedScale(
-            duration: const Duration(milliseconds: 250),
-            scale: _showPopAnimation 
-                ? 1.03 
-                : (_showPressAnimation ? 0.97 : 1.0),
-            curve: Curves.easeOutBack,
-            child: Opacity(
-              opacity: _isDragging ? 0.0 : 1.0,
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 250),
+          scale: _showPopAnimation 
+              ? 1.03 
+              : (_showPressAnimation ? 0.97 : 1.0),
+          curve: Curves.easeOutBack,
+          child: Opacity(
+            opacity: _isDragging ? 0.0 : 1.0,
+            child: IgnorePointer(
+              ignoring: !isAtivo,
               child: LongPressDraggable<Produto>(
                 data: widget.produto,
+                hapticFeedbackOnStart: false,
                 onDragStarted: _startDrag,
                 onDragEnd: _endDrag,
                 onDraggableCanceled: _cancelDrag,

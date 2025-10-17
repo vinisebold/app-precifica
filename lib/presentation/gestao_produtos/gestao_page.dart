@@ -30,7 +30,6 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   static const double _sneakPeekVisibilityThreshold = 0.08;
   late PageController _pageController; // safely initialized in initState
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  bool _hasScheduledPageSnap = false;
   int? _lastSettledPageIndex;
 
   @override
@@ -395,32 +394,15 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   }
 
   bool _handlePageViewScrollNotification(ScrollNotification notification) {
-    if (notification is ScrollStartNotification) {
-      _hasScheduledPageSnap = false;
-    } else if (notification.metrics is PageMetrics) {
+    if (notification.metrics is PageMetrics) {
       final metrics = notification.metrics as PageMetrics;
       final pageValue = metrics.page;
 
       if (notification is ScrollUpdateNotification) {
         if (notification.dragDetails != null && pageValue != null) {
           _handleSneakPeekPrefetch(pageValue);
-        } else if (pageValue != null) {
-          final targetPage = pageValue.round();
-          final delta = (pageValue - targetPage).abs();
-          if (!_hasScheduledPageSnap && delta > 0.0001 && delta <= 0.045) {
-            _hasScheduledPageSnap = true;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!mounted || !_pageController.hasClients) return;
-              final currentPage = _pageController.page;
-              if (currentPage != null &&
-                  (currentPage - targetPage).abs() > 0.0001) {
-                _pageController.jumpToPage(targetPage);
-              }
-            });
-          }
         }
       } else if (notification is ScrollEndNotification && pageValue != null) {
-        _hasScheduledPageSnap = false;
         final settledPage = pageValue.round();
         _settleToPage(settledPage);
       }
@@ -542,6 +524,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                         onNotification: _handlePageViewScrollNotification,
                         child: PageView.builder(
                           controller: _pageController,
+                          physics: const FastPageScrollPhysics(),
                           itemCount: gestaoState.categorias.length,
                           itemBuilder: (context, index) => ProductListView(
                             categoriaId: gestaoState.categorias[index].id,
@@ -992,6 +975,25 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       ref.read(gestaoControllerProvider.notifier).criarCategoria(nomeCategoria);
       Navigator.of(dialogContext).pop();
     }
+  }
+}
+
+class FastPageScrollPhysics extends PageScrollPhysics {
+  const FastPageScrollPhysics({super.parent});
+
+  @override
+  FastPageScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return FastPageScrollPhysics(parent: buildParent(ancestor));
+  }
+
+  @override
+  SpringDescription get spring {
+    final parentSpring = super.spring;
+    return SpringDescription(
+      mass: parentSpring.mass,
+      stiffness: parentSpring.stiffness * 2,
+      damping: parentSpring.damping * 1.2,
+    );
   }
 }
 

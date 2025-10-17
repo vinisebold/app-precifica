@@ -31,8 +31,8 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
   @override
   void initState() {
     super.initState();
-    _produtos =
-        ref.read(gestaoControllerProvider.select((state) => state.produtos));
+  _produtos = ref.read(gestaoControllerProvider.select((state) =>
+    state.produtosPorCategoria[widget.categoriaId] ?? const <Produto>[]));
     _focusNodes = List.generate(_produtos.length, (index) => FocusNode());
     
     // Adiciona listener para salvar a posição de rolagem
@@ -77,8 +77,8 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
   @override
   void didUpdateWidget(covariant ProductListView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final newProdutos =
-    ref.watch(gestaoControllerProvider.select((state) => state.produtos));
+  final newProdutos = ref.read(gestaoControllerProvider.select((state) =>
+    state.produtosPorCategoria[widget.categoriaId] ?? const <Produto>[]));
 
     // Se mudou de categoria, salva a posição da anterior e restaura a nova
     if (oldWidget.categoriaId != widget.categoriaId) {
@@ -109,8 +109,8 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
 
   @override
   Widget build(BuildContext context) {
-    final produtos =
-    ref.watch(gestaoControllerProvider.select((state) => state.produtos));
+  final produtos = ref.watch(gestaoControllerProvider.select((state) =>
+    state.produtosPorCategoria[widget.categoriaId] ?? const <Produto>[]));
 
     // Garante que temos a quantidade correta de FocusNodes
     if (produtos.length != _focusNodes.length) {

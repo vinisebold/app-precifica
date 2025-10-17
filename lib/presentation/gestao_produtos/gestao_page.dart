@@ -27,9 +27,11 @@ class GestaoPage extends ConsumerStatefulWidget {
 }
 
 class _GestaoPageState extends ConsumerState<GestaoPage> {
+  static const double _sneakPeekVisibilityThreshold = 0.08;
   late PageController _pageController; // safely initialized in initState
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _hasScheduledPageSnap = false;
+  int? _lastSettledPageIndex;
 
   @override
   void initState() {
@@ -44,9 +46,11 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           ? categorias.indexWhere((c) => c.id == selectedId)
           : 0;
       if (initialPage >= 0) {
+        _lastSettledPageIndex = initialPage;
         try {
           _pageController.jumpToPage(initialPage);
         } catch (_) {}
+        _prefetchAdjacent(initialPage);
       }
     });
   }
@@ -342,29 +346,84 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     );
   }
 
+  void _prefetchAdjacent(int centerIndex) {
+    final notifier = ref.read(gestaoControllerProvider.notifier);
+    notifier.prefetchCategoriaPorIndice(centerIndex - 1);
+    notifier.prefetchCategoriaPorIndice(centerIndex + 1);
+  }
+
+  void _handleSneakPeekPrefetch(double pageValue) {
+    final gestaoState = ref.read(gestaoControllerProvider);
+    final categorias = gestaoState.categorias;
+    if (categorias.isEmpty) return;
+
+    final selectedId = gestaoState.categoriaSelecionadaId;
+    final selectedIndex = selectedId != null
+        ? categorias.indexWhere((c) => c.id == selectedId)
+        : null;
+
+    final total = categorias.length;
+    final candidates = <int>{
+      pageValue.floor().clamp(0, math.max(0, total - 1)),
+      pageValue.ceil().clamp(0, math.max(0, total - 1)),
+    };
+
+    final notifier = ref.read(gestaoControllerProvider.notifier);
+
+    for (final index in candidates) {
+      if (selectedIndex != null && index == selectedIndex) continue;
+      if (index < 0 || index >= total) continue;
+      final visibility = 1 - (pageValue - index).abs();
+      if (visibility >= _sneakPeekVisibilityThreshold) {
+        notifier.prefetchCategoriaPorIndice(index);
+      }
+    }
+  }
+
+  void _settleToPage(int index) {
+    final gestaoState = ref.read(gestaoControllerProvider);
+    final categorias = gestaoState.categorias;
+    if (index < 0 || index >= categorias.length) return;
+
+    if (_lastSettledPageIndex != index) {
+      _lastSettledPageIndex = index;
+      ref.read(gestaoControllerProvider.notifier)
+          .selecionarCategoriaPorIndice(index);
+    }
+
+    _prefetchAdjacent(index);
+  }
+
   bool _handlePageViewScrollNotification(ScrollNotification notification) {
     if (notification is ScrollStartNotification) {
       _hasScheduledPageSnap = false;
-    } else if (notification is ScrollUpdateNotification &&
-        notification.metrics is PageMetrics &&
-        notification.dragDetails == null) {
-      final page = (notification.metrics as PageMetrics).page;
-      if (page != null) {
-        final targetPage = page.round();
-        final delta = (page - targetPage).abs();
-        if (!_hasScheduledPageSnap && delta > 0.0001 && delta <= 0.045) {
-          _hasScheduledPageSnap = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted || !_pageController.hasClients) return;
-            final currentPage = _pageController.page;
-            if (currentPage != null && (currentPage - targetPage).abs() > 0.0001) {
-              _pageController.jumpToPage(targetPage);
-            }
-          });
+    } else if (notification.metrics is PageMetrics) {
+      final metrics = notification.metrics as PageMetrics;
+      final pageValue = metrics.page;
+
+      if (notification is ScrollUpdateNotification) {
+        if (notification.dragDetails != null && pageValue != null) {
+          _handleSneakPeekPrefetch(pageValue);
+        } else if (pageValue != null) {
+          final targetPage = pageValue.round();
+          final delta = (pageValue - targetPage).abs();
+          if (!_hasScheduledPageSnap && delta > 0.0001 && delta <= 0.045) {
+            _hasScheduledPageSnap = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted || !_pageController.hasClients) return;
+              final currentPage = _pageController.page;
+              if (currentPage != null &&
+                  (currentPage - targetPage).abs() > 0.0001) {
+                _pageController.jumpToPage(targetPage);
+              }
+            });
+          }
         }
+      } else if (notification is ScrollEndNotification && pageValue != null) {
+        _hasScheduledPageSnap = false;
+        final settledPage = pageValue.round();
+        _settleToPage(settledPage);
       }
-    } else if (notification is ScrollEndNotification) {
-      _hasScheduledPageSnap = false;
     }
     return false;
   }
@@ -408,10 +467,13 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             newState.categoriaSelecionadaId) {
           final newIndex = newState.categorias
               .indexWhere((c) => c.id == newState.categoriaSelecionadaId);
-          if (newIndex != -1 &&
-              _pageController.hasClients &&
-              _pageController.page?.round() != newIndex) {
-            _pageController.jumpToPage(newIndex);
+          if (newIndex != -1) {
+            _lastSettledPageIndex = newIndex;
+            _prefetchAdjacent(newIndex);
+            if (_pageController.hasClients &&
+                _pageController.page?.round() != newIndex) {
+              _pageController.jumpToPage(newIndex);
+            }
           }
         }
       },
@@ -481,9 +543,6 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                         child: PageView.builder(
                           controller: _pageController,
                           itemCount: gestaoState.categorias.length,
-                          onPageChanged: (index) =>
-                              gestaoNotifier
-                                  .selecionarCategoriaPorIndice(index),
                           itemBuilder: (context, index) => ProductListView(
                             categoriaId: gestaoState.categorias[index].id,
                             onProdutoDoubleTap: (produto) =>

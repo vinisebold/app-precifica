@@ -5,6 +5,7 @@ import 'package:precificador/domain/entities/produto.dart';
 class GestaoState {
   final List<Categoria> categorias;
   final List<Produto> produtos;
+  final Map<String, List<Produto>> produtosPorCategoria;
   final String? categoriaSelecionadaId;
   final String? errorMessage;
   final bool isReordering;
@@ -18,6 +19,7 @@ class GestaoState {
   GestaoState({
     this.categorias = const [],
     this.produtos = const [],
+    this.produtosPorCategoria = const {},
     this.categoriaSelecionadaId,
     this.errorMessage,
     this.isReordering = false,
@@ -32,6 +34,7 @@ class GestaoState {
   GestaoState copyWith({
     List<Categoria>? categorias,
     List<Produto>? produtos,
+    Map<String, List<Produto>>? produtosPorCategoria,
     String? categoriaSelecionadaId,
     String? errorMessage,
     bool? isReordering,
@@ -48,6 +51,8 @@ class GestaoState {
     return GestaoState(
       categorias: categorias ?? this.categorias,
       produtos: produtos ?? this.produtos,
+    produtosPorCategoria:
+      produtosPorCategoria ?? this.produtosPorCategoria,
       categoriaSelecionadaId:
           categoriaSelecionadaId ?? this.categoriaSelecionadaId,
       errorMessage:

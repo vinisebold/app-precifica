@@ -120,9 +120,13 @@ class GestaoController extends Notifier<GestaoState> {
         }
         
         final produtos = _getProdutosByCategoria(categoriaSelecionadaId);
+        final produtosPorCategoria = {
+          categoriaSelecionadaId: List<Produto>.from(produtos),
+        };
         state = state.copyWith(
           categorias: categorias,
           produtos: produtos,
+          produtosPorCategoria: produtosPorCategoria,
           categoriaSelecionadaId: categoriaSelecionadaId,
           perfisSalvos: perfis,
           perfilAtual: nomePerfilCarregado,
@@ -132,6 +136,7 @@ class GestaoController extends Notifier<GestaoState> {
         state = state.copyWith(
           categorias: [],
           produtos: [],
+          produtosPorCategoria: const {},
           categoriaSelecionadaId: null,
           perfisSalvos: perfis,
           perfilAtual: nomePerfilCarregado,
@@ -261,23 +266,58 @@ class GestaoController extends Notifier<GestaoState> {
   void selecionarCategoria(String categoriaId) {
     if (state.categoriaSelecionadaId == categoriaId) return;
 
+    final produtosExistentes =
+        state.produtosPorCategoria[categoriaId] ?? _getProdutosByCategoria(categoriaId);
+    final produtosPorCategoria = Map<String, List<Produto>>.from(state.produtosPorCategoria)
+      ..[categoriaId] = List<Produto>.from(produtosExistentes);
+
     state = state.copyWith(
       categoriaSelecionadaId: categoriaId,
       clearUltimoProdutoDeletado: true,
+      produtos: produtosExistentes,
+      produtosPorCategoria: produtosPorCategoria,
     );
-    _refreshProdutosDaCategoriaAtual();
     
     // Salva a categoria selecionada nas preferências
     _preferencesService.saveLastCategoryId(categoriaId);
   }
 
   void _refreshProdutosDaCategoriaAtual() {
-    if (state.categoriaSelecionadaId == null) return;
+    final categoriaId = state.categoriaSelecionadaId;
+    if (categoriaId == null) return;
     try {
-      final produtos = _getProdutosByCategoria(state.categoriaSelecionadaId!);
-      state = state.copyWith(produtos: produtos);
+      final produtos = _getProdutosByCategoria(categoriaId);
+      final produtosPorCategoria =
+          Map<String, List<Produto>>.from(state.produtosPorCategoria)
+            ..[categoriaId] = List<Produto>.from(produtos);
+      state = state.copyWith(
+        produtos: produtos,
+        produtosPorCategoria: produtosPorCategoria,
+      );
     } catch (e) {
       state = state.copyWith(errorMessage: 'Falha ao recarregar produtos.');
+    }
+  }
+
+  Future<void> prefetchCategoriaPorIndice(int index) async {
+    if (index < 0 || index >= state.categorias.length) return;
+    final categoriaId = state.categorias[index].id;
+    await prefetchCategoria(categoriaId);
+  }
+
+  Future<void> prefetchCategoria(String categoriaId) async {
+    if (state.produtosPorCategoria.containsKey(categoriaId)) return;
+    try {
+      final produtos = _getProdutosByCategoria(categoriaId);
+      final produtosPorCategoria =
+          Map<String, List<Produto>>.from(state.produtosPorCategoria)
+            ..[categoriaId] = List<Produto>.from(produtos);
+      state = state.copyWith(produtosPorCategoria: produtosPorCategoria);
+    } catch (e) {
+      // Prefetch é best-effort: registra erro apenas se categoria selecionada
+      if (state.categoriaSelecionadaId == categoriaId) {
+        state = state.copyWith(errorMessage: 'Falha ao carregar produtos.');
+      }
     }
   }
 
@@ -403,8 +443,12 @@ class GestaoController extends Notifier<GestaoState> {
 
     final produtosAtuais = List<Produto>.from(state.produtos)
       ..removeWhere((p) => p.id == produtoId);
+    final produtosPorCategoria =
+        Map<String, List<Produto>>.from(state.produtosPorCategoria)
+          ..[categoriaDoProdutoDeletado] = List<Produto>.from(produtosAtuais);
     state = state.copyWith(
       produtos: produtosAtuais,
+      produtosPorCategoria: produtosPorCategoria,
       ultimoProdutoDeletado: produtoParaDeletar,
       idCategoriaProdutoDeletado: categoriaDoProdutoDeletado,
     );
@@ -413,8 +457,15 @@ class GestaoController extends Notifier<GestaoState> {
       await _deleteProduto(
           produtoId: produtoId, categoriaId: categoriaDoProdutoDeletado);
     } catch (e) {
+      final produtosRestaurados =
+          _getProdutosByCategoria(categoriaDoProdutoDeletado);
+      final produtosPorCategoriaRestaurado =
+          Map<String, List<Produto>>.from(state.produtosPorCategoria)
+            ..[categoriaDoProdutoDeletado] =
+                List<Produto>.from(produtosRestaurados);
       state = state.copyWith(
-        produtos: _getProdutosByCategoria(categoriaDoProdutoDeletado),
+        produtos: produtosRestaurados,
+        produtosPorCategoria: produtosPorCategoriaRestaurado,
         errorMessage: 'Falha ao deletar produto.',
         clearUltimoProdutoDeletado: true,
       );

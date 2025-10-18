@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.precificador"
+    namespace = "com.example.precifica"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "dev.vinisebold.precificador"
+        applicationId = "dev.vinisebold.precifica"
 
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion

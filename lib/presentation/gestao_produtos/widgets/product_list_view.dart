@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:precificador/domain/entities/produto.dart';
+import 'package:precifica/domain/entities/produto.dart';
 import '../gestao_controller.dart';
 import '../../shared/providers/modo_compacto_provider.dart';
 import 'item_produto.dart';

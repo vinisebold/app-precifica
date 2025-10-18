@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:precificador/app/app_widget.dart';
-import 'package:precificador/presentation/configuracoes/settings_controller.dart';
-import 'package:precificador/presentation/gestao_produtos/gestao_controller.dart';
+import 'package:precifica/app/app_widget.dart';
+import 'package:precifica/presentation/configuracoes/settings_controller.dart';
+import 'package:precifica/presentation/gestao_produtos/gestao_controller.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {

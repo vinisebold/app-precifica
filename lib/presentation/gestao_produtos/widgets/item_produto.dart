@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:precificador/domain/entities/produto.dart';
+import 'package:precifica/domain/entities/produto.dart';
 
 import '../gestao_controller.dart';
 import '../../shared/providers/modo_compacto_provider.dart';
 
-import 'package:precificador/app/core/utils/currency_formatter.dart';
-import 'package:precificador/app/core/utils/final_cursor_text_input_formatter.dart';
+import 'package:precifica/app/core/utils/currency_formatter.dart';
+import 'package:precifica/app/core/utils/final_cursor_text_input_formatter.dart';
 
 class ItemProduto extends ConsumerStatefulWidget {
   final Produto produto;

@@ -1,4 +1,4 @@
-name: precificador
+name: precifica
 description: "Um aplicativo que ajuda na precificação de produtos."
 publish_to: 'none'
 version: 1.7.0

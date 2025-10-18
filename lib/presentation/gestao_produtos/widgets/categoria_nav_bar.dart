@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:precificador/domain/entities/categoria.dart';
+import 'package:precifica/domain/entities/categoria.dart';
 import '../gestao_controller.dart';
 
 class CategoriaNavBar extends ConsumerStatefulWidget {

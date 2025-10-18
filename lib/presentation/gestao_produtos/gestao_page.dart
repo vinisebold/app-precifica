@@ -8,8 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import 'package:precificador/domain/entities/produto.dart';
-import 'package:precificador/app/core/toast/global_toast_controller.dart';
+import 'package:precifica/domain/entities/produto.dart';
+import 'package:precifica/app/core/toast/global_toast_controller.dart';
 
 import 'gestao_controller.dart';
 import 'gestao_state.dart';
@@ -481,7 +481,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           appBar: AppBar(
             elevation: 0,
             backgroundColor: Colors.transparent,
-            title: Text('Precificador', style: textTheme.titleLarge),
+            title: Text('Precifica', style: textTheme.titleLarge),
             actions: [
               const SizedBox(width: 6),
               Padding(
@@ -667,7 +667,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           Padding(
             padding: const EdgeInsets.fromLTRB(28, 28, 28, 16),
             child: Text(
-              'Precificador',
+              'Precifica',
               style: tt.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w400,
                 color: cs.onSurface,

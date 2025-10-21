@@ -949,6 +949,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             title: TutorialConfig.step2Title,
             description: TutorialConfig.step2Description,
             targetShapeBorder: const CircleBorder(),
+            targetPadding: const EdgeInsets.all(14),
             onTargetClick: () {
               if (gestaoState.categoriaSelecionadaId != null) {
                 ShowcaseView.get().dismiss();

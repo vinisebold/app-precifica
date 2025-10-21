@@ -11,6 +11,7 @@ class ConfiguracoesPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final modoCompacto = ref.watch(modoCompactoProvider);
     final settingsState = ref.watch(settingsControllerProvider);
     final settingsNotifier = ref.read(settingsControllerProvider.notifier);
@@ -28,7 +29,12 @@ class ConfiguracoesPage extends ConsumerWidget {
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               leading: const Icon(Icons.description_outlined),
-              title: const Text('Modelos de Relatório'),
+              title: Text(
+                'Modelos de Relatório',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               subtitle: Text(
                 _getNomeModeloSelecionado(settingsState, settingsNotifier),
                 style: TextStyle(
@@ -85,9 +91,17 @@ class ConfiguracoesPage extends ConsumerWidget {
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               leading: const Icon(Icons.school_outlined),
-              title: const Text('Reiniciar Tutorial'),
-              subtitle: const Text(
+              title: Text(
+                'Reiniciar Tutorial',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              subtitle: Text(
                 'Visualize o tutorial de introdução novamente',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
               trailing: const Icon(Icons.chevron_right_rounded),
               enableFeedback: true,
@@ -233,12 +247,14 @@ class _SwitchSettingTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: textTheme.titleSmall,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: textTheme.bodySmall?.copyWith(
+                  style: textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),

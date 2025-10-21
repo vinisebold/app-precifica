@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'template_list_page.dart';
 import 'settings_controller.dart';
 import '../shared/providers/modo_compacto_provider.dart';
+import '../shared/showcase/tutorial_controller.dart';
 
 class ConfiguracoesPage extends ConsumerWidget {
   const ConfiguracoesPage({super.key});
@@ -76,6 +77,65 @@ class ConfiguracoesPage extends ConsumerWidget {
                   );
               },
             ),
+          ),
+          const SizedBox(height: 24),
+          const _SectionHeader(label: 'Ajuda'),
+          _SurfaceCard(
+            child: ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              leading: const Icon(Icons.school_outlined),
+              title: const Text('Reiniciar Tutorial'),
+              subtitle: const Text(
+                'Visualize o tutorial de introdução novamente',
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              enableFeedback: true,
+              splashColor: Colors.transparent,
+              onTap: () async {
+                final confirmed = await _confirmarReiniciarTutorial(context);
+                if (confirmed == true) {
+                  await ref
+                      .read(tutorialControllerProvider.notifier)
+                      .resetTutorial();
+                  await ref
+                      .read(tutorialControllerProvider.notifier)
+                      .startTutorial();
+                  if (!context.mounted) return;
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Tutorial reiniciado com sucesso!'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool?> _confirmarReiniciarTutorial(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Reiniciar Tutorial'),
+        content: const Text(
+          'Isso irá reiniciar o tutorial interativo do aplicativo. '
+          'Você será guiado novamente pelos principais recursos.\n\n'
+          'Deseja continuar?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Reiniciar'),
           ),
         ],
       ),

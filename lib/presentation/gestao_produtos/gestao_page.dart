@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 import 'package:precifica/domain/entities/produto.dart';
 import 'package:precifica/app/core/toast/global_toast_controller.dart';
@@ -18,6 +19,11 @@ import '../configuracoes/configuracoes_page.dart';
 import '../configuracoes/settings_controller.dart';
 import 'widgets/categoria_nav_bar.dart';
 import 'widgets/product_list_view.dart';
+import '../shared/showcase/tutorial_controller.dart';
+import '../shared/showcase/tutorial_keys.dart';
+import '../shared/showcase/tutorial_config.dart';
+import '../shared/showcase/tutorial_overlay.dart';
+import '../shared/showcase/tutorial_widgets.dart';
 
 class GestaoPage extends ConsumerStatefulWidget {
   const GestaoPage({super.key});
@@ -31,11 +37,17 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   late PageController _pageController; // safely initialized in initState
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int? _lastSettledPageIndex;
+  bool _hasShownDrawerShowcase = false;
+  bool _hasShownProfileSelectionTutorial = false;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    
+    // Registra o ShowcaseView
+    ShowcaseView.register();
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final selectedId =
@@ -51,6 +63,82 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         } catch (_) {}
         _prefetchAdjacent(initialPage);
       }
+      
+      // Inicia o tutorial se necessário
+      _checkAndShowTutorial();
+    });
+  }
+
+  void _checkAndShowTutorial() {
+    final tutorialState = ref.read(tutorialControllerProvider);
+    
+    // Mostra os showcases baseado no estado atual do tutorial
+    if (tutorialState.isActive) {
+      _showTutorialStep(tutorialState.currentStep);
+    }
+  }
+
+  void _showTutorialStep(TutorialStep step) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      
+      switch (step) {
+        case TutorialStep.awaitingFirstCategory:
+          _showCreateCategoryShowcase();
+          break;
+        case TutorialStep.awaitingFirstProduct:
+          _showCreateProductShowcase();
+          break;
+        case TutorialStep.showSampleProfile:
+          _showSampleProfileTutorial();
+          break;
+        case TutorialStep.showNavigation:
+          _showNavigationShowcase();
+          break;
+        default:
+          break;
+      }
+    });
+  }
+
+  void _showCreateCategoryShowcase() {
+    showTutorialInstruction(
+      context: context,
+      title: TutorialConfig.tutorialTitle,
+      message: TutorialConfig.step1Description,
+      onDismiss: () {
+        ShowcaseView.get().startShowCase([TutorialKeys.addCategoryButton]);
+      },
+    );
+  }
+
+  void _showCreateProductShowcase() {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      ShowcaseView.get().startShowCase([TutorialKeys.addProductFab]);
+    });
+  }
+
+  void _showSampleProfileTutorial() {
+    _hasShownDrawerShowcase = false;
+    _hasShownProfileSelectionTutorial = false;
+
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      ShowcaseView.get().startShowCase([TutorialKeys.menuButton]);
+    });
+  }
+
+  void _showNavigationShowcase() {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      ShowcaseView.get().startShowCase([TutorialKeys.categoryNavBar]);
+      // Avança automaticamente após 8 segundos ou quando usuário interagir
+      Future.delayed(const Duration(seconds: 8), () {
+        if (mounted && ref.read(tutorialControllerProvider).currentStep == TutorialStep.showNavigation) {
+          ref.read(tutorialControllerProvider.notifier).nextStep();
+        }
+      });
     });
   }
 
@@ -64,6 +152,18 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
     final perfilInicial = ref.read(gestaoControllerProvider).perfilAtual;
     String? perfilSelecionado = perfilInicial;
+    final tutorialState = ref.read(tutorialControllerProvider);
+    final shouldShowProfileSelectionTutorial =
+        tutorialState.isActive &&
+        tutorialState.currentStep == TutorialStep.showSampleProfile &&
+        !_hasShownProfileSelectionTutorial;
+
+    if (shouldShowProfileSelectionTutorial) {
+      _hasShownProfileSelectionTutorial = true;
+    }
+
+    bool profileSelectionShowcaseScheduled = false;
+  bool hasShownApplyProfileShowcase = false;
 
     showModalBottomSheet(
       context: context,
@@ -82,6 +182,58 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 .watch(gestaoControllerProvider.select((s) => s.perfisSalvos));
             final colorScheme = Theme.of(context).colorScheme;
             final textTheme = Theme.of(context).textTheme;
+
+            if (shouldShowProfileSelectionTutorial &&
+                !profileSelectionShowcaseScheduled &&
+                perfis.contains(TutorialConfig.sampleProfileName)) {
+              profileSelectionShowcaseScheduled = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                Future.delayed(const Duration(milliseconds: 180), () {
+                  if (!mounted) return;
+                  ShowcaseView.get().startShowCase([
+                    TutorialKeys.sampleProfileTile,
+                  ]);
+                });
+              });
+            }
+
+            void showApplyButtonShowcase() {
+              if (!shouldShowProfileSelectionTutorial ||
+                  hasShownApplyProfileShowcase ||
+                  !(perfilSelecionado == TutorialConfig.sampleProfileName)) {
+                return;
+              }
+              hasShownApplyProfileShowcase = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                Future.delayed(const Duration(milliseconds: 160), () {
+                  if (!mounted) return;
+                  ShowcaseView.get().startShowCase([
+                    TutorialKeys.applyProfileButton,
+                  ]);
+                });
+              });
+            }
+
+            void applySelectedProfile() {
+              if (perfilSelecionado != null &&
+                  perfilSelecionado != perfilInicial) {
+                _mostrarDialogoConfirmarAcao(
+                  context: sheetContext,
+                  titulo: 'Carregar Perfil?',
+                  mensagem:
+                      'Isto substituirá todos os seus dados atuais com o perfil "${perfilSelecionado!}".',
+                  onConfirmar: () {
+                    Navigator.of(sheetContext).pop();
+                    gestaoNotifier.carregarPerfil(perfilSelecionado!);
+                  },
+                );
+              } else {
+                Navigator.of(sheetContext).pop();
+              }
+            }
+
             return AnimatedPadding(
               duration: const Duration(milliseconds: 250),
               padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
@@ -184,17 +336,64 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                   itemCount: perfis.length,
                                   itemBuilder: (context, index) {
                                     final nomePerfil = perfis[index];
-                                    return ListTile(
+                                    Widget tile = ListTile(
                                       title: Text(nomePerfil),
                                       leading: Radio<String>(
                                         value: nomePerfil,
                                         groupValue: perfilSelecionado,
-                                        onChanged: (value) => setState(
-                                            () => perfilSelecionado = value),
+                                        onChanged: (value) {
+                                          setState(() => perfilSelecionado = value);
+                                          if (value == TutorialConfig.sampleProfileName) {
+                                            showApplyButtonShowcase();
+                                          }
+                                        },
                                       ),
-                                      onTap: () => setState(
-                                          () => perfilSelecionado = nomePerfil),
+                                      onTap: () {
+                                        setState(() => perfilSelecionado = nomePerfil);
+                                        if (nomePerfil ==
+                                            TutorialConfig.sampleProfileName) {
+                                          showApplyButtonShowcase();
+                                        }
+                                      },
                                     );
+
+                                    final isSampleProfile =
+                                        nomePerfil ==
+                                            TutorialConfig.sampleProfileName;
+
+                                    if (shouldShowProfileSelectionTutorial &&
+                                        isSampleProfile) {
+                                      tile = buildTutorialShowcase(
+                                        context: context,
+                                        key: TutorialKeys.sampleProfileTile,
+                                        title: TutorialConfig
+                                            .profileSelectionTitle,
+                                        description: TutorialConfig
+                                            .profileSelectionDescription,
+                                        targetShapeBorder:
+                                            RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        targetPadding:
+                                            const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        onTargetClick: () {
+                                          if (perfilSelecionado != nomePerfil) {
+                                            setState(() => perfilSelecionado =
+                                                nomePerfil);
+                                            showApplyButtonShowcase();
+                                          } else {
+                                            showApplyButtonShowcase();
+                                          }
+                                        },
+                                        child: tile,
+                                      );
+                                    }
+
+                                    return tile;
                                   },
                                 ),
                               ),
@@ -213,26 +412,35 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: FilledButton(
-                              onPressed: () {
-                                if (perfilSelecionado != null &&
-                                    perfilSelecionado != perfilInicial) {
-                                  _mostrarDialogoConfirmarAcao(
-                                    context: sheetContext,
-                                    titulo: 'Carregar Perfil?',
-                                    mensagem:
-                                        'Isto substituirá todos os seus dados atuais com o perfil "$perfilSelecionado".',
-                                    onConfirmar: () {
-                                      Navigator.of(sheetContext).pop();
-                                      gestaoNotifier
-                                          .carregarPerfil(perfilSelecionado!);
-                                    },
+                            child: Builder(
+                              builder: (context) {
+                                Widget okButton = FilledButton(
+                                  onPressed: applySelectedProfile,
+                                  child: const Text('OK'),
+                                );
+
+                                if (shouldShowProfileSelectionTutorial) {
+                                  okButton = buildTutorialShowcase(
+                                    context: context,
+                                    key: TutorialKeys.applyProfileButton,
+                                    title: TutorialConfig.profileApplyTitle,
+                                    description: TutorialConfig
+                                        .profileApplyDescription,
+                                    targetShapeBorder:
+                                        RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    targetPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    onTargetClick: applySelectedProfile,
+                                    child: okButton,
                                   );
-                                } else {
-                                  Navigator.of(sheetContext).pop();
                                 }
+
+                                return okButton;
                               },
-                              child: const Text('OK'),
                             ),
                           ),
                         ],
@@ -401,10 +609,22 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       if (notification is ScrollUpdateNotification) {
         if (notification.dragDetails != null && pageValue != null) {
           _handleSneakPeekPrefetch(pageValue);
+          
+          // Se está no tutorial de swipe, fecha o showcase ao detectar deslize
+          final tutorialState = ref.read(tutorialControllerProvider);
+          if (tutorialState.currentStep == TutorialStep.showNavigation) {
+            ShowcaseView.get().dismiss();
+          }
         }
       } else if (notification is ScrollEndNotification && pageValue != null) {
         final settledPage = pageValue.round();
         _settleToPage(settledPage);
+        
+        // Avança o tutorial se estava mostrando o gesto de swipe
+        final tutorialState = ref.read(tutorialControllerProvider);
+        if (tutorialState.currentStep == TutorialStep.showNavigation) {
+          ref.read(tutorialControllerProvider.notifier).nextStep();
+        }
       }
     }
     return false;
@@ -457,6 +677,71 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               _pageController.jumpToPage(newIndex);
             }
           }
+          
+          // Tutorial: detecta navegação entre categorias
+          final tutorialState = ref.read(tutorialControllerProvider);
+          if (tutorialState.isActive &&
+              tutorialState.currentStep == TutorialStep.showNavigation) {
+            // Avança para o próximo passo após navegação
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                ref.read(tutorialControllerProvider.notifier).nextStep();
+              }
+            });
+          }
+        }
+        
+        // Tutorial: detecta criação de categorias e produtos
+        final tutorialNotifier = ref.read(tutorialControllerProvider.notifier);
+        final tutorialState = ref.read(tutorialControllerProvider);
+        
+        if (tutorialState.isActive) {
+          // Detecta criação de categoria
+          if (newState.categorias.length > (previousState?.categorias.length ?? 0)) {
+            tutorialNotifier.onCategoryCreated();
+            // Mostra o próximo passo após um delay
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (mounted) {
+                _showTutorialStep(ref.read(tutorialControllerProvider).currentStep);
+              }
+            });
+          }
+          
+          // Detecta criação de produto
+          if (newState.produtos.length > (previousState?.produtos.length ?? 0)) {
+            tutorialNotifier.onProductCreated();
+            // Mostra o próximo passo após um delay
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (mounted) {
+                _showTutorialStep(ref.read(tutorialControllerProvider).currentStep);
+              }
+            });
+          }
+
+          // Detecta carregamento de perfil pronto
+          final previousProfile = previousState?.perfilAtual;
+          final newProfile = newState.perfilAtual;
+          if (tutorialState.currentStep == TutorialStep.showSampleProfile &&
+              newProfile != null &&
+              newProfile != previousProfile) {
+            ShowcaseView.get().dismiss();
+            tutorialNotifier.onSampleProfileLoaded();
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (mounted) {
+                _showTutorialStep(ref.read(tutorialControllerProvider).currentStep);
+              }
+            });
+          }
+        }
+      },
+    );
+    
+    // Listener para mudanças no estado do tutorial
+    ref.listen<TutorialState>(
+      tutorialControllerProvider,
+      (previousState, newState) {
+        if (newState.isActive && previousState?.currentStep != newState.currentStep) {
+          _showTutorialStep(newState.currentStep);
         }
       },
     );
@@ -476,11 +761,54 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             },
           ),
           onDrawerChanged: (isOpened) {
-            // Handle drawer state if needed
+            if (!mounted) return;
+            final tutorialState = ref.read(tutorialControllerProvider);
+
+            if (isOpened &&
+                tutorialState.isActive &&
+                tutorialState.currentStep == TutorialStep.showSampleProfile &&
+                !_hasShownDrawerShowcase) {
+              _hasShownDrawerShowcase = true;
+
+              // Aguardar 2 frames + delay para garantir render completo
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  Future.delayed(const Duration(milliseconds: 350), () {
+                    if (!mounted) return;
+                    if (!(_scaffoldKey.currentState?.isDrawerOpen ?? false)) {
+                      return;
+                    }
+                    ShowcaseView.get().startShowCase(
+                      [TutorialKeys.manageProfilesDestination],
+                    );
+                  });
+                });
+              });
+            }
           },
           appBar: AppBar(
             elevation: 0,
             backgroundColor: Colors.transparent,
+            automaticallyImplyLeading: false,
+            leading: buildTutorialShowcase(
+              context: context,
+              key: TutorialKeys.menuButton,
+              title: TutorialConfig.menuButtonTitle,
+              description: TutorialConfig.menuButtonDescription,
+              targetShapeBorder: const CircleBorder(),
+              onTargetClick: () {
+                ShowcaseView.get().dismiss();
+                _scaffoldKey.currentState?.openDrawer();
+              },
+              child: IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  _scaffoldKey.currentState?.openDrawer();
+                },
+                splashRadius: 26,
+              ),
+            ),
             title: Text('Precifica', style: textTheme.titleLarge),
             actions: [
               const SizedBox(width: 6),
@@ -497,13 +825,24 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               ),
               Padding(
                 padding: const EdgeInsets.only(right: 8, left: 2),
-                child: IconButton(
-                  icon: const Icon(Icons.add_box_outlined),
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
+                child: buildTutorialShowcase(
+                  context: context,
+                  key: TutorialKeys.addCategoryButton,
+                  title: TutorialConfig.step1Title,
+                  description: TutorialConfig.step1Description,
+                  targetShapeBorder: const CircleBorder(),
+                  onTargetClick: () {
+                    ShowcaseView.get().dismiss();
                     _mostrarDialogoNovaCategoria(context, ref);
                   },
-                  splashRadius: 26,
+                  child: IconButton(
+                    icon: const Icon(Icons.add_box_outlined),
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      _mostrarDialogoNovaCategoria(context, ref);
+                    },
+                    splashRadius: 26,
+                  ),
                 ),
               ),
             ],
@@ -578,37 +917,63 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           bottomNavigationBar: SafeArea(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
-              child: CategoriaNavBar(
-                onCategoriaDoubleTap: (categoria) {
-                  _mostrarDialogoEditarNome(
-                    context,
-                    ref,
-                    titulo: 'Editar Categoria',
-                    valorAtual: categoria.nome,
-                    onSalvar: (novoNome) => gestaoNotifier
-                        .atualizarNomeCategoria(categoria.id, novoNome),
-                  );
+              child: buildTutorialShowcase(
+                context: context,
+                key: TutorialKeys.categoryNavBar,
+                title: TutorialConfig.step4Title,
+                description: TutorialConfig.step4Description,
+                targetShapeBorder: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(28.0),
+                ),
+                onTargetClick: () {
+                  ShowcaseView.get().dismiss();
                 },
+                child: CategoriaNavBar(
+                  onCategoriaDoubleTap: (categoria) {
+                    _mostrarDialogoEditarNome(
+                      context,
+                      ref,
+                      titulo: 'Editar Categoria',
+                      valorAtual: categoria.nome,
+                      onSalvar: (novoNome) => gestaoNotifier
+                          .atualizarNomeCategoria(categoria.id, novoNome),
+                    );
+                  },
+                ),
               ),
             ),
           ),
-          floatingActionButton: FloatingActionButton(
-            heroTag: 'add-product-fab',
-            onPressed: gestaoState.categoriaSelecionadaId != null
-                ? () {
-                    HapticFeedback.lightImpact();
-                    _mostrarDialogoNovoProduto(context, ref);
-                  }
-                : null,
-            elevation: gestaoState.categoriaSelecionadaId != null ? 3.0 : 0.0,
-            backgroundColor: gestaoState.categoriaSelecionadaId != null
-                ? colorScheme.primaryContainer
-                : colorScheme.surfaceContainer,
-            child: Icon(
-              Icons.add_shopping_cart,
-              color: gestaoState.categoriaSelecionadaId != null
-                  ? colorScheme.onPrimaryContainer
-                  : colorScheme.outline,
+          floatingActionButton: buildTutorialShowcase(
+            context: context,
+            key: TutorialKeys.addProductFab,
+            title: TutorialConfig.step2Title,
+            description: TutorialConfig.step2Description,
+            targetShapeBorder: const CircleBorder(),
+            onTargetClick: () {
+              if (gestaoState.categoriaSelecionadaId != null) {
+                ShowcaseView.get().dismiss();
+                HapticFeedback.lightImpact();
+                _mostrarDialogoNovoProduto(context, ref);
+              }
+            },
+            child: FloatingActionButton(
+              heroTag: 'add-product-fab',
+              onPressed: gestaoState.categoriaSelecionadaId != null
+                  ? () {
+                      HapticFeedback.lightImpact();
+                      _mostrarDialogoNovoProduto(context, ref);
+                    }
+                  : null,
+              elevation: gestaoState.categoriaSelecionadaId != null ? 3.0 : 0.0,
+              backgroundColor: gestaoState.categoriaSelecionadaId != null
+                  ? colorScheme.primaryContainer
+                  : colorScheme.surfaceContainer,
+              child: Icon(
+                Icons.add_shopping_cart,
+                color: gestaoState.categoriaSelecionadaId != null
+                    ? colorScheme.onPrimaryContainer
+                    : colorScheme.outline,
+              ),
             ),
           ),
         ),
@@ -640,6 +1005,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       WidgetRef ref, GestaoController gestaoNotifier) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+
+    final drawerContext = context;
 
     return SafeArea(
       child: NavigationDrawer(
@@ -681,10 +1048,29 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             label: const Text('Organizar com IA'),
             enabled: !gestaoState.isLoading,
           ),
-          const NavigationDrawerDestination(
-            icon: Icon(Icons.folder_outlined),
-            selectedIcon: Icon(Icons.folder),
-            label: Text('Gerir Perfis'),
+          NavigationDrawerDestination(
+            icon: const Icon(Icons.folder_outlined),
+            selectedIcon: const Icon(Icons.folder),
+            label: Builder(
+              builder: (context) {
+                return buildTutorialShowcase(
+                  context: context,
+                  key: TutorialKeys.manageProfilesDestination,
+                  title: TutorialConfig.profileDrawerTitle,
+                  description: TutorialConfig.profileDrawerDescription,
+                  targetShapeBorder: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  targetPadding: const EdgeInsets.all(8),
+                  onTargetClick: () {
+                    ShowcaseView.get().dismiss();
+                    Navigator.of(drawerContext).pop();
+                    _mostrarDialogoGerenciarPerfis(drawerContext, ref);
+                  },
+                  child: const Text('Gerir Perfis'),
+                );
+              },
+            ),
           ),
           const NavigationDrawerDestination(
             icon: Icon(Icons.settings_outlined),

@@ -1282,8 +1282,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       cancelSavePromptTimer();
       if (hasShownSavePrompt) return;
       if (controller.text.trim().isEmpty) return;
-      savePromptTimer =
-          Timer(const Duration(milliseconds: 1600), triggerSaveShowcase);
+    savePromptTimer =
+      Timer(const Duration(milliseconds: 2600), triggerSaveShowcase);
     }
 
     if (isAwaitingFirstProductTutorial) {
@@ -1353,13 +1353,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                     key: TutorialKeys.productDialogSaveButton,
                     title: TutorialConfig.productSaveTitle,
                     description: TutorialConfig.productSaveDescription,
-                    targetShapeBorder: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    targetPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
+                    targetShapeBorder: const CircleBorder(),
+                    targetPadding: const EdgeInsets.all(4),
                     onTargetClick: () {
                       ShowcaseView.get().dismiss();
                       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1438,8 +1433,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       cancelSavePromptTimer();
       if (hasShownSavePrompt) return;
       if (controller.text.trim().isEmpty) return;
-      savePromptTimer =
-          Timer(const Duration(milliseconds: 1600), triggerSaveShowcase);
+    savePromptTimer =
+      Timer(const Duration(milliseconds: 2200), triggerSaveShowcase);
     }
 
     if (isAwaitingFirstCategoryTutorial) {
@@ -1509,13 +1504,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                     key: TutorialKeys.categoryDialogSaveButton,
                     title: TutorialConfig.categorySaveTitle,
                     description: TutorialConfig.categorySaveDescription,
-                    targetShapeBorder: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    targetPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
+                    targetShapeBorder: const CircleBorder(),
+                    targetPadding: const EdgeInsets.all(4),
                     onTargetClick: () {
                       ShowcaseView.get().dismiss();
                       WidgetsBinding.instance.addPostFrameCallback((_) {

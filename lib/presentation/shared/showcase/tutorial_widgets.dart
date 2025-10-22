@@ -153,6 +153,8 @@ Widget buildTutorialShowcase({
     disableDefaultTargetGestures: disableDefaultTargetGestures ?? false,
     overlayColor: overlayColor,
     disableMovingAnimation: false,
+    scaleAnimationDuration: TutorialConfig.animationDuration,
+    scaleAnimationCurve: Curves.easeOutCubic,
     child: child,
   );
 }

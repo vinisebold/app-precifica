@@ -14,6 +14,10 @@ class TutorialKeys {
   // Passo 3: Destacar Gerir Perfis no menu
   static final GlobalKey manageProfilesDestination = GlobalKey();
   
+  // Diálogos: salvar categoria e produto
+  static final GlobalKey categoryDialogSaveButton = GlobalKey();
+  static final GlobalKey productDialogSaveButton = GlobalKey();
+
   // Passo 3.1: Selecionar perfil de demonstração
   static final GlobalKey sampleProfileTile = GlobalKey();
   

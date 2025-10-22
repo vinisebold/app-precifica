@@ -1250,48 +1250,145 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     final textTheme = Theme.of(pageContext).textTheme;
     final colorScheme = Theme.of(pageContext).colorScheme;
 
+    final tutorialState = ref.read(tutorialControllerProvider);
+    final isAwaitingFirstProductTutorial = tutorialState.isActive &&
+        tutorialState.currentStep == TutorialStep.awaitingFirstProduct;
+
+    Timer? savePromptTimer;
+    bool hasShownSavePrompt = false;
+    bool listenerAttached = false;
+    bool isDisposed = false;
+    bool isClosing = false;
+
+    void cancelSavePromptTimer() {
+      savePromptTimer?.cancel();
+      savePromptTimer = null;
+    }
+
+    void triggerSaveShowcase() {
+      if (!mounted || !isAwaitingFirstProductTutorial || hasShownSavePrompt || isDisposed) {
+        return;
+      }
+      hasShownSavePrompt = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || isDisposed) return;
+        ShowcaseView.get()
+            .startShowCase([TutorialKeys.productDialogSaveButton]);
+      });
+    }
+
+    void textListener() {
+      if (!mounted || isDisposed) return;
+      cancelSavePromptTimer();
+      if (hasShownSavePrompt) return;
+      if (controller.text.trim().isEmpty) return;
+      savePromptTimer =
+          Timer(const Duration(milliseconds: 1600), triggerSaveShowcase);
+    }
+
+    if (isAwaitingFirstProductTutorial) {
+      controller.addListener(textListener);
+      listenerAttached = true;
+    }
+
     showDialog(
       context: pageContext,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('Novo Produto', style: textTheme.headlineSmall),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            labelText: "Nome do produto",
-            filled: true,
-            fillColor: colorScheme.surfaceContainerHighest,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: colorScheme.primary,
-                width: 2,
+      builder: (dialogContext) {
+        void handleCancel() {
+          if (isDisposed || isClosing) return;
+          isClosing = true;
+          cancelSavePromptTimer();
+          Navigator.of(dialogContext).pop();
+        }
+
+        void handleSave() {
+          if (isDisposed || isClosing) return;
+          isClosing = true;
+          cancelSavePromptTimer();
+          _salvarNovoProduto(dialogContext, controller, ref);
+        }
+
+        return AlertDialog(
+          title: Text('Novo Produto', style: textTheme.headlineSmall),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              labelText: "Nome do produto",
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: colorScheme.primary,
+                  width: 2,
+                ),
               ),
             ),
+            autofocus: true,
+            onSubmitted: (_) => handleSave(),
           ),
-          autofocus: true,
-          onSubmitted: (_) =>
-              _salvarNovoProduto(dialogContext, controller, ref),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text('Cancelar', style: textTheme.labelLarge),
-          ),
-          TextButton(
-            onPressed: () => _salvarNovoProduto(dialogContext, controller, ref),
-            child: Text('Salvar', style: textTheme.labelLarge),
-          ),
-        ],
-      ),
-    );
+          actions: [
+            TextButton(
+              onPressed: handleCancel,
+              child: Text('Cancelar', style: textTheme.labelLarge),
+            ),
+            Builder(
+              builder: (context) {
+                Widget saveButton = TextButton(
+                  onPressed: handleSave,
+                  child: Text('Salvar', style: textTheme.labelLarge),
+                );
+
+                if (isAwaitingFirstProductTutorial) {
+                  saveButton = buildTutorialShowcase(
+                    context: context,
+                    key: TutorialKeys.productDialogSaveButton,
+                    title: TutorialConfig.productSaveTitle,
+                    description: TutorialConfig.productSaveDescription,
+                    targetShapeBorder: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    targetPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    onTargetClick: () {
+                      ShowcaseView.get().dismiss();
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!isDisposed && !isClosing) {
+                          handleSave();
+                        }
+                      });
+                    },
+                    child: saveButton,
+                  );
+                }
+
+                return saveButton;
+              },
+            ),
+          ],
+        );
+      },
+    ).then((_) {
+      if (isDisposed) return;
+      isDisposed = true;
+      cancelSavePromptTimer();
+      if (listenerAttached) {
+        controller.removeListener(textListener);
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.dispose();
+      });
+    });
   }
 
   void _salvarNovoProduto(BuildContext dialogContext,
@@ -1309,49 +1406,145 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     final textTheme = Theme.of(pageContext).textTheme;
     final colorScheme = Theme.of(pageContext).colorScheme;
 
+    final tutorialState = ref.read(tutorialControllerProvider);
+    final isAwaitingFirstCategoryTutorial = tutorialState.isActive &&
+        tutorialState.currentStep == TutorialStep.awaitingFirstCategory;
+
+    Timer? savePromptTimer;
+    bool hasShownSavePrompt = false;
+    bool listenerAttached = false;
+    bool isDisposed = false;
+    bool isClosing = false;
+
+    void cancelSavePromptTimer() {
+      savePromptTimer?.cancel();
+      savePromptTimer = null;
+    }
+
+    void triggerSaveShowcase() {
+      if (!mounted || !isAwaitingFirstCategoryTutorial || hasShownSavePrompt || isDisposed) {
+        return;
+      }
+      hasShownSavePrompt = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || isDisposed) return;
+        ShowcaseView.get()
+            .startShowCase([TutorialKeys.categoryDialogSaveButton]);
+      });
+    }
+
+    void textListener() {
+      if (!mounted || isDisposed) return;
+      cancelSavePromptTimer();
+      if (hasShownSavePrompt) return;
+      if (controller.text.trim().isEmpty) return;
+      savePromptTimer =
+          Timer(const Duration(milliseconds: 1600), triggerSaveShowcase);
+    }
+
+    if (isAwaitingFirstCategoryTutorial) {
+      controller.addListener(textListener);
+      listenerAttached = true;
+    }
+
     showDialog(
       context: pageContext,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('Nova Categoria', style: textTheme.headlineSmall),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            labelText: "Nome da categoria",
-            filled: true,
-            fillColor: colorScheme.surfaceContainerHighest,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: colorScheme.primary,
-                width: 2,
+      builder: (dialogContext) {
+        void handleCancel() {
+          if (isDisposed || isClosing) return;
+          isClosing = true;
+          cancelSavePromptTimer();
+          Navigator.of(dialogContext).pop();
+        }
+
+        void handleSave() {
+          if (isDisposed || isClosing) return;
+          isClosing = true;
+          cancelSavePromptTimer();
+          _salvarNovaCategoria(dialogContext, controller, ref);
+        }
+
+        return AlertDialog(
+          title: Text('Nova Categoria', style: textTheme.headlineSmall),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              labelText: "Nome da categoria",
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: colorScheme.primary,
+                  width: 2,
+                ),
               ),
             ),
+            autofocus: true,
+            onSubmitted: (_) => handleSave(),
           ),
-          autofocus: true,
-          onSubmitted: (_) =>
-              _salvarNovaCategoria(dialogContext, controller, ref),
-        ),
-        actions: [
-          TextButton(
-            child: Text('Cancelar', style: textTheme.labelLarge),
-            onPressed: () => Navigator.of(dialogContext).pop(),
-          ),
-          TextButton(
-            child: Text('Salvar', style: textTheme.labelLarge),
-            onPressed: () =>
-                _salvarNovaCategoria(dialogContext, controller, ref),
-          ),
-        ],
-      ),
-    );
+          actions: [
+            TextButton(
+              child: Text('Cancelar', style: textTheme.labelLarge),
+              onPressed: handleCancel,
+            ),
+            Builder(
+              builder: (context) {
+                Widget saveButton = TextButton(
+                  child: Text('Salvar', style: textTheme.labelLarge),
+                  onPressed: handleSave,
+                );
+
+                if (isAwaitingFirstCategoryTutorial) {
+                  saveButton = buildTutorialShowcase(
+                    context: context,
+                    key: TutorialKeys.categoryDialogSaveButton,
+                    title: TutorialConfig.categorySaveTitle,
+                    description: TutorialConfig.categorySaveDescription,
+                    targetShapeBorder: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    targetPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    onTargetClick: () {
+                      ShowcaseView.get().dismiss();
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!isDisposed && !isClosing) {
+                          handleSave();
+                        }
+                      });
+                    },
+                    child: saveButton,
+                  );
+                }
+
+                return saveButton;
+              },
+            ),
+          ],
+        );
+      },
+    ).then((_) {
+      if (isDisposed) return;
+      isDisposed = true;
+      cancelSavePromptTimer();
+      if (listenerAttached) {
+        controller.removeListener(textListener);
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.dispose();
+      });
+    });
   }
 
   void _salvarNovaCategoria(BuildContext dialogContext,

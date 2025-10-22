@@ -25,10 +25,18 @@ class TutorialConfig {
   static const String step1Title = 'Criar categoria';
   static const String step1Description = 
       'Toque no botão para criar uma categoria. Use categorias para organizar seus produtos.';
+
+  static const String categorySaveTitle = 'Salvar categoria';
+  static const String categorySaveDescription =
+      'Toque em "Salvar" para concluir a criação desta categoria.';
   
   static const String step2Title = 'Adicionar produto';
   static const String step2Description = 
       'Toque no botão para adicionar um produto. Você pode definir o preço depois.';
+
+  static const String productSaveTitle = 'Salvar produto';
+  static const String productSaveDescription =
+      'Toque em "Salvar" para adicionar o novo produto à sua categoria.';
   
   static const String step3Title = 'Usar perfil pronto';
   static const String step3Description =

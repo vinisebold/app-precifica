@@ -609,22 +609,10 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       if (notification is ScrollUpdateNotification) {
         if (notification.dragDetails != null && pageValue != null) {
           _handleSneakPeekPrefetch(pageValue);
-          
-          // Se está no tutorial de swipe, fecha o showcase ao detectar deslize
-          final tutorialState = ref.read(tutorialControllerProvider);
-          if (tutorialState.currentStep == TutorialStep.showNavigation) {
-            ShowcaseView.get().dismiss();
-          }
         }
       } else if (notification is ScrollEndNotification && pageValue != null) {
         final settledPage = pageValue.round();
         _settleToPage(settledPage);
-        
-        // Avança o tutorial se estava mostrando o gesto de swipe
-        final tutorialState = ref.read(tutorialControllerProvider);
-        if (tutorialState.currentStep == TutorialStep.showNavigation) {
-          ref.read(tutorialControllerProvider.notifier).nextStep();
-        }
       }
     }
     return false;
@@ -682,10 +670,17 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           final tutorialState = ref.read(tutorialControllerProvider);
           if (tutorialState.isActive &&
               tutorialState.currentStep == TutorialStep.showNavigation) {
-            // Avança para o próximo passo após navegação
-            Future.delayed(const Duration(milliseconds: 500), () {
-              if (mounted) {
-                ref.read(tutorialControllerProvider.notifier).nextStep();
+            // Aguarda 3 segundos após a troca de categoria antes de fechar o showcase
+            Future.delayed(const Duration(seconds: 3), () {
+              if (mounted && 
+                  ref.read(tutorialControllerProvider).currentStep == TutorialStep.showNavigation) {
+                ShowcaseView.get().dismiss();
+                // Avança para o próximo passo após o showcase fechar
+                Future.delayed(const Duration(milliseconds: 500), () {
+                  if (mounted) {
+                    ref.read(tutorialControllerProvider.notifier).nextStep();
+                  }
+                });
               }
             });
           }
@@ -925,9 +920,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 targetShapeBorder: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(28.0),
                 ),
-                onTargetClick: () {
-                  ShowcaseView.get().dismiss();
-                },
+                disableDefaultTargetGestures: true,
+                disposeOnTap: false,
                 child: CategoriaNavBar(
                   onCategoriaDoubleTap: (categoria) {
                     _mostrarDialogoEditarNome(

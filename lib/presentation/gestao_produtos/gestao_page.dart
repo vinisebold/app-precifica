@@ -1054,9 +1054,9 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                   title: TutorialConfig.profileDrawerTitle,
                   description: TutorialConfig.profileDrawerDescription,
                   targetShapeBorder: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(56),
                   ),
-                  targetPadding: const EdgeInsets.all(8),
+                  targetPadding: const EdgeInsets.fromLTRB(52, 18, 148, 18),
                   onTargetClick: () {
                     ShowcaseView.get().dismiss();
                     Navigator.of(drawerContext).pop();

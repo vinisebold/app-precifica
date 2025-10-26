@@ -420,21 +420,35 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                 );
 
                                 if (shouldShowProfileSelectionTutorial) {
-                                  okButton = buildTutorialShowcase(
-                                    context: context,
+                                  final theme = Theme.of(context);
+                                  final colorScheme = theme.colorScheme;
+                                  final textTheme = theme.textTheme;
+                                  final isDark = theme.brightness == Brightness.dark;
+
+                                  okButton = Showcase(
                                     key: TutorialKeys.applyProfileButton,
                                     title: TutorialConfig.profileApplyTitle,
-                                    description: TutorialConfig
-                                        .profileApplyDescription,
-                                    targetShapeBorder:
-                                        RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
+                                    description: TutorialConfig.profileApplyDescription,
+                                    tooltipBackgroundColor: colorScheme.surfaceContainerHigh,
+                                    titleTextStyle: textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: colorScheme.onSurface.withOpacity(isDark ? 0.92 : 0.86),
                                     ),
-                                    targetPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
+                                    descTextStyle: textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.onSurfaceVariant.withOpacity(isDark ? 0.88 : 0.68),
+                                      height: 1.35,
                                     ),
+                                    tooltipPadding: const EdgeInsets.all(16),
+                                    targetShapeBorder: const CircleBorder(),
+                                    targetPadding: const EdgeInsets.all(10),
                                     onTargetClick: applySelectedProfile,
+                                    disposeOnTap: true,
+                                    disableDefaultTargetGestures: false,
+                                    overlayColor: colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32),
+                                    disableBarrierInteraction: false,
+                                    disableMovingAnimation: false,
+                                    scaleAnimationDuration: const Duration(milliseconds: 300),
+                                    scaleAnimationCurve: Curves.easeOutCubic,
                                     child: okButton,
                                   );
                                 }

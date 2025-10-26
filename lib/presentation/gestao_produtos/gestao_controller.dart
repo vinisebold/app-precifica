@@ -437,26 +437,37 @@ class GestaoController extends Notifier<GestaoState> {
   }
 
   Future<void> deletarProduto(String produtoId) async {
-    final produtoParaDeletar =
-        state.produtos.firstWhere((p) => p.id == produtoId);
-    final categoriaDoProdutoDeletado = state.categoriaSelecionadaId!;
-
-    final produtosAtuais = List<Produto>.from(state.produtos)
-      ..removeWhere((p) => p.id == produtoId);
-    final produtosPorCategoria =
-        Map<String, List<Produto>>.from(state.produtosPorCategoria)
-          ..[categoriaDoProdutoDeletado] = List<Produto>.from(produtosAtuais);
-    state = state.copyWith(
-      produtos: produtosAtuais,
-      produtosPorCategoria: produtosPorCategoria,
-      ultimoProdutoDeletado: produtoParaDeletar,
-      idCategoriaProdutoDeletado: categoriaDoProdutoDeletado,
-    );
-
+    Produto? produtoParaDeletar;
+    String? categoriaDoProdutoDeletado;
+    
     try {
+      produtoParaDeletar =
+          state.produtos.firstWhere((p) => p.id == produtoId);
+      categoriaDoProdutoDeletado = state.categoriaSelecionadaId!;
+
+      final produtosAtuais = List<Produto>.from(state.produtos)
+        ..removeWhere((p) => p.id == produtoId);
+      final produtosPorCategoria =
+          Map<String, List<Produto>>.from(state.produtosPorCategoria)
+            ..[categoriaDoProdutoDeletado] = List<Produto>.from(produtosAtuais);
+      state = state.copyWith(
+        produtos: produtosAtuais,
+        produtosPorCategoria: produtosPorCategoria,
+        ultimoProdutoDeletado: produtoParaDeletar,
+        idCategoriaProdutoDeletado: categoriaDoProdutoDeletado,
+      );
+
       await _deleteProduto(
           produtoId: produtoId, categoriaId: categoriaDoProdutoDeletado);
+    } on StateError catch (_) {
+      // Produto não encontrado na lista
+      state = state.copyWith(
+        errorMessage: 'Produto não encontrado.',
+      );
+      return;
     } catch (e) {
+      if (categoriaDoProdutoDeletado == null) return;
+      
       final produtosRestaurados =
           _getProdutosByCategoria(categoriaDoProdutoDeletado);
       final produtosPorCategoriaRestaurado =

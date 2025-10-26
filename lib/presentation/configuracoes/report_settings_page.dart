@@ -5,6 +5,7 @@ import '../../domain/services/report_generator_service.dart';
 import '../../domain/services/sample_data_service.dart';
 import 'settings_controller.dart';
 import 'widgets/whatsapp_formatted_text.dart';
+import '../../app/core/snackbar/app_snackbar.dart';
 
 class ReportSettingsPage extends ConsumerStatefulWidget {
   final String? templateId;
@@ -756,11 +757,9 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
                 _nomeController.text = renameController.text.trim();
                 _atualizarTemplate(template.copyWith(nome: renameController.text.trim()));
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Modelo renomeado com sucesso'),
-                    duration: Duration(seconds: 2),
-                  ),
+                AppSnackbar.showSuccess(
+                  context,
+                  'Modelo renomeado com sucesso',
                 );
               }
             },
@@ -795,7 +794,6 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
           TextButton(
             onPressed: () async {
               final navigator = Navigator.of(context);
-              final messenger = ScaffoldMessenger.of(context);
               
               try {
                 // Primeiro fecha o diálogo
@@ -812,19 +810,18 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
                 // Volta para a lista de modelos
                 navigator.pop();
                 
-                messenger.showSnackBar(
-                  SnackBar(
-                    content: Text('Modelo "${template.nome}" excluído'),
-                    duration: const Duration(seconds: 2),
-                  ),
+                if (!context.mounted) return;
+                
+                AppSnackbar.show(
+                  context,
+                  'Modelo "${template.nome}" excluído',
                 );
               } catch (e) {
-                messenger.showSnackBar(
-                  SnackBar(
-                    content: Text('Erro ao excluir: $e'),
-                    duration: const Duration(seconds: 3),
-                    backgroundColor: Colors.red,
-                  ),
+                if (!context.mounted) return;
+                
+                AppSnackbar.showError(
+                  context,
+                  'Erro ao excluir: $e',
                 );
               }
             },

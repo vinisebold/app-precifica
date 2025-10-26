@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/report_template.dart';
 import 'report_settings_page.dart';
 import 'settings_controller.dart';
+import '../../app/core/snackbar/app_snackbar.dart';
 
 class TemplateListPage extends ConsumerWidget {
   const TemplateListPage({super.key});
@@ -160,14 +161,10 @@ class _TemplateCard extends ConsumerWidget {
 
     if (!context.mounted) return;
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text('Modelo "${template.nome}" selecionado'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+    AppSnackbar.show(
+      context,
+      'Modelo "${template.nome}" selecionado',
+    );
   }
 }
 

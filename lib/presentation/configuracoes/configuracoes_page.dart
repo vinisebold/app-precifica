@@ -4,6 +4,7 @@ import 'template_list_page.dart';
 import 'settings_controller.dart';
 import '../shared/providers/modo_compacto_provider.dart';
 import '../shared/showcase/tutorial_controller.dart';
+import '../../app/core/snackbar/app_snackbar.dart';
 
 class ConfiguracoesPage extends ConsumerWidget {
   const ConfiguracoesPage({super.key});
@@ -69,18 +70,12 @@ class ConfiguracoesPage extends ConsumerWidget {
 
                 if (!context.mounted) return;
 
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        valor
-                            ? 'Modo compacto ativado'
-                            : 'Modo compacto desativado',
-                      ),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
+                AppSnackbar.show(
+                  context,
+                  valor
+                      ? 'Modo compacto ativado'
+                      : 'Modo compacto desativado',
+                );
               },
             ),
           ),
@@ -117,11 +112,9 @@ class ConfiguracoesPage extends ConsumerWidget {
                       .startTutorial();
                   if (!context.mounted) return;
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Tutorial reiniciado com sucesso!'),
-                      duration: Duration(seconds: 2),
-                    ),
+                  AppSnackbar.showSuccess(
+                    context,
+                    'Tutorial reiniciado com sucesso!',
                   );
                 }
               },

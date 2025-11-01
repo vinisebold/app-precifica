@@ -39,15 +39,17 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   int? _lastSettledPageIndex;
   bool _hasShownDrawerShowcase = false;
   bool _hasShownProfileSelectionTutorial = false;
+  Timer? _navigationShowcaseDismissTimer;
+  Timer? _navigationShowcaseAutoAdvanceTimer;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
-    
+
     // Registra o ShowcaseView
     ShowcaseView.register();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final selectedId =
@@ -63,7 +65,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         } catch (_) {}
         _prefetchAdjacent(initialPage);
       }
-      
+
       // Inicia o tutorial se necessário
       _checkAndShowTutorial();
     });
@@ -71,7 +73,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
   void _checkAndShowTutorial() {
     final tutorialState = ref.read(tutorialControllerProvider);
-    
+
     // Mostra os showcases baseado no estado atual do tutorial
     if (tutorialState.isActive) {
       _showTutorialStep(tutorialState.currentStep);
@@ -81,7 +83,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   void _showTutorialStep(TutorialStep step) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      
+
       switch (step) {
         case TutorialStep.awaitingFirstCategory:
           _showCreateCategoryShowcase();
@@ -133,17 +135,62 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     Future.delayed(const Duration(milliseconds: 500), () {
       if (!mounted) return;
       ShowcaseView.get().startShowCase([TutorialKeys.categoryNavBar]);
-      // Avança automaticamente após 8 segundos ou quando usuário interagir
-      Future.delayed(const Duration(seconds: 8), () {
-        if (mounted && ref.read(tutorialControllerProvider).currentStep == TutorialStep.showNavigation) {
-          ref.read(tutorialControllerProvider.notifier).nextStep();
+      _navigationShowcaseAutoAdvanceTimer?.cancel();
+      _navigationShowcaseAutoAdvanceTimer =
+          Timer(TutorialConfig.autoAdvanceDelay, () {
+        if (!mounted) return;
+        final tutorialState = ref.read(tutorialControllerProvider);
+        if (tutorialState.currentStep == TutorialStep.showNavigation) {
+          _completeNavigationStep();
         }
       });
     });
   }
 
+  void _scheduleNavigationShowcaseDismiss() {
+    _navigationShowcaseDismissTimer?.cancel();
+    _navigationShowcaseDismissTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      final tutorialState = ref.read(tutorialControllerProvider);
+      if (tutorialState.currentStep == TutorialStep.showNavigation) {
+        _completeNavigationStep();
+      }
+    });
+  }
+
+  void _cancelNavigationShowcaseTimers() {
+    _navigationShowcaseDismissTimer?.cancel();
+    _navigationShowcaseDismissTimer = null;
+    _navigationShowcaseAutoAdvanceTimer?.cancel();
+    _navigationShowcaseAutoAdvanceTimer = null;
+  }
+
+  void _completeNavigationStep() {
+    if (!mounted) {
+      _cancelNavigationShowcaseTimers();
+      return;
+    }
+
+    final tutorialState = ref.read(tutorialControllerProvider);
+    if (tutorialState.currentStep != TutorialStep.showNavigation) {
+      _cancelNavigationShowcaseTimers();
+      return;
+    }
+
+    _cancelNavigationShowcaseTimers();
+    ShowcaseView.get().dismiss();
+    Future.delayed(const Duration(milliseconds: 450), () {
+      if (!mounted) return;
+      final currentStep = ref.read(tutorialControllerProvider).currentStep;
+      if (currentStep == TutorialStep.showNavigation) {
+        ref.read(tutorialControllerProvider.notifier).nextStep();
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _cancelNavigationShowcaseTimers();
     _pageController.dispose();
     super.dispose();
   }
@@ -153,8 +200,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     final perfilInicial = ref.read(gestaoControllerProvider).perfilAtual;
     String? perfilSelecionado = perfilInicial;
     final tutorialState = ref.read(tutorialControllerProvider);
-    final shouldShowProfileSelectionTutorial =
-        tutorialState.isActive &&
+    final shouldShowProfileSelectionTutorial = tutorialState.isActive &&
         tutorialState.currentStep == TutorialStep.showSampleProfile &&
         !_hasShownProfileSelectionTutorial;
 
@@ -163,7 +209,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     }
 
     bool profileSelectionShowcaseScheduled = false;
-  bool hasShownApplyProfileShowcase = false;
+    bool hasShownApplyProfileShowcase = false;
 
     showModalBottomSheet(
       context: context,
@@ -342,14 +388,18 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                         value: nomePerfil,
                                         groupValue: perfilSelecionado,
                                         onChanged: (value) {
-                                          setState(() => perfilSelecionado = value);
-                                          if (value == TutorialConfig.sampleProfileName) {
+                                          setState(
+                                              () => perfilSelecionado = value);
+                                          if (value ==
+                                              TutorialConfig
+                                                  .sampleProfileName) {
                                             showApplyButtonShowcase();
                                           }
                                         },
                                       ),
                                       onTap: () {
-                                        setState(() => perfilSelecionado = nomePerfil);
+                                        setState(() =>
+                                            perfilSelecionado = nomePerfil);
                                         if (nomePerfil ==
                                             TutorialConfig.sampleProfileName) {
                                           showApplyButtonShowcase();
@@ -357,9 +407,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                       },
                                     );
 
-                                    final isSampleProfile =
-                                        nomePerfil ==
-                                            TutorialConfig.sampleProfileName;
+                                    final isSampleProfile = nomePerfil ==
+                                        TutorialConfig.sampleProfileName;
 
                                     if (shouldShowProfileSelectionTutorial &&
                                         isSampleProfile) {
@@ -382,8 +431,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                         ),
                                         onTargetClick: () {
                                           if (perfilSelecionado != nomePerfil) {
-                                            setState(() => perfilSelecionado =
-                                                nomePerfil);
+                                            setState(() =>
+                                                perfilSelecionado = nomePerfil);
                                             showApplyButtonShowcase();
                                           } else {
                                             showApplyButtonShowcase();
@@ -423,19 +472,26 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                   final theme = Theme.of(context);
                                   final colorScheme = theme.colorScheme;
                                   final textTheme = theme.textTheme;
-                                  final isDark = theme.brightness == Brightness.dark;
+                                  final isDark =
+                                      theme.brightness == Brightness.dark;
 
                                   okButton = Showcase(
                                     key: TutorialKeys.applyProfileButton,
                                     title: TutorialConfig.profileApplyTitle,
-                                    description: TutorialConfig.profileApplyDescription,
-                                    tooltipBackgroundColor: colorScheme.surfaceContainerHigh,
-                                    titleTextStyle: textTheme.titleMedium?.copyWith(
+                                    description:
+                                        TutorialConfig.profileApplyDescription,
+                                    tooltipBackgroundColor:
+                                        colorScheme.surfaceContainerHigh,
+                                    titleTextStyle:
+                                        textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.w700,
-                                      color: colorScheme.onSurface.withOpacity(isDark ? 0.92 : 0.86),
+                                      color: colorScheme.onSurface
+                                          .withOpacity(isDark ? 0.92 : 0.86),
                                     ),
-                                    descTextStyle: textTheme.bodyMedium?.copyWith(
-                                      color: colorScheme.onSurfaceVariant.withOpacity(isDark ? 0.88 : 0.68),
+                                    descTextStyle:
+                                        textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.onSurfaceVariant
+                                          .withOpacity(isDark ? 0.88 : 0.68),
                                       height: 1.35,
                                     ),
                                     tooltipPadding: const EdgeInsets.all(16),
@@ -444,10 +500,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                     onTargetClick: applySelectedProfile,
                                     disposeOnTap: true,
                                     disableDefaultTargetGestures: false,
-                                    overlayColor: colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32),
+                                    overlayColor: colorScheme.scrim
+                                        .withOpacity(isDark ? 0.65 : 0.32),
                                     disableBarrierInteraction: false,
                                     disableMovingAnimation: false,
-                                    scaleAnimationDuration: const Duration(milliseconds: 300),
+                                    scaleAnimationDuration:
+                                        const Duration(milliseconds: 300),
                                     scaleAnimationCurve: Curves.easeOutCubic,
                                     child: okButton,
                                   );
@@ -608,7 +666,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
     if (_lastSettledPageIndex != index) {
       _lastSettledPageIndex = index;
-      ref.read(gestaoControllerProvider.notifier)
+      ref
+          .read(gestaoControllerProvider.notifier)
           .selecionarCategoriaPorIndice(index);
     }
 
@@ -679,50 +738,42 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               _pageController.jumpToPage(newIndex);
             }
           }
-          
+
           // Tutorial: detecta navegação entre categorias
           final tutorialState = ref.read(tutorialControllerProvider);
           if (tutorialState.isActive &&
               tutorialState.currentStep == TutorialStep.showNavigation) {
-            // Aguarda 3 segundos após a troca de categoria antes de fechar o showcase
-            Future.delayed(const Duration(seconds: 3), () {
-              if (mounted && 
-                  ref.read(tutorialControllerProvider).currentStep == TutorialStep.showNavigation) {
-                ShowcaseView.get().dismiss();
-                // Avança para o próximo passo após o showcase fechar
-                Future.delayed(const Duration(milliseconds: 500), () {
-                  if (mounted) {
-                    ref.read(tutorialControllerProvider.notifier).nextStep();
-                  }
-                });
-              }
-            });
+            _scheduleNavigationShowcaseDismiss();
           }
         }
-        
+
         // Tutorial: detecta criação de categorias e produtos
         final tutorialNotifier = ref.read(tutorialControllerProvider.notifier);
         final tutorialState = ref.read(tutorialControllerProvider);
-        
+
         if (tutorialState.isActive) {
           // Detecta criação de categoria
-          if (newState.categorias.length > (previousState?.categorias.length ?? 0)) {
+          if (newState.categorias.length >
+              (previousState?.categorias.length ?? 0)) {
             tutorialNotifier.onCategoryCreated();
             // Mostra o próximo passo após um delay
             Future.delayed(const Duration(milliseconds: 300), () {
               if (mounted) {
-                _showTutorialStep(ref.read(tutorialControllerProvider).currentStep);
+                _showTutorialStep(
+                    ref.read(tutorialControllerProvider).currentStep);
               }
             });
           }
-          
+
           // Detecta criação de produto
-          if (newState.produtos.length > (previousState?.produtos.length ?? 0)) {
+          if (newState.produtos.length >
+              (previousState?.produtos.length ?? 0)) {
             tutorialNotifier.onProductCreated();
             // Mostra o próximo passo após um delay
             Future.delayed(const Duration(milliseconds: 300), () {
               if (mounted) {
-                _showTutorialStep(ref.read(tutorialControllerProvider).currentStep);
+                _showTutorialStep(
+                    ref.read(tutorialControllerProvider).currentStep);
               }
             });
           }
@@ -737,19 +788,26 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             tutorialNotifier.onSampleProfileLoaded();
             Future.delayed(const Duration(milliseconds: 300), () {
               if (mounted) {
-                _showTutorialStep(ref.read(tutorialControllerProvider).currentStep);
+                _showTutorialStep(
+                    ref.read(tutorialControllerProvider).currentStep);
               }
             });
           }
         }
       },
     );
-    
+
     // Listener para mudanças no estado do tutorial
     ref.listen<TutorialState>(
       tutorialControllerProvider,
       (previousState, newState) {
-        if (newState.isActive && previousState?.currentStep != newState.currentStep) {
+        if (previousState?.currentStep == TutorialStep.showNavigation &&
+            newState.currentStep != TutorialStep.showNavigation) {
+          _cancelNavigationShowcaseTimers();
+        }
+
+        if (newState.isActive &&
+            previousState?.currentStep != newState.currentStep) {
           _showTutorialStep(newState.currentStep);
         }
       },
@@ -1274,7 +1332,10 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     }
 
     void triggerSaveShowcase() {
-      if (!mounted || !isAwaitingFirstProductTutorial || hasShownSavePrompt || isDisposed) {
+      if (!mounted ||
+          !isAwaitingFirstProductTutorial ||
+          hasShownSavePrompt ||
+          isDisposed) {
         return;
       }
       hasShownSavePrompt = true;
@@ -1290,8 +1351,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       cancelSavePromptTimer();
       if (hasShownSavePrompt) return;
       if (controller.text.trim().isEmpty) return;
-    savePromptTimer =
-      Timer(const Duration(milliseconds: 2600), triggerSaveShowcase);
+      savePromptTimer =
+          Timer(const Duration(milliseconds: 2600), triggerSaveShowcase);
     }
 
     if (isAwaitingFirstProductTutorial) {
@@ -1328,7 +1389,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
               focusedBorder: OutlineInputBorder(
@@ -1424,7 +1486,10 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     }
 
     void triggerSaveShowcase() {
-      if (!mounted || !isAwaitingFirstCategoryTutorial || hasShownSavePrompt || isDisposed) {
+      if (!mounted ||
+          !isAwaitingFirstCategoryTutorial ||
+          hasShownSavePrompt ||
+          isDisposed) {
         return;
       }
       hasShownSavePrompt = true;
@@ -1440,8 +1505,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       cancelSavePromptTimer();
       if (hasShownSavePrompt) return;
       if (controller.text.trim().isEmpty) return;
-    savePromptTimer =
-      Timer(const Duration(milliseconds: 2200), triggerSaveShowcase);
+      savePromptTimer =
+          Timer(const Duration(milliseconds: 2200), triggerSaveShowcase);
     }
 
     if (isAwaitingFirstCategoryTutorial) {
@@ -1719,7 +1784,8 @@ class _GlobalProcessingOverlayState extends State<_GlobalProcessingOverlay>
                                   letterSpacing: 0.15,
                                   shadows: [
                                     Shadow(
-                                      color: Colors.black.withValues(alpha: 0.25 * v),
+                                      color: Colors.black
+                                          .withValues(alpha: 0.25 * v),
                                       blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     ),
@@ -1739,7 +1805,8 @@ class _GlobalProcessingOverlayState extends State<_GlobalProcessingOverlay>
                                     .withValues(alpha: 0.9 * v),
                                 shadows: [
                                   Shadow(
-                                    color: Colors.black.withValues(alpha: 0.2 * v),
+                                    color:
+                                        Colors.black.withValues(alpha: 0.2 * v),
                                     blurRadius: 6,
                                     offset: const Offset(0, 1),
                                   ),
@@ -2012,17 +2079,18 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
 void _compartilharRelatorio(BuildContext context, WidgetRef ref) {
   final settingsNotifier = ref.read(settingsControllerProvider.notifier);
   final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
-  
+
   // Obtém o template selecionado (ou padrão se nenhum estiver selecionado)
   final template = settingsNotifier.getTemplateSelecionadoObjeto();
-  
+
   if (template == null) {
     // Fallback: usar geração padrão
     final textoRelatorio = gestaoNotifier.gerarTextoRelatorio();
     Share.share(textoRelatorio);
   } else {
     // Usar o template selecionado
-    final textoRelatorio = gestaoNotifier.gerarTextoRelatorioComTemplate(template);
+    final textoRelatorio =
+        gestaoNotifier.gerarTextoRelatorioComTemplate(template);
     Share.share(textoRelatorio);
   }
 }

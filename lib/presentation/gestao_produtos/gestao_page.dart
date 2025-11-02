@@ -1560,14 +1560,14 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           ),
           actions: [
             TextButton(
-              child: Text('Cancelar', style: textTheme.labelLarge),
               onPressed: handleCancel,
+              child: Text('Cancelar', style: textTheme.labelLarge),
             ),
             Builder(
               builder: (context) {
                 Widget saveButton = TextButton(
-                  child: Text('Salvar', style: textTheme.labelLarge),
                   onPressed: handleSave,
+                  child: Text('Salvar', style: textTheme.labelLarge),
                 );
 
                 if (isAwaitingFirstCategoryTutorial) {

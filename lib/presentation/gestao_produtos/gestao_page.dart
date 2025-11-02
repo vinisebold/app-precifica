@@ -41,6 +41,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   bool _hasShownProfileSelectionTutorial = false;
   Timer? _navigationShowcaseDismissTimer;
   Timer? _navigationShowcaseAutoAdvanceTimer;
+  Timer? _swipeShowcaseDismissTimer;
+  Timer? _swipeShowcaseAutoAdvanceTimer;
 
   @override
   void initState() {
@@ -97,6 +99,9 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         case TutorialStep.showNavigation:
           _showNavigationShowcase();
           break;
+        case TutorialStep.showSwipe:
+          _showSwipeShowcase();
+          break;
         default:
           break;
       }
@@ -147,6 +152,25 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     });
   }
 
+  void _showSwipeShowcase() {
+    final categorias = ref.read(gestaoControllerProvider).categorias;
+    if (categorias.isEmpty) return;
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      ShowcaseView.get().startShowCase([TutorialKeys.categorySwipeArea]);
+      _swipeShowcaseAutoAdvanceTimer?.cancel();
+      _swipeShowcaseAutoAdvanceTimer =
+          Timer(TutorialConfig.autoAdvanceDelay, () {
+        if (!mounted) return;
+        final tutorialState = ref.read(tutorialControllerProvider);
+        if (tutorialState.currentStep == TutorialStep.showSwipe) {
+          _completeSwipeStep();
+        }
+      });
+    });
+  }
+
   void _scheduleNavigationShowcaseDismiss() {
     _navigationShowcaseDismissTimer?.cancel();
     _navigationShowcaseDismissTimer = Timer(const Duration(seconds: 3), () {
@@ -163,6 +187,13 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     _navigationShowcaseDismissTimer = null;
     _navigationShowcaseAutoAdvanceTimer?.cancel();
     _navigationShowcaseAutoAdvanceTimer = null;
+  }
+
+  void _cancelSwipeShowcaseTimers() {
+    _swipeShowcaseDismissTimer?.cancel();
+    _swipeShowcaseDismissTimer = null;
+    _swipeShowcaseAutoAdvanceTimer?.cancel();
+    _swipeShowcaseAutoAdvanceTimer = null;
   }
 
   void _completeNavigationStep() {
@@ -188,9 +219,44 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     });
   }
 
+  void _scheduleSwipeShowcaseDismiss() {
+    _swipeShowcaseDismissTimer?.cancel();
+    _swipeShowcaseDismissTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      final tutorialState = ref.read(tutorialControllerProvider);
+      if (tutorialState.currentStep == TutorialStep.showSwipe) {
+        _completeSwipeStep();
+      }
+    });
+  }
+
+  void _completeSwipeStep() {
+    if (!mounted) {
+      _cancelSwipeShowcaseTimers();
+      return;
+    }
+
+    final tutorialState = ref.read(tutorialControllerProvider);
+    if (tutorialState.currentStep != TutorialStep.showSwipe) {
+      _cancelSwipeShowcaseTimers();
+      return;
+    }
+
+    _cancelSwipeShowcaseTimers();
+    ShowcaseView.get().dismiss();
+    Future.delayed(const Duration(milliseconds: 450), () {
+      if (!mounted) return;
+      final currentStep = ref.read(tutorialControllerProvider).currentStep;
+      if (currentStep == TutorialStep.showSwipe) {
+        ref.read(tutorialControllerProvider.notifier).nextStep();
+      }
+    });
+  }
+
   @override
   void dispose() {
     _cancelNavigationShowcaseTimers();
+    _cancelSwipeShowcaseTimers();
     _pageController.dispose();
     super.dispose();
   }
@@ -693,8 +759,10 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     ref.listen<GestaoState>(
       gestaoControllerProvider,
@@ -741,9 +809,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
           // Tutorial: detecta navegação entre categorias
           final tutorialState = ref.read(tutorialControllerProvider);
-          if (tutorialState.isActive &&
-              tutorialState.currentStep == TutorialStep.showNavigation) {
-            _scheduleNavigationShowcaseDismiss();
+          if (tutorialState.isActive) {
+            if (tutorialState.currentStep == TutorialStep.showNavigation) {
+              _scheduleNavigationShowcaseDismiss();
+            } else if (tutorialState.currentStep == TutorialStep.showSwipe) {
+              _scheduleSwipeShowcaseDismiss();
+            }
           }
         }
 
@@ -804,6 +875,11 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         if (previousState?.currentStep == TutorialStep.showNavigation &&
             newState.currentStep != TutorialStep.showNavigation) {
           _cancelNavigationShowcaseTimers();
+        }
+
+        if (previousState?.currentStep == TutorialStep.showSwipe &&
+            newState.currentStep != TutorialStep.showSwipe) {
+          _cancelSwipeShowcaseTimers();
         }
 
         if (newState.isActive &&
@@ -925,27 +1001,46 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               child: Stack(
                 children: [
                   if (gestaoState.categorias.isNotEmpty)
-                    RepaintBoundary(
-                      child: NotificationListener<ScrollNotification>(
-                        onNotification: _handlePageViewScrollNotification,
-                        child: PageView.builder(
-                          controller: _pageController,
-                          physics: const FastPageScrollPhysics(),
-                          itemCount: gestaoState.categorias.length,
-                          itemBuilder: (context, index) => ProductListView(
-                            categoriaId: gestaoState.categorias[index].id,
-                            onProdutoDoubleTap: (produto) =>
-                                _mostrarDialogoEditarNome(
-                              context,
-                              ref,
-                              titulo: 'Editar Produto',
-                              valorAtual: produto.nome,
-                              onSalvar: (novoNome) => gestaoNotifier
-                                  .atualizarNomeProduto(produto.id, novoNome),
+                    Showcase.withWidget(
+                      key: TutorialKeys.categorySwipeArea,
+                      targetShapeBorder: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16.0),
+                      ),
+                      targetPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 16,
+                      ),
+                      overlayColor:
+                          colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32),
+                      disableBarrierInteraction:
+                          TutorialConfig.disableBarrierInteraction,
+                      disableDefaultTargetGestures: true,
+                      disposeOnTap: false,
+                      onTargetClick: () {},
+                      container: const _SwipeGestureGuide(),
+                      child: RepaintBoundary(
+                        child: NotificationListener<ScrollNotification>(
+                          onNotification: _handlePageViewScrollNotification,
+                          child: PageView.builder(
+                            controller: _pageController,
+                            physics: const FastPageScrollPhysics(),
+                            itemCount: gestaoState.categorias.length,
+                            itemBuilder: (context, index) => ProductListView(
+                              categoriaId: gestaoState.categorias[index].id,
+                              onProdutoDoubleTap: (produto) =>
+                                  _mostrarDialogoEditarNome(
+                                context,
+                                ref,
+                                titulo: 'Editar Produto',
+                                valorAtual: produto.nome,
+                                onSalvar: (novoNome) => gestaoNotifier
+                                    .atualizarNomeProduto(
+                                        produto.id, novoNome),
+                              ),
+                              onProdutoTap: (produto) =>
+                                  gestaoNotifier.atualizarStatusProduto(
+                                      produto.id, !produto.isAtivo),
                             ),
-                            onProdutoTap: (produto) =>
-                                gestaoNotifier.atualizarStatusProduto(
-                                    produto.id, !produto.isAtivo),
                           ),
                         ),
                       ),
@@ -1639,6 +1734,94 @@ class FastPageScrollPhysics extends PageScrollPhysics {
   }
 }
 
+class _SwipeGestureGuide extends StatefulWidget {
+  const _SwipeGestureGuide();
+
+  @override
+  State<_SwipeGestureGuide> createState() => _SwipeGestureGuideState();
+}
+
+class _SwipeGestureGuideState extends State<_SwipeGestureGuide>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _offsetAnimation;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+    _offsetAnimation = Tween<double>(begin: -28, end: 28).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return IgnorePointer(
+      child: SizedBox(
+        width: 160,
+        height: 120,
+        child: Center(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(_offsetAnimation.value, 0),
+                child: Transform.scale(
+                  scale: _scaleAnimation.value,
+                  child: child,
+                ),
+              );
+            },
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHigh
+                    .withOpacity(isDark ? 0.92 : 0.86),
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.35 : 0.18),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 20,
+                ),
+                child: Icon(
+                  Icons.swipe,
+                  size: 48,
+                  color: colorScheme.primary,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _GlobalProcessingOverlay extends StatefulWidget {
   final bool active;
 
@@ -1836,15 +2019,13 @@ class _GlowBackdropPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Three moving glow blobs (radial gradients) whose centers animate softly
     final paints = <_GlowSpec>[
       _GlowSpec(
         baseOffset: const Offset(0.18, 0.22),
         radiusFactor: 0.65,
-        // maior
         hueShift: 0.0,
         speed: 0.9,
-        intensity: 0.38, // mais leve
+        intensity: 0.38,
       ),
       _GlowSpec(
         baseOffset: const Offset(0.88, 0.78),
@@ -1888,7 +2069,6 @@ class _GlowBackdropPainter extends CustomPainter {
   }
 
   Color _tint(Color base, double shift) {
-    // Simple hue shift approximation by mixing with complementary/white
     if (shift == 0) return base;
     final hsl = HSLColor.fromColor(base);
     final shifted = hsl.withHue((hsl.hue + shift * 360) % 360);
@@ -1902,11 +2082,11 @@ class _GlowBackdropPainter extends CustomPainter {
 }
 
 class _GlowSpec {
-  final Offset baseOffset; // relative 0..1
-  final double radiusFactor; // relative to shortestSide
-  final double hueShift; // -1..1 -> fraction of 360 degrees
-  final double speed; // multiplier for animation speed
-  final double intensity; // base opacity scaler
+  final Offset baseOffset;
+  final double radiusFactor;
+  final double hueShift;
+  final double speed;
+  final double intensity;
   _GlowSpec({
     required this.baseOffset,
     required this.radiusFactor,
@@ -1963,8 +2143,6 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-// Navigation Drawer using Material You 3 native components
-
 class _ConfirmacaoIAOverlay extends StatelessWidget {
   final VoidCallback onConfirmar;
   final VoidCallback onCancelar;
@@ -1983,7 +2161,6 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
       color: Colors.transparent,
       child: Stack(
         children: [
-          // Blur backdrop similar to processing overlay
           Positioned.fill(
             child: ClipRect(
               child: BackdropFilter(
@@ -1994,7 +2171,6 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
               ),
             ),
           ),
-          // Content dialog
           Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 340),
@@ -2005,14 +2181,12 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // AI Icon - sem fundo
                       Icon(
                         Icons.auto_awesome,
                         color: colorScheme.primary,
                         size: 56,
                       ),
                       const SizedBox(height: 20),
-                      // Title
                       Text(
                         'Organizar com IA?',
                         style: textTheme.headlineSmall?.copyWith(
@@ -2022,7 +2196,6 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
-                      // Message
                       Text(
                         'Tem certeza que deseja reorganizar seus produtos automaticamente?',
                         style: textTheme.bodyMedium?.copyWith(
@@ -2032,7 +2205,6 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
-                      // Buttons
                       Row(
                         children: [
                           Expanded(
@@ -2080,15 +2252,12 @@ void _compartilharRelatorio(BuildContext context, WidgetRef ref) {
   final settingsNotifier = ref.read(settingsControllerProvider.notifier);
   final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
-  // Obtém o template selecionado (ou padrão se nenhum estiver selecionado)
   final template = settingsNotifier.getTemplateSelecionadoObjeto();
 
   if (template == null) {
-    // Fallback: usar geração padrão
     final textoRelatorio = gestaoNotifier.gerarTextoRelatorio();
     Share.share(textoRelatorio);
   } else {
-    // Usar o template selecionado
     final textoRelatorio =
         gestaoNotifier.gerarTextoRelatorioComTemplate(template);
     Share.share(textoRelatorio);

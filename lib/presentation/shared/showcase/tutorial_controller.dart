@@ -8,6 +8,7 @@ enum TutorialStep {
   awaitingFirstProduct,
   showSampleProfile,
   showNavigation,
+  showSwipe,
   completed,
 }
 
@@ -68,8 +69,9 @@ class TutorialController extends Notifier<TutorialState> {
   /// Avança para o próximo passo baseado na ação do usuário.
   void onCategoryCreated() {
     final newCount = state.categoriesCreated + 1;
-    
-    if (state.currentStep == TutorialStep.awaitingFirstCategory && newCount >= 1) {
+
+    if (state.currentStep == TutorialStep.awaitingFirstCategory &&
+        newCount >= 1) {
       state = state.copyWith(
         categoriesCreated: newCount,
         currentStep: TutorialStep.awaitingFirstProduct,
@@ -81,8 +83,9 @@ class TutorialController extends Notifier<TutorialState> {
 
   void onProductCreated() {
     final newCount = state.productsCreated + 1;
-    
-    if (state.currentStep == TutorialStep.awaitingFirstProduct && newCount >= 1) {
+
+    if (state.currentStep == TutorialStep.awaitingFirstProduct &&
+        newCount >= 1) {
       state = state.copyWith(
         productsCreated: newCount,
         currentStep: TutorialStep.showSampleProfile,
@@ -93,7 +96,8 @@ class TutorialController extends Notifier<TutorialState> {
   }
 
   void onSampleProfileLoaded() {
-    if (state.currentStep == TutorialStep.showSampleProfile && !state.sampleProfileLoaded) {
+    if (state.currentStep == TutorialStep.showSampleProfile &&
+        !state.sampleProfileLoaded) {
       state = state.copyWith(
         sampleProfileLoaded: true,
         currentStep: TutorialStep.showNavigation,
@@ -105,6 +109,9 @@ class TutorialController extends Notifier<TutorialState> {
   void nextStep() {
     switch (state.currentStep) {
       case TutorialStep.showNavigation:
+        state = state.copyWith(currentStep: TutorialStep.showSwipe);
+        break;
+      case TutorialStep.showSwipe:
         _completeTutorial();
         break;
       default:

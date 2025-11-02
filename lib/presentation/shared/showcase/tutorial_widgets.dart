@@ -81,7 +81,7 @@ class TutorialTooltip extends StatelessWidget {
                   style: TextButton.styleFrom(
                     foregroundColor: skipColor,
                   ),
-                  child: Text(TutorialConfig.buttonSkip),
+                  child: const Text(TutorialConfig.buttonSkip),
                 ),
                 const SizedBox(width: 8),
               ],

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 
 /// Configurações visuais e comportamentais para o tutorial.
 class TutorialConfig {

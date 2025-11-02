@@ -333,7 +333,7 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
           if (template.agruparPorCategoria) ...[
             const SizedBox(height: 12),
             DropdownButtonFormField<CategoryFormatting>(
-              value: template.formatoCategoria,
+              initialValue: template.formatoCategoria,
               decoration: InputDecoration(
                 labelText: 'Formato do Nome',
                 filled: true,
@@ -410,7 +410,7 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
           const SizedBox(height: 16),
 
           DropdownButtonFormField<ProductFilter>(
-            value: template.filtroProdutos,
+            initialValue: template.filtroProdutos,
             decoration: InputDecoration(
               labelText: 'Produtos a Incluir',
               filled: true,
@@ -454,7 +454,7 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
           const SizedBox(height: 12),
 
           DropdownButtonFormField<ProductNameFormatting>(
-            value: template.formatoNomeProduto,
+            initialValue: template.formatoNomeProduto,
             decoration: InputDecoration(
               labelText: 'Formato do Nome do Produto',
               filled: true,

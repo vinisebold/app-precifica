@@ -180,7 +180,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   }
 
   void _scheduleNavigationShowcaseDismiss() {
-    _navigationShowcaseDismissTimer?.cancel();
+    if (_navigationShowcaseDismissTimer?.isActive ?? false) return;
+
     _navigationShowcaseDismissTimer = Timer(const Duration(seconds: 3), () {
       if (!mounted) return;
       final tutorialState = ref.read(tutorialControllerProvider);
@@ -316,7 +317,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   }
 
   void _scheduleSwipeShowcaseDismiss() {
-    _swipeShowcaseDismissTimer?.cancel();
+    if (_swipeShowcaseDismissTimer?.isActive ?? false) return;
+
     _swipeShowcaseDismissTimer = Timer(const Duration(seconds: 3), () {
       if (!mounted) return;
       final tutorialState = ref.read(tutorialControllerProvider);

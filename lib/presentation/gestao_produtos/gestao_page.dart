@@ -34,8 +34,7 @@ class GestaoPage extends ConsumerStatefulWidget {
 
 class _GestaoPageState extends ConsumerState<GestaoPage> {
   static const double _sneakPeekVisibilityThreshold = 0.08;
-  static const Duration _spotlightFadeDuration =
-      Duration(milliseconds: 220);
+  static const Duration _spotlightFadeDuration = Duration(milliseconds: 220);
   late PageController _pageController; // safely initialized in initState
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int? _lastSettledPageIndex;
@@ -51,6 +50,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   bool _swipeSpotlightUpdateScheduled = false;
   Timer? _navigationSpotlightClearTimer;
   Timer? _swipeSpotlightClearTimer;
+  bool _hasShownCompletionScreen = false;
 
   @override
   void initState() {
@@ -217,10 +217,13 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
       final navContext = TutorialKeys.categoryNavBar.currentContext;
       final overlayRenderBox = context.findRenderObject() as RenderBox?;
-      final navRenderBox =
-          navContext != null ? navContext.findRenderObject() as RenderBox? : null;
+      final navRenderBox = navContext != null
+          ? navContext.findRenderObject() as RenderBox?
+          : null;
 
-      if (overlayRenderBox == null || navRenderBox == null || !navRenderBox.attached) {
+      if (overlayRenderBox == null ||
+          navRenderBox == null ||
+          !navRenderBox.attached) {
         return;
       }
 
@@ -235,12 +238,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   }
 
   void _clearNavigationSpotlightRect() {
-    if (_navigationSpotlightRect == null || _navigationSpotlightClearTimer != null) {
+    if (_navigationSpotlightRect == null ||
+        _navigationSpotlightClearTimer != null) {
       return;
     }
 
-    _navigationSpotlightClearTimer =
-        Timer(_spotlightFadeDuration, () {
+    _navigationSpotlightClearTimer = Timer(_spotlightFadeDuration, () {
       if (!mounted) return;
       _navigationSpotlightClearTimer = null;
       if (_navigationSpotlightRect != null) {
@@ -265,7 +268,9 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           ? swipeContext.findRenderObject() as RenderBox?
           : null;
 
-      if (overlayRenderBox == null || swipeRenderBox == null || !swipeRenderBox.attached) {
+      if (overlayRenderBox == null ||
+          swipeRenderBox == null ||
+          !swipeRenderBox.attached) {
         return;
       }
 
@@ -307,7 +312,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
     _cancelNavigationShowcaseTimers();
     ShowcaseView.get().dismiss();
-    Future.delayed(const Duration(milliseconds: 450), () {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final currentStep = ref.read(tutorialControllerProvider).currentStep;
       if (currentStep == TutorialStep.showNavigation) {
@@ -347,6 +352,71 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       final currentStep = ref.read(tutorialControllerProvider).currentStep;
       if (currentStep == TutorialStep.showSwipe) {
         ref.read(tutorialControllerProvider.notifier).nextStep();
+      }
+    });
+  }
+
+  List<Map<String, dynamic>> _buildTutorialUserSnapshot(GestaoState state) {
+    final data = <Map<String, dynamic>>[];
+
+    for (final categoria in state.categorias) {
+      final produtos = state.produtosPorCategoria[categoria.id] ??
+          (state.categoriaSelecionadaId == categoria.id
+              ? state.produtos
+              : const <Produto>[]);
+
+      final produtosData = produtos
+          .map((produto) => {
+                'nome': produto.nome,
+                'preco': produto.preco,
+                'isAtivo': produto.isAtivo,
+              })
+          .toList();
+
+      data.add({
+        'nome': categoria.nome,
+        'produtos': produtosData,
+      });
+    }
+
+    return data;
+  }
+
+  void _showTutorialCompletionScreen() {
+    if (_hasShownCompletionScreen || !mounted) return;
+    _hasShownCompletionScreen = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ShowcaseView.get().dismiss();
+      showTutorialInstruction(
+        context: context,
+        title: TutorialConfig.finalTitle,
+        message: TutorialConfig.finalDescription,
+        onDismiss: _handleTutorialCompletion,
+        barrierDismissible: false,
+      );
+    });
+  }
+
+  void _handleTutorialCompletion() {
+    final snapshot = ref.read(tutorialControllerProvider).userDataSnapshot;
+    if (snapshot == null || snapshot.isEmpty) {
+      ref.read(tutorialControllerProvider.notifier).clearUserDataSnapshot();
+      return;
+    }
+
+    Future.microtask(() async {
+      try {
+        await ref
+            .read(gestaoControllerProvider.notifier)
+            .resetAndSeedDatabase(snapshot);
+      } catch (_) {
+        ref
+            .read(globalToastControllerProvider.notifier)
+            .showError('Não foi possível restaurar seus dados do tutorial.');
+      } finally {
+        ref.read(tutorialControllerProvider.notifier).clearUserDataSnapshot();
       }
     });
   }
@@ -956,6 +1026,19 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           // Detecta criação de produto
           if (newState.produtos.length >
               (previousState?.produtos.length ?? 0)) {
+            final existingSnapshot = tutorialState.userDataSnapshot;
+            final shouldCaptureSnapshot =
+                (existingSnapshot == null || existingSnapshot.isEmpty) &&
+                    newState.perfilAtual == null &&
+                    newState.categorias.isNotEmpty;
+
+            if (shouldCaptureSnapshot) {
+              final snapshot = _buildTutorialUserSnapshot(newState);
+              if (snapshot.isNotEmpty) {
+                tutorialNotifier.setUserDataSnapshot(snapshot);
+              }
+            }
+
             tutorialNotifier.onProductCreated();
             // Mostra o próximo passo após um delay
             Future.delayed(const Duration(milliseconds: 300), () {
@@ -1002,6 +1085,17 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         if (newState.isActive &&
             previousState?.currentStep != newState.currentStep) {
           _showTutorialStep(newState.currentStep);
+        }
+
+        if (newState.isActive &&
+            newState.currentStep == TutorialStep.awaitingFirstCategory &&
+            previousState?.currentStep != TutorialStep.awaitingFirstCategory) {
+          _hasShownCompletionScreen = false;
+        }
+
+        if (newState.currentStep == TutorialStep.completed &&
+            previousState?.currentStep != TutorialStep.completed) {
+          _showTutorialCompletionScreen();
         }
       },
     );
@@ -1128,7 +1222,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                         horizontal: 0,
                         vertical: 0,
                       ),
-            overlayColor: Colors.transparent,
+                      overlayColor: Colors.transparent,
                       disableBarrierInteraction:
                           TutorialConfig.disableBarrierInteraction,
                       disableDefaultTargetGestures: true,
@@ -1139,24 +1233,22 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                         children: [
                           RepaintBoundary(
                             child: NotificationListener<ScrollNotification>(
-                              onNotification:
-                                  _handlePageViewScrollNotification,
+                              onNotification: _handlePageViewScrollNotification,
                               child: PageView.builder(
                                 controller: _pageController,
                                 physics: const FastPageScrollPhysics(),
                                 itemCount: gestaoState.categorias.length,
                                 itemBuilder: (context, index) =>
                                     ProductListView(
-                                  categoriaId:
-                                      gestaoState.categorias[index].id,
+                                  categoriaId: gestaoState.categorias[index].id,
                                   onProdutoDoubleTap: (produto) =>
                                       _mostrarDialogoEditarNome(
                                     context,
                                     ref,
                                     titulo: 'Editar Produto',
                                     valorAtual: produto.nome,
-                                    onSalvar: (novoNome) => gestaoNotifier
-                                        .atualizarNomeProduto(
+                                    onSalvar: (novoNome) =>
+                                        gestaoNotifier.atualizarNomeProduto(
                                             produto.id, novoNome),
                                   ),
                                   onProdutoTap: (produto) =>
@@ -1278,8 +1370,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               rect: _navigationSpotlightRect,
               visible: isNavigationShowcaseActive,
               borderRadius: 28.0,
-              overlayColor:
-                  colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32),
+              overlayColor: colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32),
             ),
           ),
         ),
@@ -1289,8 +1380,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               rect: _swipeSpotlightRect,
               visible: isSwipeShowcaseActive,
               borderRadius: 18.0,
-              overlayColor:
-                  colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32),
+              overlayColor: colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32),
               padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
             ),
           ),

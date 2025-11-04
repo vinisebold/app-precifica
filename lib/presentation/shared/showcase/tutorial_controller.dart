@@ -19,6 +19,7 @@ class TutorialState {
   final int categoriesCreated;
   final int productsCreated;
   final bool sampleProfileLoaded;
+  final List<Map<String, dynamic>>? userDataSnapshot;
 
   const TutorialState({
     this.currentStep = TutorialStep.notStarted,
@@ -26,6 +27,7 @@ class TutorialState {
     this.categoriesCreated = 0,
     this.productsCreated = 0,
     this.sampleProfileLoaded = false,
+    this.userDataSnapshot,
   });
 
   TutorialState copyWith({
@@ -34,6 +36,8 @@ class TutorialState {
     int? categoriesCreated,
     int? productsCreated,
     bool? sampleProfileLoaded,
+    List<Map<String, dynamic>>? userDataSnapshot,
+    bool clearUserDataSnapshot = false,
   }) {
     return TutorialState(
       currentStep: currentStep ?? this.currentStep,
@@ -41,6 +45,9 @@ class TutorialState {
       categoriesCreated: categoriesCreated ?? this.categoriesCreated,
       productsCreated: productsCreated ?? this.productsCreated,
       sampleProfileLoaded: sampleProfileLoaded ?? this.sampleProfileLoaded,
+      userDataSnapshot: clearUserDataSnapshot
+          ? null
+          : userDataSnapshot ?? this.userDataSnapshot,
     );
   }
 }
@@ -156,6 +163,30 @@ class TutorialController extends Notifier<TutorialState> {
   Future<void> resetTutorial() async {
     await _service.resetTutorial();
     state = const TutorialState();
+  }
+
+  void setUserDataSnapshot(List<Map<String, dynamic>> snapshot) {
+    final clonedSnapshot = snapshot
+        .map((categoria) {
+          final produtos = (categoria['produtos'] as List<dynamic>? ?? [])
+              .map((produto) => Map<String, dynamic>.from(
+                    produto as Map<String, dynamic>,
+                  ))
+              .toList();
+
+          return <String, dynamic>{
+            'nome': categoria['nome'],
+            'produtos': produtos,
+          };
+        })
+        .map((categoria) => Map<String, dynamic>.from(categoria))
+        .toList();
+
+    state = state.copyWith(userDataSnapshot: clonedSnapshot);
+  }
+
+  void clearUserDataSnapshot() {
+    state = state.copyWith(clearUserDataSnapshot: true);
   }
 }
 

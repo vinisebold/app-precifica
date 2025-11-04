@@ -98,6 +98,27 @@ class GestaoRepositoryImpl implements IGestaoRepository {
   }
 
   @override
+  Future<void> resetStorage() async {
+    final categoriasBox = Hive.box<CategoriaModel>(_categoriasBox);
+    final produtosBox = Hive.box<ProdutoModel>(_produtosBox);
+
+    await categoriasBox.clear();
+    await produtosBox.clear();
+
+    final profilesDir = await _getProfilesDirectory();
+    if (await profilesDir.exists()) {
+      final entities = profilesDir.listSync();
+      for (final entity in entities) {
+        if (entity is File && entity.path.endsWith('.json')) {
+          await entity.delete();
+        }
+      }
+    }
+
+    await _seedInitialProfilesFromAssets();
+  }
+
+  @override
   Future<String> exportCurrentDataToJson() async {
     final catBox = Hive.box<CategoriaModel>(_categoriasBox);
     final prodBox = Hive.box<ProdutoModel>(_produtosBox);
@@ -250,10 +271,11 @@ class GestaoRepositoryImpl implements IGestaoRepository {
         .where((produto) => produto != null)
         .cast<Produto>()
         .toList();
-    
+
     // Ordenar alfabeticamente por nome (case-insensitive)
-    produtos.sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
-    
+    produtos
+        .sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
+
     return produtos;
   }
 
@@ -297,10 +319,10 @@ class GestaoRepositoryImpl implements IGestaoRepository {
     final categoria = categoriasBox.get(produto.categoriaId);
     if (categoria != null && !categoria.produtoIds.contains(produto.id)) {
       categoria.produtoIds.add(produto.id);
-      
+
       // Ordenar produtos alfabeticamente
       _ordenarProdutosPorNome(categoria.produtoIds, produtosBox);
-      
+
       await categoriasBox.put(produto.categoriaId, categoria);
     }
   }
@@ -310,11 +332,11 @@ class GestaoRepositoryImpl implements IGestaoRepository {
     final produtosBox = Hive.box<ProdutoModel>(_produtosBox);
     final categoriasBox = Hive.box<CategoriaModel>(_categoriasBox);
     final produto = produtosBox.get(produtoId);
-    
+
     if (produto != null) {
       produto.nome = novoNome;
       await produtosBox.put(produtoId, produto);
-      
+
       // Reordenar produtos na categoria após alterar o nome
       final categoria = categoriasBox.get(produto.categoriaId);
       if (categoria != null) {
@@ -335,13 +357,14 @@ class GestaoRepositoryImpl implements IGestaoRepository {
   }
 
   /// Ordena uma lista de IDs de produtos alfabeticamente baseado nos nomes
-  void _ordenarProdutosPorNome(List<String> produtoIds, Box<ProdutoModel> produtosBox) {
+  void _ordenarProdutosPorNome(
+      List<String> produtoIds, Box<ProdutoModel> produtosBox) {
     produtoIds.sort((idA, idB) {
       final produtoA = produtosBox.get(idA);
       final produtoB = produtosBox.get(idB);
-      
+
       if (produtoA == null || produtoB == null) return 0;
-      
+
       return produtoA.nome.toLowerCase().compareTo(produtoB.nome.toLowerCase());
     });
   }

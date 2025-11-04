@@ -7,6 +7,9 @@ abstract class IGestaoRepository {
   /// Popula o banco de dados com um conjunto de dados, substituindo os existentes.
   Future<void> seedDatabase(List<Map<String, dynamic>> seedData);
 
+  /// Limpa todos os dados persistidos e retorna o repositório ao estado inicial.
+  Future<void> resetStorage();
+
   /// Exporta os dados atualmente no banco de dados (perfil ativo) para uma string JSON.
   Future<String> exportCurrentDataToJson();
 

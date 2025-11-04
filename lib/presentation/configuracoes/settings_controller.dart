@@ -19,20 +19,26 @@ final settingsControllerProvider =
 );
 
 class SettingsController extends Notifier<SettingsState> {
-  late final GetTemplates _getTemplates;
-  late final GetTemplate _getTemplate;
-  late final SaveTemplate _saveTemplate;
-  late final DeleteTemplate _deleteTemplate;
+  late GetTemplates _getTemplates;
+  late GetTemplate _getTemplate;
+  late SaveTemplate _saveTemplate;
+  late DeleteTemplate _deleteTemplate;
+  bool _isInitialized = false;
   static const _uuid = Uuid();
 
-  @override
-  SettingsState build() {
-    final repository = ref.watch(settingsRepositoryProvider);
+  void _init() {
+    if (_isInitialized) return;
+    final repository = ref.read(settingsRepositoryProvider);
     _getTemplates = GetTemplates(repository);
     _getTemplate = GetTemplate(repository);
     _saveTemplate = SaveTemplate(repository);
     _deleteTemplate = DeleteTemplate(repository);
+    _isInitialized = true;
+  }
 
+  @override
+  SettingsState build() {
+    _init();
     state = SettingsState(isLoading: true);
     _carregarTemplates();
     return state;

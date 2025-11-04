@@ -16,11 +16,11 @@ class SettingsRepositoryImpl implements ISettingsRepository {
     Hive.registerAdapter(CategoryFormattingAdapter());
     Hive.registerAdapter(ProductFilterAdapter());
     Hive.registerAdapter(ProductNameFormattingAdapter());
-    
+
     await Hive.openBox<ReportTemplateModel>(_templatesBox);
     await Hive.openBox(_preferencesBox);
     await ensureDefaultTemplate();
-    
+
     // Garante que há um template selecionado
     final prefsBox = Hive.box(_preferencesBox);
     if (prefsBox.get(_keyTemplateSelecionado) == null) {
@@ -31,7 +31,7 @@ class SettingsRepositoryImpl implements ISettingsRepository {
   @override
   Future<void> ensureDefaultTemplate() async {
     final box = Hive.box<ReportTemplateModel>(_templatesBox);
-    
+
     // Verifica se já existe o template padrão
     if (box.get('default') == null) {
       final defaultTemplate = ReportTemplate.padrao();
@@ -51,12 +51,12 @@ class SettingsRepositoryImpl implements ISettingsRepository {
   Future<void> deleteTemplate(String templateId) async {
     final box = Hive.box<ReportTemplateModel>(_templatesBox);
     final template = box.get(templateId);
-    
+
     // Não permite deletar o template padrão
     if (template?.isPadrao ?? false) {
       throw Exception('Não é possível deletar o modelo padrão');
     }
-    
+
     await box.delete(templateId);
   }
 
@@ -70,15 +70,27 @@ class SettingsRepositoryImpl implements ISettingsRepository {
   List<ReportTemplate> getTemplates() {
     final box = Hive.box<ReportTemplateModel>(_templatesBox);
     final templates = box.values.toList();
-    
+
     // Ordena: padrão primeiro, depois alfabeticamente
     templates.sort((a, b) {
       if (a.isPadrao) return -1;
       if (b.isPadrao) return 1;
       return a.nome.compareTo(b.nome);
     });
-    
+
     return templates;
+  }
+
+  @override
+  Future<void> resetStorage() async {
+    final templatesBox = Hive.box<ReportTemplateModel>(_templatesBox);
+    final prefsBox = Hive.box(_preferencesBox);
+
+    await templatesBox.clear();
+    await prefsBox.clear();
+
+    await ensureDefaultTemplate();
+    await prefsBox.put(_keyTemplateSelecionado, 'default');
   }
 
   @override
@@ -129,15 +141,15 @@ class SettingsRepositoryImpl implements ISettingsRepository {
       final box = Hive.box<ReportTemplateModel>(_templatesBox);
       return box.get('default');
     }
-    
+
     final box = Hive.box<ReportTemplateModel>(_templatesBox);
     final template = box.get(templateId);
-    
+
     // Se o template selecionado não existe mais, retorna o padrão
     if (template == null) {
       return box.get('default');
     }
-    
+
     return template;
   }
 }

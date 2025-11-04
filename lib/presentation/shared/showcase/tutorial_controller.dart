@@ -47,11 +47,18 @@ class TutorialState {
 
 /// Controller para gerenciar o tutorial.
 class TutorialController extends Notifier<TutorialState> {
-  late final TutorialService _service;
+  late TutorialService _service;
+  bool _isInitialized = false;
+
+  void _init() {
+    if (_isInitialized) return;
+    _service = ref.read(tutorialServiceProvider);
+    _isInitialized = true;
+  }
 
   @override
   TutorialState build() {
-    _service = ref.watch(tutorialServiceProvider);
+    _init();
     return const TutorialState();
   }
 

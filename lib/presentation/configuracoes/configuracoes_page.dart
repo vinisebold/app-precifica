@@ -5,6 +5,8 @@ import 'settings_controller.dart';
 import '../shared/providers/modo_compacto_provider.dart';
 import '../shared/showcase/tutorial_controller.dart';
 import '../../app/core/snackbar/app_snackbar.dart';
+import '../../app/core/services/app_reset_service.dart';
+import '../gestao_produtos/gestao_controller.dart';
 
 class ConfiguracoesPage extends ConsumerWidget {
   const ConfiguracoesPage({super.key});
@@ -72,28 +74,26 @@ class ConfiguracoesPage extends ConsumerWidget {
 
                 AppSnackbar.show(
                   context,
-                  valor
-                      ? 'Modo compacto ativado'
-                      : 'Modo compacto desativado',
+                  valor ? 'Modo compacto ativado' : 'Modo compacto desativado',
                 );
               },
             ),
           ),
           const SizedBox(height: 24),
-          const _SectionHeader(label: 'Ajuda'),
+          const _SectionHeader(label: 'Aplicativo'),
           _SurfaceCard(
             child: ListTile(
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              leading: const Icon(Icons.school_outlined),
+              leading: const Icon(Icons.restart_alt_outlined),
               title: Text(
-                'Reiniciar Tutorial',
+                'Reset',
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
               subtitle: Text(
-                'Visualize o tutorial de introdução novamente',
+                'Remove dados, perfis e configurações, voltando ao estado inicial',
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -102,20 +102,51 @@ class ConfiguracoesPage extends ConsumerWidget {
               enableFeedback: true,
               splashColor: Colors.transparent,
               onTap: () async {
-                final confirmed = await _confirmarReiniciarTutorial(context);
-                if (confirmed == true) {
-                  await ref
-                      .read(tutorialControllerProvider.notifier)
-                      .resetTutorial();
+                final confirmed = await _confirmarResetAplicativo(context);
+                if (confirmed != true) return;
+
+                if (!context.mounted) return;
+
+                showDialog<void>(
+                  context: context,
+                  useRootNavigator: true,
+                  barrierDismissible: false,
+                  builder: (_) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+
+                try {
+                  final resetService = ref.read(appResetServiceProvider);
+                  await resetService.reset();
+
+                  ref.invalidate(gestaoControllerProvider);
+                  ref.invalidate(settingsControllerProvider);
+                  ref.invalidate(modoCompactoProvider);
+                  ref.invalidate(tutorialControllerProvider);
+
                   await ref
                       .read(tutorialControllerProvider.notifier)
                       .startTutorial();
+
                   if (!context.mounted) return;
-                  Navigator.of(context).pop();
+
+                  Navigator.of(context, rootNavigator: true).pop();
+
                   AppSnackbar.showSuccess(
                     context,
-                    'Tutorial reiniciado com sucesso!',
+                    'Aplicativo resetado com sucesso!',
                   );
+
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                } catch (e) {
+                  if (context.mounted) {
+                    Navigator.of(context, rootNavigator: true).pop();
+                    AppSnackbar.showError(
+                      context,
+                      'Não foi possível resetar o aplicativo.',
+                    );
+                  }
                 }
               },
             ),
@@ -125,15 +156,15 @@ class ConfiguracoesPage extends ConsumerWidget {
     );
   }
 
-  Future<bool?> _confirmarReiniciarTutorial(BuildContext context) {
+  Future<bool?> _confirmarResetAplicativo(BuildContext context) {
     return showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Reiniciar Tutorial'),
+        title: const Text('Reset do Aplicativo'),
         content: const Text(
-          'Isso irá reiniciar o tutorial interativo do aplicativo. '
-          'Você será guiado novamente pelos principais recursos.\n\n'
-          'Deseja continuar?',
+          'Todos os dados, perfis salvos e preferências serão removidos. '
+          'O aplicativo ficará como se estivesse sendo aberto pela primeira vez.\n\n'
+          'Esta ação não pode ser desfeita. Deseja continuar?',
         ),
         actions: [
           TextButton(
@@ -142,7 +173,7 @@ class ConfiguracoesPage extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Reiniciar'),
+            child: const Text('Resetar'),
           ),
         ],
       ),

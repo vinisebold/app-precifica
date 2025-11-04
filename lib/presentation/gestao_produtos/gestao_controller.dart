@@ -44,25 +44,26 @@ final gestaoControllerProvider =
 );
 
 class GestaoController extends Notifier<GestaoState> {
-  late final GetCategorias _getCategorias;
-  late final CreateCategoria _createCategoria;
-  late final DeleteCategoria _deleteCategoria;
-  late final ReorderCategorias _reorderCategorias;
-  late final UpdateCategoriaName _updateCategoriaName;
-  late final GetProdutosByCategoria _getProdutosByCategoria;
-  late final CreateProduto _createProduto;
-  late final DeleteProduto _deleteProduto;
-  late final UpdateProdutoName _updateProdutoName;
-  late final UpdateProdutoPrice _updateProdutoPrice;
-  late final UndoDeleteProduto _undoDeleteProduto;
-  late final GetAllProdutos _getAllProdutos;
-  late final UpdateProdutoStatus _updateProdutoStatus;
-  late final OrganizeWithAI _organizeAI;
+  late GetCategorias _getCategorias;
+  late CreateCategoria _createCategoria;
+  late DeleteCategoria _deleteCategoria;
+  late ReorderCategorias _reorderCategorias;
+  late UpdateCategoriaName _updateCategoriaName;
+  late GetProdutosByCategoria _getProdutosByCategoria;
+  late CreateProduto _createProduto;
+  late DeleteProduto _deleteProduto;
+  late UpdateProdutoName _updateProdutoName;
+  late UpdateProdutoPrice _updateProdutoPrice;
+  late UndoDeleteProduto _undoDeleteProduto;
+  late GetAllProdutos _getAllProdutos;
+  late UpdateProdutoStatus _updateProdutoStatus;
+  late OrganizeWithAI _organizeAI;
   final PreferencesService _preferencesService = PreferencesService();
+  bool _isInitialized = false;
 
-  @override
-  GestaoState build() {
-    final repository = ref.watch(gestaoRepositoryProvider);
+  void _init() {
+    if (_isInitialized) return;
+    final repository = ref.read(gestaoRepositoryProvider);
     _getCategorias = GetCategorias(repository);
     _createCategoria = CreateCategoria(repository);
     _deleteCategoria = DeleteCategoria(repository);
@@ -79,7 +80,12 @@ class GestaoController extends Notifier<GestaoState> {
 
     final aiService = AIService();
     _organizeAI = OrganizeWithAI(repository, aiService);
+    _isInitialized = true;
+  }
 
+  @override
+  GestaoState build() {
+    _init();
     // O estado inicial será definido por _carregarDadosIniciais
     state = GestaoState(isLoading: true);
     _carregarDadosIniciais();

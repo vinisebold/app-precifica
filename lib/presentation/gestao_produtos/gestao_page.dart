@@ -156,7 +156,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     final categorias = ref.read(gestaoControllerProvider).categorias;
     if (categorias.isEmpty) return;
 
-    Future.delayed(const Duration(milliseconds: 500), () {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ShowcaseView.get().startShowCase([TutorialKeys.categorySwipeArea]);
       _swipeShowcaseAutoAdvanceTimer?.cancel();
@@ -759,10 +759,13 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-    final isDark = theme.brightness == Brightness.dark;
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
+  final textTheme = theme.textTheme;
+  final isDark = theme.brightness == Brightness.dark;
+  final tutorialStateSnapshot = ref.watch(tutorialControllerProvider);
+  final isSwipeShowcaseActive = tutorialStateSnapshot.isActive &&
+    tutorialStateSnapshot.currentStep == TutorialStep.showSwipe;
 
     ref.listen<GestaoState>(
       gestaoControllerProvider,
@@ -1004,11 +1007,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                     Showcase.withWidget(
                       key: TutorialKeys.categorySwipeArea,
                       targetShapeBorder: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16.0),
+                        borderRadius: BorderRadius.circular(18.0),
                       ),
+                      targetBorderRadius: BorderRadius.circular(18.0),
                       targetPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 16,
+                        horizontal: 0,
+                        vertical: 0,
                       ),
                       overlayColor:
                           colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32),
@@ -1017,32 +1021,47 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                       disableDefaultTargetGestures: true,
                       disposeOnTap: false,
                       onTargetClick: () {},
-                      container: const _SwipeGestureGuide(),
-                      child: RepaintBoundary(
-                        child: NotificationListener<ScrollNotification>(
-                          onNotification: _handlePageViewScrollNotification,
-                          child: PageView.builder(
-                            controller: _pageController,
-                            physics: const FastPageScrollPhysics(),
-                            itemCount: gestaoState.categorias.length,
-                            itemBuilder: (context, index) => ProductListView(
-                              categoriaId: gestaoState.categorias[index].id,
-                              onProdutoDoubleTap: (produto) =>
-                                  _mostrarDialogoEditarNome(
-                                context,
-                                ref,
-                                titulo: 'Editar Produto',
-                                valorAtual: produto.nome,
-                                onSalvar: (novoNome) => gestaoNotifier
-                                    .atualizarNomeProduto(
-                                        produto.id, novoNome),
+                      container: const SizedBox.shrink(),
+                      child: Stack(
+                        children: [
+                          RepaintBoundary(
+                            child: NotificationListener<ScrollNotification>(
+                              onNotification:
+                                  _handlePageViewScrollNotification,
+                              child: PageView.builder(
+                                controller: _pageController,
+                                physics: const FastPageScrollPhysics(),
+                                itemCount: gestaoState.categorias.length,
+                                itemBuilder: (context, index) =>
+                                    ProductListView(
+                                  categoriaId:
+                                      gestaoState.categorias[index].id,
+                                  onProdutoDoubleTap: (produto) =>
+                                      _mostrarDialogoEditarNome(
+                                    context,
+                                    ref,
+                                    titulo: 'Editar Produto',
+                                    valorAtual: produto.nome,
+                                    onSalvar: (novoNome) => gestaoNotifier
+                                        .atualizarNomeProduto(
+                                            produto.id, novoNome),
+                                  ),
+                                  onProdutoTap: (produto) =>
+                                      gestaoNotifier.atualizarStatusProduto(
+                                          produto.id, !produto.isAtivo),
+                                ),
                               ),
-                              onProdutoTap: (produto) =>
-                                  gestaoNotifier.atualizarStatusProduto(
-                                      produto.id, !produto.isAtivo),
                             ),
                           ),
-                        ),
+                          if (isSwipeShowcaseActive)
+                            const Positioned.fill(
+                              child: IgnorePointer(
+                                child: Center(
+                                  child: _SwipeGestureGuide(),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   if (gestaoState.isReordering) _buildDeleteArea(context, ref),
@@ -1772,7 +1791,6 @@ class _SwipeGestureGuideState extends State<_SwipeGestureGuide>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
 
     return IgnorePointer(
       child: SizedBox(
@@ -1790,30 +1808,17 @@ class _SwipeGestureGuideState extends State<_SwipeGestureGuide>
                 ),
               );
             },
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHigh
-                    .withOpacity(isDark ? 0.92 : 0.86),
-                borderRadius: BorderRadius.circular(32),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.35 : 0.18),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 20,
+            child: Icon(
+              Icons.swipe,
+              size: 56,
+              color: colorScheme.primary,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
-                child: Icon(
-                  Icons.swipe,
-                  size: 48,
-                  color: colorScheme.primary,
-                ),
-              ),
+              ],
             ),
           ),
         ),

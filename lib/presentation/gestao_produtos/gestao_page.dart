@@ -34,6 +34,8 @@ class GestaoPage extends ConsumerStatefulWidget {
 
 class _GestaoPageState extends ConsumerState<GestaoPage> {
   static const double _sneakPeekVisibilityThreshold = 0.08;
+  static const Duration _spotlightFadeDuration =
+      Duration(milliseconds: 220);
   late PageController _pageController; // safely initialized in initState
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int? _lastSettledPageIndex;
@@ -43,6 +45,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   Timer? _navigationShowcaseAutoAdvanceTimer;
   Timer? _swipeShowcaseDismissTimer;
   Timer? _swipeShowcaseAutoAdvanceTimer;
+  Rect? _navigationSpotlightRect;
+  bool _navigationSpotlightUpdateScheduled = false;
+  Rect? _swipeSpotlightRect;
+  bool _swipeSpotlightUpdateScheduled = false;
+  Timer? _navigationSpotlightClearTimer;
+  Timer? _swipeSpotlightClearTimer;
 
   @override
   void initState() {
@@ -196,6 +204,94 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     _swipeShowcaseAutoAdvanceTimer = null;
   }
 
+  void _scheduleNavigationSpotlightUpdate() {
+    _navigationSpotlightClearTimer?.cancel();
+    _navigationSpotlightClearTimer = null;
+    if (_navigationSpotlightUpdateScheduled) return;
+    _navigationSpotlightUpdateScheduled = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _navigationSpotlightUpdateScheduled = false;
+      if (!mounted) return;
+
+      final navContext = TutorialKeys.categoryNavBar.currentContext;
+      final overlayRenderBox = context.findRenderObject() as RenderBox?;
+      final navRenderBox =
+          navContext != null ? navContext.findRenderObject() as RenderBox? : null;
+
+      if (overlayRenderBox == null || navRenderBox == null || !navRenderBox.attached) {
+        return;
+      }
+
+      final offset =
+          navRenderBox.localToGlobal(Offset.zero, ancestor: overlayRenderBox);
+      final rect = offset & navRenderBox.size;
+
+      if (_navigationSpotlightRect != rect) {
+        setState(() => _navigationSpotlightRect = rect);
+      }
+    });
+  }
+
+  void _clearNavigationSpotlightRect() {
+    if (_navigationSpotlightRect == null || _navigationSpotlightClearTimer != null) {
+      return;
+    }
+
+    _navigationSpotlightClearTimer =
+        Timer(_spotlightFadeDuration, () {
+      if (!mounted) return;
+      _navigationSpotlightClearTimer = null;
+      if (_navigationSpotlightRect != null) {
+        setState(() => _navigationSpotlightRect = null);
+      }
+    });
+  }
+
+  void _scheduleSwipeSpotlightUpdate() {
+    _swipeSpotlightClearTimer?.cancel();
+    _swipeSpotlightClearTimer = null;
+    if (_swipeSpotlightUpdateScheduled) return;
+    _swipeSpotlightUpdateScheduled = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _swipeSpotlightUpdateScheduled = false;
+      if (!mounted) return;
+
+      final swipeContext = TutorialKeys.categorySwipeArea.currentContext;
+      final overlayRenderBox = context.findRenderObject() as RenderBox?;
+      final swipeRenderBox = swipeContext != null
+          ? swipeContext.findRenderObject() as RenderBox?
+          : null;
+
+      if (overlayRenderBox == null || swipeRenderBox == null || !swipeRenderBox.attached) {
+        return;
+      }
+
+      final offset =
+          swipeRenderBox.localToGlobal(Offset.zero, ancestor: overlayRenderBox);
+      final rect = offset & swipeRenderBox.size;
+
+      if (_swipeSpotlightRect != rect) {
+        setState(() => _swipeSpotlightRect = rect);
+      }
+    });
+  }
+
+  void _clearSwipeSpotlightRect() {
+    if (_swipeSpotlightRect == null || _swipeSpotlightClearTimer != null) {
+      return;
+    }
+
+    _swipeSpotlightClearTimer = Timer(_spotlightFadeDuration, () {
+      if (!mounted) return;
+      _swipeSpotlightClearTimer = null;
+      if (_swipeSpotlightRect != null) {
+        setState(() => _swipeSpotlightRect = null);
+      }
+    });
+  }
+
   void _completeNavigationStep() {
     if (!mounted) {
       _cancelNavigationShowcaseTimers();
@@ -257,6 +353,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   void dispose() {
     _cancelNavigationShowcaseTimers();
     _cancelSwipeShowcaseTimers();
+    _navigationSpotlightClearTimer?.cancel();
+    _swipeSpotlightClearTimer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -759,13 +857,27 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
   @override
   Widget build(BuildContext context) {
-  final theme = Theme.of(context);
-  final colorScheme = theme.colorScheme;
-  final textTheme = theme.textTheme;
-  final isDark = theme.brightness == Brightness.dark;
-  final tutorialStateSnapshot = ref.watch(tutorialControllerProvider);
-  final isSwipeShowcaseActive = tutorialStateSnapshot.isActive &&
-    tutorialStateSnapshot.currentStep == TutorialStep.showSwipe;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final tutorialStateSnapshot = ref.watch(tutorialControllerProvider);
+    final isNavigationShowcaseActive = tutorialStateSnapshot.isActive &&
+        tutorialStateSnapshot.currentStep == TutorialStep.showNavigation;
+    final isSwipeShowcaseActive = tutorialStateSnapshot.isActive &&
+        tutorialStateSnapshot.currentStep == TutorialStep.showSwipe;
+
+    if (isNavigationShowcaseActive) {
+      _scheduleNavigationSpotlightUpdate();
+    } else {
+      _clearNavigationSpotlightRect();
+    }
+
+    if (isSwipeShowcaseActive) {
+      _scheduleSwipeSpotlightUpdate();
+    } else {
+      _clearSwipeSpotlightRect();
+    }
 
     ref.listen<GestaoState>(
       gestaoControllerProvider,
@@ -1014,8 +1126,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                         horizontal: 0,
                         vertical: 0,
                       ),
-                      overlayColor:
-                          colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32),
+            overlayColor: Colors.transparent,
                       disableBarrierInteraction:
                           TutorialConfig.disableBarrierInteraction,
                       disableDefaultTargetGestures: true,
@@ -1106,6 +1217,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 targetShapeBorder: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(28.0),
                 ),
+                overlayColor: Colors.transparent,
                 disableDefaultTargetGestures: true,
                 disposeOnTap: false,
                 child: CategoriaNavBar(
@@ -1155,6 +1267,29 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                     ? colorScheme.onPrimaryContainer
                     : colorScheme.outline,
               ),
+            ),
+          ),
+        ),
+        Positioned.fill(
+          child: IgnorePointer(
+            child: _SpotlightFadeOverlay(
+              rect: _navigationSpotlightRect,
+              visible: isNavigationShowcaseActive,
+              borderRadius: 28.0,
+              overlayColor:
+                  colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32),
+            ),
+          ),
+        ),
+        Positioned.fill(
+          child: IgnorePointer(
+            child: _SpotlightFadeOverlay(
+              rect: _swipeSpotlightRect,
+              visible: isSwipeShowcaseActive,
+              borderRadius: 18.0,
+              overlayColor:
+                  colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32),
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
             ),
           ),
         ),
@@ -1824,6 +1959,106 @@ class _SwipeGestureGuideState extends State<_SwipeGestureGuide>
         ),
       ),
     );
+  }
+}
+
+class _SpotlightFadeOverlay extends StatelessWidget {
+  const _SpotlightFadeOverlay({
+    required this.rect,
+    required this.visible,
+    required this.borderRadius,
+    required this.overlayColor,
+    this.padding = EdgeInsets.zero,
+    this.duration = _GestaoPageState._spotlightFadeDuration,
+  });
+
+  final Rect? rect;
+  final bool visible;
+  final double borderRadius;
+  final Color overlayColor;
+  final EdgeInsets padding;
+  final Duration duration;
+
+  @override
+  Widget build(BuildContext context) {
+    final targetRect = rect;
+    if (targetRect == null) {
+      return const SizedBox.shrink();
+    }
+
+    final paddedRect = Rect.fromLTRB(
+      targetRect.left - padding.left,
+      targetRect.top - padding.top,
+      targetRect.right + padding.right,
+      targetRect.bottom + padding.bottom,
+    );
+
+    return TweenAnimationBuilder<double>(
+      key: ValueKey<Rect>(paddedRect),
+      tween: Tween<double>(begin: 0, end: visible ? 1 : 0),
+      duration: duration,
+      curve: Curves.easeOutCubic,
+      builder: (context, opacity, child) {
+        if (opacity <= 0.001) {
+          return const SizedBox.shrink();
+        }
+
+        return SizedBox.expand(
+          child: CustomPaint(
+            painter: _SpotlightPainter(
+              rect: paddedRect,
+              radius: borderRadius,
+              color: overlayColor,
+              opacity: opacity,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SpotlightPainter extends CustomPainter {
+  _SpotlightPainter({
+    required this.rect,
+    required this.radius,
+    required this.color,
+    required this.opacity,
+  });
+
+  final Rect rect;
+  final double radius;
+  final Color color;
+  final double opacity;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final effectiveOpacity =
+        (color.opacity * opacity).clamp(0.0, 1.0).toDouble();
+    if (effectiveOpacity <= 0.0) return;
+
+    final overlayPaint = Paint()
+      ..color = color.withOpacity(effectiveOpacity)
+      ..style = PaintingStyle.fill;
+
+    final screenPath = Path()..addRect(Offset.zero & size);
+    final spotlightPath = Path()
+      ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(radius)));
+    final overlayPath = Path.combine(
+      PathOperation.difference,
+      screenPath,
+      spotlightPath,
+    );
+
+    canvas.drawPath(overlayPath, overlayPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SpotlightPainter oldDelegate) {
+    return rect != oldDelegate.rect ||
+        radius != oldDelegate.radius ||
+        color != oldDelegate.color ||
+        opacity != oldDelegate.opacity;
   }
 }
 

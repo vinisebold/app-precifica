@@ -112,6 +112,7 @@ Widget buildTutorialShowcase({
   ShapeBorder? targetShapeBorder,
   EdgeInsets? targetPadding,
   double? targetBorderRadius,
+  Color? overlayColor,
   bool disposeOnTap = true,
   bool? disableDefaultTargetGestures,
 }) {
@@ -131,7 +132,8 @@ Widget buildTutorialShowcase({
   );
 
   final tooltipBackground = colorScheme.surfaceContainerHigh;
-  final overlayColor = colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32);
+  final overlayTint =
+      overlayColor ?? colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32);
 
   final effectiveOnTargetClick = onTargetClick ?? () {};
 
@@ -149,12 +151,12 @@ Widget buildTutorialShowcase({
         ),
     targetPadding: targetPadding ?? EdgeInsets.zero,
     tooltipPosition: tooltipPosition,
-  onTargetClick: effectiveOnTargetClick,
+    onTargetClick: effectiveOnTargetClick,
     onToolTipClick: onToolTipClick,
     disposeOnTap: disposeOnTap,
     disableDefaultTargetGestures:
         disableDefaultTargetGestures ?? TutorialConfig.disableDefaultTargetGestures,
-    overlayColor: overlayColor,
+    overlayColor: overlayTint,
     disableBarrierInteraction: TutorialConfig.disableBarrierInteraction,
     disableMovingAnimation: false,
     scaleAnimationDuration: TutorialConfig.animationDuration,

@@ -76,8 +76,13 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         _prefetchAdjacent(initialPage);
       }
 
-      // Inicia o tutorial se necessário
-      _checkAndShowTutorial();
+      Future.microtask(() async {
+        await ref
+            .read(tutorialControllerProvider.notifier)
+            .checkAndStartTutorial();
+        // A exibição do passo inicial será disparada pelo ref.listen
+        // ao detectar a mudança de estado do tutorial.
+      });
     });
   }
 

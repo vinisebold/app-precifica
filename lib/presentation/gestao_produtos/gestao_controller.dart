@@ -96,6 +96,10 @@ class GestaoController extends Notifier<GestaoState> {
     state = state.copyWith(isLoading: true);
     try {
       await _organizeAI();
+      
+      // Limpa perfil ao organizar com IA, pois a estrutura foi reorganizada
+      _clearPerfilSeNecessario();
+      
       await _carregarDadosIniciais();
     } catch (e) {
       state = state.copyWith(
@@ -334,6 +338,14 @@ class GestaoController extends Notifier<GestaoState> {
   void setDraggingProduto(bool value) =>
       state = state.copyWith(isDraggingProduto: value);
 
+  /// Limpa o perfil atual quando o usuário faz alterações sensíveis
+  /// que invalidam o perfil aplicado
+  void _clearPerfilSeNecessario() {
+    if (state.perfilAtual != null) {
+      state = state.copyWith(clearPerfilAtual: true);
+    }
+  }
+
   Future<void> criarCategoria(String nome) async {
     state = state.copyWith(isLoading: true);
     try {
@@ -372,6 +384,9 @@ class GestaoController extends Notifier<GestaoState> {
       await _deleteCategoria(categoriaId);
       final categoriasAtualizadas = _getCategorias();
 
+      // Limpa perfil ao deletar categoria
+      _clearPerfilSeNecessario();
+
       if (categoriasAtualizadas.isNotEmpty) {
         final novaCategoriaId = categoriasAtualizadas.first.id;
         final novosProdutos = _getProdutosByCategoria(novaCategoriaId);
@@ -407,6 +422,10 @@ class GestaoController extends Notifier<GestaoState> {
 
     try {
       await _reorderCategorias(categorias);
+      
+      // Limpa perfil ao reordenar categorias
+      _clearPerfilSeNecessario();
+      
       state = state.copyWith(categorias: categorias);
     } catch (e) {
       state = state.copyWith(errorMessage: 'Falha ao reordenar categorias.');
@@ -416,6 +435,10 @@ class GestaoController extends Notifier<GestaoState> {
   Future<void> atualizarNomeCategoria(String id, String novoNome) async {
     try {
       await _updateCategoriaName(id: id, novoNome: novoNome);
+      
+      // Limpa perfil ao modificar nome da categoria
+      _clearPerfilSeNecessario();
+      
       state = state.copyWith(categorias: _getCategorias());
     } catch (e) {
       state =
@@ -465,6 +488,9 @@ class GestaoController extends Notifier<GestaoState> {
 
       await _deleteProduto(
           produtoId: produtoId, categoriaId: categoriaDoProdutoDeletado);
+      
+      // Limpa perfil ao deletar produto
+      _clearPerfilSeNecessario();
     } on StateError catch (_) {
       // Produto não encontrado na lista
       state = state.copyWith(
@@ -532,6 +558,10 @@ class GestaoController extends Notifier<GestaoState> {
   Future<void> atualizarNomeProduto(String id, String novoNome) async {
     try {
       await _updateProdutoName(id: id, novoNome: novoNome);
+      
+      // Limpa perfil ao modificar nome do produto
+      _clearPerfilSeNecessario();
+      
       _refreshProdutosDaCategoriaAtual();
     } catch (e) {
       state =

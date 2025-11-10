@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';
-import '../presentation/gestao_produtos/gestao_page.dart';
+import '../presentation/shared/introduction/app_introduction_wrapper.dart';
 import 'core/toast/global_toast_host.dart';
 
 class AppWidget extends StatelessWidget {
@@ -14,7 +14,7 @@ class AppWidget extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      home: const GestaoPage(),
+      home: const AppIntroductionWrapper(),
       builder: (context, child) {
         if (child == null) return const SizedBox.shrink();
         return GlobalToastHost(child: child);

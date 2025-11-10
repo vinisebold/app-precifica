@@ -26,7 +26,6 @@ dependencies:
   package_info_plus: ^8.0.0
   shared_preferences: ^2.2.3
   showcaseview: ^5.0.1
-  introduction_screen: ^4.0.0
 
 dev_dependencies:
   flutter_test:
@@ -42,6 +41,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/profiles/
+    - assets/introduction/
 
 flutter_launcher_icons:
   android: "launcher_icon"

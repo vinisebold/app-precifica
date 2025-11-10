@@ -122,14 +122,11 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   }
 
   void _showCreateCategoryShowcase() {
-    showTutorialInstruction(
-      context: context,
-      title: TutorialConfig.tutorialTitle,
-      message: TutorialConfig.step1Description,
-      onDismiss: () {
-        ShowcaseView.get().startShowCase([TutorialKeys.addCategoryButton]);
-      },
-    );
+    // Inicia o showcase diretamente sem o diálogo de boas-vindas
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      ShowcaseView.get().startShowCase([TutorialKeys.addCategoryButton]);
+    });
   }
 
   void _showCreateProductShowcase() {

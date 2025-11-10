@@ -7,6 +7,7 @@ import '../shared/showcase/tutorial_controller.dart';
 import '../../app/core/snackbar/app_snackbar.dart';
 import '../../app/core/services/app_reset_service.dart';
 import '../gestao_produtos/gestao_controller.dart';
+import '../shared/introduction/app_introduction_wrapper.dart';
 
 class ConfiguracoesPage extends ConsumerWidget {
   const ConfiguracoesPage({super.key});
@@ -85,11 +86,16 @@ class ConfiguracoesPage extends ConsumerWidget {
             child: ListTile(
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              leading: const Icon(Icons.restart_alt_outlined),
+              leading: Icon(
+                Icons.restart_alt_outlined,
+                color: colorScheme.onSurfaceVariant,
+              ),
               title: Text(
                 'Reset',
                 style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+                  // Aparência mais discreta
+                  fontWeight: FontWeight.w500,
+                  color: colorScheme.onSurface,
                 ),
               ),
               subtitle: Text(
@@ -98,7 +104,7 @@ class ConfiguracoesPage extends ConsumerWidget {
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
-              trailing: const Icon(Icons.chevron_right_rounded),
+              // Sem ícone de navegação para reduzir destaque
               enableFeedback: true,
               splashColor: Colors.transparent,
               onTap: () async {
@@ -120,25 +126,24 @@ class ConfiguracoesPage extends ConsumerWidget {
                   final resetService = ref.read(appResetServiceProvider);
                   await resetService.reset();
 
+                  // Invalida estados
                   ref.invalidate(gestaoControllerProvider);
                   ref.invalidate(settingsControllerProvider);
                   ref.invalidate(modoCompactoProvider);
                   ref.invalidate(tutorialControllerProvider);
 
-                  await ref
-                      .read(tutorialControllerProvider.notifier)
-                      .startTutorial();
-
                   if (!context.mounted) return;
 
+                  // Fecha o diálogo de loading
                   Navigator.of(context, rootNavigator: true).pop();
 
-                  AppSnackbar.showSuccess(
-                    context,
-                    'Aplicativo resetado com sucesso!',
+                  // Navega para o fluxo inicial (introdução), limpando toda a pilha
+                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (_) => const AppIntroductionWrapper(),
+                    ),
+                    (route) => false,
                   );
-
-                  Navigator.of(context).popUntil((route) => route.isFirst);
                 } catch (e) {
                   if (context.mounted) {
                     Navigator.of(context, rootNavigator: true).pop();

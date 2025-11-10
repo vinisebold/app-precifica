@@ -37,27 +37,15 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                physics: const ClampingScrollPhysics(),
-                itemCount: pages.length,
-                onPageChanged: (index) => setState(() => _currentPage = index),
-                itemBuilder: (context, index) {
-                  final page = pages[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _buildPage(context, page),
-                  );
-                },
-              ),
-            ),
-            _buildBottomBar(context, pages.length),
-          ],
-        ),
+      body: PageView.builder(
+        controller: _pageController,
+        physics: const ClampingScrollPhysics(),
+        itemCount: pages.length,
+        onPageChanged: (index) => setState(() => _currentPage = index),
+        itemBuilder: (context, index) {
+          final page = pages[index];
+          return _buildPage(context, page);
+        },
       ),
     );
   }
@@ -114,14 +102,25 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
   }
 
   Widget _buildPage(BuildContext context, _IntroductionPageData page) {
+    final totalPages = _buildPages(context).length;
+
     return LayoutBuilder(
       builder: (context, constraints) {
+        Widget content;
         switch (page.type) {
           case _IntroductionPageType.phone:
-            return _buildPhonePage(context, constraints, page);
+            content = _buildPhonePage(context, constraints, page);
+            break;
           case _IntroductionPageType.icon:
-            return _buildIconPage(context, constraints, page);
+            content = _buildIconPage(context, constraints, page);
+            break;
         }
+        return Column(
+          children: [
+            Expanded(child: content),
+            _buildBottomBar(context, totalPages),
+          ],
+        );
       },
     );
   }
@@ -138,14 +137,24 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
     return Column(
       children: [
         Expanded(
-          flex: 6,
+          flex: 7,
           child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: page.primaryColor,
-              borderRadius: BorderRadius.circular(32),
+              color: Colors.grey[900],
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.10),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            padding: const EdgeInsets.fromLTRB(24, 32, 24, 12),
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
             child: Align(
               alignment: Alignment.bottomCenter,
               child: ClipRRect(
@@ -156,7 +165,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
                 child: Image.asset(
                   page.assetPath!,
                   fit: BoxFit.contain,
-                  width: constraints.maxWidth,
+                  width: double.infinity,
                 ),
               ),
             ),
@@ -164,14 +173,15 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
         ),
         const SizedBox(height: 16),
         Expanded(
-          flex: 4,
+          flex: 3,
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                Spacer(),
                 Text(
                   page.title,
                   textAlign: TextAlign.center,
@@ -189,6 +199,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
+                Spacer(),
               ],
             ),
           ),
@@ -208,17 +219,27 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
     return Column(
       children: [
         Expanded(
-          flex: 6,
+          flex: 7,
           child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: page.primaryColor.withOpacity(0.25),
-              borderRadius: BorderRadius.circular(32),
+              color: Colors.grey[900],
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            padding: const EdgeInsets.fromLTRB(24, 32, 24, 12),
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
             child: Center(
               child: Container(
-                width: constraints.maxWidth * 0.5,
+                width: double.infinity,
                 constraints: const BoxConstraints(maxWidth: 220, maxHeight: 220),
                 decoration: BoxDecoration(
                   color: page.gradientColors == null ? page.primaryColor : null,
@@ -262,14 +283,15 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
         ),
         const SizedBox(height: 16),
         Expanded(
-          flex: 4,
+          flex: 3,
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                Spacer(),
                 Text(
                   page.title,
                   textAlign: TextAlign.center,
@@ -287,6 +309,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
                     height: 1.4,
                   ),
                 ),
+                Spacer(),
               ],
             ),
           ),

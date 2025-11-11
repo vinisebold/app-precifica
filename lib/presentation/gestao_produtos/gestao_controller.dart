@@ -351,16 +351,11 @@ class GestaoController extends Notifier<GestaoState> {
     try {
       await _createCategoria(nome);
       final categoriasAtualizadas = _getCategorias();
-      final tinhaCategoriasAntes = state.categorias.isNotEmpty;
 
-      String? categoriaSelecionadaId = state.categoriaSelecionadaId;
-      if (!tinhaCategoriasAntes ||
-          categoriaSelecionadaId == null ||
-          !categoriasAtualizadas
-              .any((categoria) => categoria.id == categoriaSelecionadaId)) {
-        categoriaSelecionadaId =
-            categoriasAtualizadas.isNotEmpty ? categoriasAtualizadas.first.id : null;
-      }
+      // Seleciona automaticamente a categoria recém-criada (última da lista)
+      String? categoriaSelecionadaId = categoriasAtualizadas.isNotEmpty 
+          ? categoriasAtualizadas.last.id 
+          : null;
 
       final produtosAtualizados = categoriaSelecionadaId != null
           ? _getProdutosByCategoria(categoriaSelecionadaId)

@@ -11,6 +11,7 @@ import 'package:showcaseview/showcaseview.dart';
 
 import 'package:precifica/domain/entities/produto.dart';
 import 'package:precifica/app/core/toast/global_toast_controller.dart';
+import 'package:precifica/app/core/snackbar/app_snackbar.dart';
 
 import 'gestao_controller.dart';
 import 'gestao_state.dart';
@@ -1801,10 +1802,20 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   void _salvarNovoProduto(BuildContext dialogContext,
       TextEditingController controller, WidgetRef ref) {
     HapticFeedback.lightImpact();
-    final nomeProduto = controller.text;
+    final nomeProduto = controller.text.trim();
     if (nomeProduto.isNotEmpty) {
       ref.read(gestaoControllerProvider.notifier).criarProduto(nomeProduto);
       Navigator.of(dialogContext).pop();
+      
+      // Exibe feedback de sucesso
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          AppSnackbar.showSuccess(
+            context,
+            'Produto "$nomeProduto" adicionado com sucesso!',
+          );
+        }
+      });
     }
   }
 
@@ -1955,10 +1966,20 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   void _salvarNovaCategoria(BuildContext dialogContext,
       TextEditingController controller, WidgetRef ref) {
     HapticFeedback.lightImpact();
-    final nomeCategoria = controller.text;
+    final nomeCategoria = controller.text.trim();
     if (nomeCategoria.isNotEmpty) {
       ref.read(gestaoControllerProvider.notifier).criarCategoria(nomeCategoria);
       Navigator.of(dialogContext).pop();
+      
+      // Exibe feedback de sucesso
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          AppSnackbar.showSuccess(
+            context,
+            'Categoria "$nomeCategoria" adicionada com sucesso!',
+          );
+        }
+      });
     }
   }
 }

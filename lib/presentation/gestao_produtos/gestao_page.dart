@@ -734,7 +734,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                     ),
                                     tooltipPadding: const EdgeInsets.all(16),
                                     targetShapeBorder: const CircleBorder(),
-                                    targetPadding: const EdgeInsets.all(10),
+                                    targetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                     onTargetClick: applySelectedProfile,
                                     disposeOnTap: true,
                                     disableDefaultTargetGestures: false,

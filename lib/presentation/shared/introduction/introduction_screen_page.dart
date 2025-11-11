@@ -20,8 +20,14 @@ class IntroductionScreenPage extends ConsumerStatefulWidget {
 }
 
 class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage> {
-  final PageController _pageController = PageController();
+  late PageController _pageController;
   int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
 
   @override
   void dispose() {
@@ -37,15 +43,67 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      body: PageView.builder(
-        controller: _pageController,
-        physics: const ClampingScrollPhysics(),
-        itemCount: pages.length,
-        onPageChanged: (index) => setState(() => _currentPage = index),
-        itemBuilder: (context, index) {
-          final page = pages[index];
-          return _buildPage(context, page);
-        },
+      body: Column(
+        children: [
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              physics: const ClampingScrollPhysics(),
+              itemCount: pages.length,
+              onPageChanged: (index) {
+                if (mounted) {
+                  setState(() => _currentPage = index);
+                }
+              },
+              itemBuilder: (context, index) => Column(
+                children: [
+                  Expanded(
+                    flex: 7,
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[900],
+                          ),
+                          padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+                          child: _buildMediaContent(context, pages[index]),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: 20,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                  spreadRadius: 0,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    flex: 3,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                      child: _buildTextContent(context, pages[index]),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          _buildBottomBar(context, pages.length),
+        ],
       ),
     );
   }
@@ -57,14 +115,14 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
       _IntroductionPageData.phone(
         title: 'Preços desorganizados?',
         body:
-            'Atualizar preços em listas de papel, planilhas ou anotações é trabalhoso e lento.',
+        'Atualizar preços em listas de papel, planilhas ou anotações é trabalhoso e lento.',
         assetPath: 'assets/introduction/example1.png',
         primaryColor: colorScheme.errorContainer.withOpacity(0.3),
       ),
       _IntroductionPageData.icon(
         title: 'Perdendo tempo?',
         body:
-            'Distribuir preços atualizados para clientes pelo WhatsApp ou imprimindo é repetitivo e ineficiente.',
+        'Distribuir preços atualizados para clientes pelo WhatsApp ou imprimindo é repetitivo e ineficiente.',
         icon: Icons.schedule_outlined,
         primaryColor: colorScheme.tertiaryContainer,
         iconColor: colorScheme.onTertiaryContainer,
@@ -72,7 +130,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
       _IntroductionPageData.icon(
         title: 'Precifica resolve isso!',
         body:
-            'Centralize todos os seus produtos e preços em um só lugar. Organize por categorias de forma prática.',
+        'Centralize todos os seus produtos e preços em um só lugar. Organize por categorias de forma prática.',
         icon: Icons.folder_special_outlined,
         primaryColor: colorScheme.primaryContainer,
         iconColor: colorScheme.onPrimaryContainer,
@@ -83,7 +141,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
       _IntroductionPageData.icon(
         title: 'Compartilhe facilmente',
         body:
-            'Envie suas listas de preços atualizadas pelo WhatsApp ou imprima de forma rápida e profissional.',
+        'Envie suas listas de preços atualizadas pelo WhatsApp ou imprima de forma rápida e profissional.',
         icon: Icons.share_outlined,
         primaryColor: colorScheme.secondaryContainer,
         iconColor: colorScheme.onSecondaryContainer,
@@ -101,219 +159,99 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
     ];
   }
 
-  Widget _buildPage(BuildContext context, _IntroductionPageData page) {
-    final totalPages = _buildPages(context).length;
+  Widget _buildMediaContent(BuildContext context, _IntroductionPageData page) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        Widget content;
-        switch (page.type) {
-          case _IntroductionPageType.phone:
-            content = _buildPhonePage(context, constraints, page);
-            break;
-          case _IntroductionPageType.icon:
-            content = _buildIconPage(context, constraints, page);
-            break;
-        }
-        return Column(
+    if (page.type == _IntroductionPageType.phone) {
+      return Align(
+        alignment: Alignment.bottomCenter,
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(36),
+            topRight: Radius.circular(36),
+          ),
+          child: Image.asset(
+            page.assetPath!,
+            fit: BoxFit.contain,
+            width: double.infinity,
+          ),
+        ),
+      );
+    }
+
+    // Icon page
+    return Center(
+      child: Container(
+        width: double.infinity,
+        constraints: const BoxConstraints(maxWidth: 220, maxHeight: 220),
+        decoration: BoxDecoration(
+          color: page.gradientColors == null ? page.primaryColor : null,
+          gradient: page.gradientColors != null
+              ? LinearGradient(
+            colors: page.gradientColors!,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          )
+              : null,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: page.hasSubtext
+            ? Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Expanded(child: content),
-            _buildBottomBar(context, totalPages),
+            Icon(
+              page.icon,
+              size: 60,
+              color: page.iconColor ?? colorScheme.onPrimary,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              page.subtext!,
+              textAlign: TextAlign.center,
+              style: textTheme.titleMedium?.copyWith(
+                color: page.iconColor ?? colorScheme.onPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
-        );
-      },
+        )
+            : Icon(
+          page.icon,
+          size: 80,
+          color: page.iconColor ?? colorScheme.onPrimary,
+        ),
+      ),
     );
   }
 
-  Widget _buildPhonePage(
-    BuildContext context,
-    BoxConstraints constraints,
-    _IntroductionPageData page,
-  ) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-    final colorScheme = theme.colorScheme;
-
-    return Column(
-      children: [
-        Expanded(
-          flex: 7,
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.10),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(36),
-                  topRight: Radius.circular(36),
-                ),
-                child: Image.asset(
-                  page.assetPath!,
-                  fit: BoxFit.contain,
-                  width: double.infinity,
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Expanded(
-          flex: 3,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Spacer(),
-                Text(
-                  page.title,
-                  textAlign: TextAlign.center,
-                  style: textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  page.body,
-                  textAlign: TextAlign.center,
-                  style: textTheme.bodyLarge?.copyWith(
-                    height: 1.4,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                Spacer(),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildIconPage(
-    BuildContext context,
-    BoxConstraints constraints,
-    _IntroductionPageData page,
-  ) {
+  Widget _buildTextContent(BuildContext context, _IntroductionPageData page) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Expanded(
-          flex: 7,
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
-            child: Center(
-              child: Container(
-                width: double.infinity,
-                constraints: const BoxConstraints(maxWidth: 220, maxHeight: 220),
-                decoration: BoxDecoration(
-                  color: page.gradientColors == null ? page.primaryColor : null,
-                  gradient: page.gradientColors != null
-                      ? LinearGradient(
-                          colors: page.gradientColors!,
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : null,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: page.hasSubtext
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            page.icon,
-                            size: 60,
-                            color: page.iconColor ?? colorScheme.onPrimary,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            page.subtext!,
-                            textAlign: TextAlign.center,
-                            style: textTheme.titleMedium?.copyWith(
-                              color: page.iconColor ?? colorScheme.onPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      )
-                    : Icon(
-                        page.icon,
-                        size: 80,
-                        color: page.iconColor ?? colorScheme.onPrimary,
-                      ),
-              ),
-            ),
+        const Spacer(),
+        Text(
+          page.title,
+          textAlign: TextAlign.center,
+          style: textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: page.titleColor ?? colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 16),
-        Expanded(
-          flex: 3,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Spacer(),
-                Text(
-                  page.title,
-                  textAlign: TextAlign.center,
-                  style: textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: page.titleColor ?? colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  page.body,
-                  textAlign: TextAlign.center,
-                  style: textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    height: 1.4,
-                  ),
-                ),
-                Spacer(),
-              ],
-            ),
+        Text(
+          page.body,
+          textAlign: TextAlign.center,
+          style: textTheme.bodyLarge?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+            height: 1.4,
           ),
         ),
+        const Spacer(),
       ],
     );
   }
@@ -341,13 +279,13 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
               child: isLastPage
                   ? const SizedBox.shrink()
                   : TextButton(
-                      onPressed: _handleSkip,
-                      style: TextButton.styleFrom(
-                        foregroundColor: colorScheme.primary,
-                        textStyle: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      child: const Text('Pular'),
-                    ),
+                onPressed: _handleSkip,
+                style: TextButton.styleFrom(
+                  foregroundColor: colorScheme.primary,
+                  textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                child: const Text('Pular'),
+              ),
             ),
             Expanded(
               child: Row(

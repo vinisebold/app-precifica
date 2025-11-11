@@ -69,24 +69,6 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
                           padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
                           child: _buildMediaContent(context, pages[index]),
                         ),
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          height: 20,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.15),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                  spreadRadius: 0,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),

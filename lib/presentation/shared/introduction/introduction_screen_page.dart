@@ -116,45 +116,28 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
         title: 'Preços desorganizados?',
         body:
         'Atualizar preços em listas de papel, planilhas ou anotações é trabalhoso e lento.',
-        assetPath: 'assets/introduction/example1.png',
+        assetPath: 'assets/introduction/wrong-way.png',
         primaryColor: colorScheme.errorContainer.withOpacity(0.3),
       ),
-      _IntroductionPageData.icon(
-        title: 'Perdendo tempo?',
-        body:
-        'Distribuir preços atualizados para clientes pelo WhatsApp ou imprimindo é repetitivo e ineficiente.',
-        icon: Icons.schedule_outlined,
-        primaryColor: colorScheme.tertiaryContainer,
-        iconColor: colorScheme.onTertiaryContainer,
-      ),
-      _IntroductionPageData.icon(
+      _IntroductionPageData.phone(
         title: 'Precifica resolve isso!',
         body:
         'Centralize todos os seus produtos e preços em um só lugar. Organize por categorias de forma prática.',
-        icon: Icons.folder_special_outlined,
+        assetPath: 'assets/introduction/in-app.png',
         primaryColor: colorScheme.primaryContainer,
-        iconColor: colorScheme.onPrimaryContainer,
-        titleColor: colorScheme.primary,
-        hasSubtext: true,
-        subtext: 'Suas\nCategorias',
       ),
-      _IntroductionPageData.icon(
+      _IntroductionPageData.phone(
         title: 'Compartilhe facilmente',
         body:
         'Envie suas listas de preços atualizadas pelo WhatsApp ou imprima de forma rápida e profissional.',
-        icon: Icons.share_outlined,
+        assetPath: 'assets/introduction/sharing.png',
         primaryColor: colorScheme.secondaryContainer,
-        iconColor: colorScheme.onSecondaryContainer,
-        titleColor: colorScheme.primary,
       ),
-      _IntroductionPageData.icon(
+      _IntroductionPageData.phone(
         title: 'Pronto para começar!',
         body: 'Vamos configurar seu primeiro catálogo de produtos. É rápido e fácil!',
-        icon: Icons.rocket_launch_outlined,
+        assetPath: 'assets/introduction/correct-way.png',
         primaryColor: colorScheme.primary,
-        iconColor: colorScheme.onPrimary,
-        titleColor: colorScheme.primary,
-        gradientColors: [colorScheme.primary, colorScheme.secondary],
       ),
     ];
   }

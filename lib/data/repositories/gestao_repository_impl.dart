@@ -188,6 +188,17 @@ class GestaoRepositoryImpl implements IGestaoRepository {
   @override
   Future<void> criarCategoria(String nome) async {
     final box = Hive.box<CategoriaModel>(_categoriasBox);
+    
+    // Verifica se já existe uma categoria com o mesmo nome (case-insensitive)
+    final nomeNormalizado = nome.trim().toLowerCase();
+    final categoriaExistente = box.values.any(
+      (categoria) => categoria.nome.trim().toLowerCase() == nomeNormalizado
+    );
+    
+    if (categoriaExistente) {
+      throw Exception('Já existe uma categoria com o nome "$nome".');
+    }
+    
     final novaOrdem = box.values.length;
     final novoId = _uuid.v4();
     final novaCategoria =
@@ -235,7 +246,19 @@ class GestaoRepositoryImpl implements IGestaoRepository {
       String categoriaId, String novoNome) async {
     final box = Hive.box<CategoriaModel>(_categoriasBox);
     final categoria = box.get(categoriaId);
+    
     if (categoria != null) {
+      // Verifica se já existe outra categoria com o mesmo nome (case-insensitive)
+      final nomeNormalizado = novoNome.trim().toLowerCase();
+      final categoriaExistente = box.values.any(
+        (cat) => cat.id != categoriaId && 
+                 cat.nome.trim().toLowerCase() == nomeNormalizado
+      );
+      
+      if (categoriaExistente) {
+        throw Exception('Já existe uma categoria com o nome "$novoNome".');
+      }
+      
       categoria.nome = novoNome;
       await box.put(categoriaId, categoria);
     }

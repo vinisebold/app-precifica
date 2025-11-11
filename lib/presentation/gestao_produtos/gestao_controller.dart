@@ -368,8 +368,12 @@ class GestaoController extends Notifier<GestaoState> {
         isLoading: false,
       );
     } catch (e) {
+      // Captura a mensagem de erro específica para nomes duplicados
+      final mensagemErro = e.toString().contains('Já existe uma categoria')
+          ? e.toString().replaceFirst('Exception: ', '')
+          : 'Falha ao criar categoria.';
       state = state.copyWith(
-          errorMessage: 'Falha ao criar categoria.', isLoading: false);
+          errorMessage: mensagemErro, isLoading: false);
     }
   }
 
@@ -436,8 +440,11 @@ class GestaoController extends Notifier<GestaoState> {
       
       state = state.copyWith(categorias: _getCategorias());
     } catch (e) {
-      state =
-          state.copyWith(errorMessage: 'Falha ao atualizar nome da categoria.');
+      // Captura a mensagem de erro específica para nomes duplicados
+      final mensagemErro = e.toString().contains('Já existe uma categoria')
+          ? e.toString().replaceFirst('Exception: ', '')
+          : 'Falha ao atualizar nome da categoria.';
+      state = state.copyWith(errorMessage: mensagemErro);
     }
   }
 

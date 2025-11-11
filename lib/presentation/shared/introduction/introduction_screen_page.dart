@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,17 +24,63 @@ class IntroductionScreenPage extends ConsumerStatefulWidget {
 class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage> {
   late PageController _pageController;
   int _currentPage = 0;
+  Timer? _autoPlayTimer;
+  Timer? _progressTimer;
+  double _progress = 0.0;
+  static const _autoPlayDuration = Duration(seconds: 5);
+  static const _progressUpdateInterval = Duration(milliseconds: 16); // ~60fps
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    _startAutoPlay();
   }
 
   @override
   void dispose() {
+    _autoPlayTimer?.cancel();
+    _progressTimer?.cancel();
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _startAutoPlay() {
+    _progress = 0.0;
+    _progressTimer?.cancel();
+    _autoPlayTimer?.cancel();
+
+    _progressTimer = Timer.periodic(_progressUpdateInterval, (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      
+      setState(() {
+        _progress += _progressUpdateInterval.inMilliseconds / _autoPlayDuration.inMilliseconds;
+        if (_progress >= 1.0) {
+          _progress = 1.0;
+        }
+      });
+    });
+
+    _autoPlayTimer = Timer(_autoPlayDuration, () {
+      if (!mounted) return;
+      
+      if (_currentPage < 3) {
+        _handleNext();
+      }
+    });
+  }
+
+  void _stopAutoPlay() {
+    _autoPlayTimer?.cancel();
+    _progressTimer?.cancel();
+  }
+
+  void _resetAutoPlay() {
+    _stopAutoPlay();
+    _startAutoPlay();
   }
 
   @override
@@ -53,26 +101,22 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
               onPageChanged: (index) {
                 if (mounted) {
                   setState(() => _currentPage = index);
+                  _resetAutoPlay();
                 }
               },
               itemBuilder: (context, index) => Column(
                 children: [
                   Expanded(
-                    flex: 7,
-                    child: Stack(
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[900],
-                          ),
-                          padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
-                          child: _buildMediaContent(context, pages[index]),
-                        ),
-                      ],
+                    flex: 8,
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[900],
+                      ),
+                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+                      child: _buildMediaContent(context, pages[index]),
                     ),
                   ),
-                  const SizedBox(height: 16),
                   Expanded(
                     flex: 3,
                     child: Padding(
@@ -94,28 +138,28 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
     final colorScheme = Theme.of(context).colorScheme;
 
     return [
-      _IntroductionPageData.phone(
+      _IntroductionPageData(
         title: 'Preços desorganizados?',
         body:
         'Atualizar preços em listas de papel, planilhas ou anotações é trabalhoso e lento.',
         assetPath: 'assets/introduction/wrong-way.png',
         primaryColor: colorScheme.errorContainer.withOpacity(0.3),
       ),
-      _IntroductionPageData.phone(
+      _IntroductionPageData(
         title: 'Precifica resolve isso!',
         body:
         'Centralize todos os seus produtos e preços em um só lugar. Organize por categorias de forma prática.',
         assetPath: 'assets/introduction/in-app.png',
         primaryColor: colorScheme.primaryContainer,
       ),
-      _IntroductionPageData.phone(
+      _IntroductionPageData(
         title: 'Compartilhe facilmente',
         body:
         'Envie suas listas de preços atualizadas pelo WhatsApp ou imprima de forma rápida e profissional.',
         assetPath: 'assets/introduction/sharing.png',
         primaryColor: colorScheme.secondaryContainer,
       ),
-      _IntroductionPageData.phone(
+      _IntroductionPageData(
         title: 'Pronto para começar!',
         body: 'Vamos configurar seu primeiro catálogo de produtos. É rápido e fácil!',
         assetPath: 'assets/introduction/correct-way.png',
@@ -125,66 +169,17 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
   }
 
   Widget _buildMediaContent(BuildContext context, _IntroductionPageData page) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    if (page.type == _IntroductionPageType.phone) {
-      return Align(
-        alignment: Alignment.bottomCenter,
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(36),
-            topRight: Radius.circular(36),
-          ),
-          child: Image.asset(
-            page.assetPath!,
-            fit: BoxFit.contain,
-            width: double.infinity,
-          ),
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(36),
+          topRight: Radius.circular(36),
         ),
-      );
-    }
-
-    // Icon page
-    return Center(
-      child: Container(
-        width: double.infinity,
-        constraints: const BoxConstraints(maxWidth: 220, maxHeight: 220),
-        decoration: BoxDecoration(
-          color: page.gradientColors == null ? page.primaryColor : null,
-          gradient: page.gradientColors != null
-              ? LinearGradient(
-            colors: page.gradientColors!,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          )
-              : null,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: page.hasSubtext
-            ? Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              page.icon,
-              size: 60,
-              color: page.iconColor ?? colorScheme.onPrimary,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              page.subtext!,
-              textAlign: TextAlign.center,
-              style: textTheme.titleMedium?.copyWith(
-                color: page.iconColor ?? colorScheme.onPrimary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        )
-            : Icon(
-          page.icon,
-          size: 80,
-          color: page.iconColor ?? colorScheme.onPrimary,
+        child: Image.asset(
+          page.assetPath,
+          fit: BoxFit.contain,
+          width: double.infinity,
         ),
       ),
     );
@@ -204,7 +199,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
           textAlign: TextAlign.center,
           style: textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: page.titleColor ?? colorScheme.onSurface,
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 16),
@@ -241,15 +236,31 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
           children: [
             SizedBox(
               width: 72,
-              child: isLastPage
-                  ? const SizedBox.shrink()
-                  : TextButton(
-                onPressed: _handleSkip,
-                style: TextButton.styleFrom(
-                  foregroundColor: colorScheme.primary,
-                  textStyle: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                child: const Text('Pular'),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(-0.5, 0),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                child: isLastPage
+                    ? const SizedBox.shrink(key: ValueKey('empty'))
+                    : TextButton(
+                        key: const ValueKey('skip'),
+                        onPressed: _handleSkip,
+                        style: TextButton.styleFrom(
+                          foregroundColor: colorScheme.primary,
+                          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        child: const Text('Pular'),
+                      ),
               ),
             ),
             Expanded(
@@ -257,16 +268,39 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(totalPages, (index) {
                   final isActive = index == _currentPage;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                  final isPast = index < _currentPage;
+                  
+                  return Container(
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     height: 10,
-                    width: isActive ? 24 : 10,
+                    width: 24,
                     decoration: BoxDecoration(
-                      color: isActive
-                          ? colorScheme.primary
-                          : colorScheme.surfaceContainerHighest,
+                      color: colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: TweenAnimationBuilder<double>(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOutCubic,
+                          tween: Tween<double>(
+                            begin: isPast ? 24 : (isActive ? 24 * _progress : 0),
+                            end: isPast ? 24 : (isActive ? 24 * _progress : 0),
+                          ),
+                          builder: (context, value, child) {
+                            return Container(
+                              height: 10,
+                              width: value,
+                              decoration: BoxDecoration(
+                                color: colorScheme.primary,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   );
                 }),
@@ -290,6 +324,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
   }
 
   Future<void> _handleSkip() async {
+    _stopAutoPlay();
     await _completeIntroduction();
   }
 
@@ -301,6 +336,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
   }
 
   Future<void> _handleDone() async {
+    _stopAutoPlay();
     await _completeIntroduction();
   }
 
@@ -316,44 +352,16 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
   }
 }
 
-enum _IntroductionPageType { phone, icon }
-
 class _IntroductionPageData {
-  _IntroductionPageData.phone({
+  _IntroductionPageData({
     required this.title,
     required this.body,
     required this.assetPath,
     required this.primaryColor,
-  })  : type = _IntroductionPageType.phone,
-        icon = null,
-        iconColor = null,
-        titleColor = null,
-        gradientColors = null,
-        hasSubtext = false,
-        subtext = null;
+  });
 
-  _IntroductionPageData.icon({
-    required this.title,
-    required this.body,
-    required this.icon,
-    required this.primaryColor,
-    this.iconColor,
-    this.titleColor,
-    this.gradientColors,
-    this.hasSubtext = false,
-    this.subtext,
-  })  : type = _IntroductionPageType.icon,
-        assetPath = null;
-
-  final _IntroductionPageType type;
   final String title;
   final String body;
-  final String? assetPath;
-  final IconData? icon;
+  final String assetPath;
   final Color primaryColor;
-  final Color? iconColor;
-  final Color? titleColor;
-  final List<Color>? gradientColors;
-  final bool hasSubtext;
-  final String? subtext;
 }

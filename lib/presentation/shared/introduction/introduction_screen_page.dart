@@ -143,7 +143,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
         body:
         'Atualizar preços em listas de papel, planilhas ou anotações é trabalhoso e lento.',
         assetPath: 'assets/introduction/wrong-way.png',
-        primaryColor: colorScheme.errorContainer.withOpacity(0.3),
+  primaryColor: colorScheme.errorContainer.withValues(alpha: 0.3),
       ),
       _IntroductionPageData(
         title: 'Precifica resolve isso!',
@@ -226,9 +226,9 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark
-              ? colorScheme.surfaceContainerHigh.withOpacity(0.3)
-              : colorScheme.surfaceContainerHigh.withOpacity(0.5),
+      color: isDark
+        ? colorScheme.surfaceContainerHigh.withValues(alpha: 0.3)
+        : colorScheme.surfaceContainerHigh.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(20),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),

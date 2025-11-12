@@ -116,6 +116,7 @@ class GestaoController extends Notifier<GestaoState> {
       final repository = ref.read(gestaoRepositoryProvider);
       final perfis = await repository.getProfileList();
       final categorias = _getCategorias();
+      final shouldClearPerfilAtual = nomePerfilCarregado == null;
 
       if (categorias.isNotEmpty) {
         // Tenta recuperar a última categoria visualizada
@@ -141,6 +142,7 @@ class GestaoController extends Notifier<GestaoState> {
           categoriaSelecionadaId: categoriaSelecionadaId,
           perfisSalvos: perfis,
           perfilAtual: nomePerfilCarregado,
+          clearPerfilAtual: shouldClearPerfilAtual,
           isLoading: false,
         );
       } else {
@@ -151,6 +153,7 @@ class GestaoController extends Notifier<GestaoState> {
           categoriaSelecionadaId: null,
           perfisSalvos: perfis,
           perfilAtual: nomePerfilCarregado,
+          clearPerfilAtual: shouldClearPerfilAtual,
           isLoading: false,
         );
       }
@@ -351,6 +354,7 @@ class GestaoController extends Notifier<GestaoState> {
     state = state.copyWith(isLoading: true);
     try {
       await _createCategoria(nome);
+      _clearPerfilSeNecessario();
       final categoriasAtualizadas = _getCategorias();
 
       // Seleciona automaticamente a categoria recém-criada (última da lista)
@@ -460,6 +464,7 @@ class GestaoController extends Notifier<GestaoState> {
     try {
       await _createProduto(
           nome: nome, categoriaId: state.categoriaSelecionadaId!);
+      _clearPerfilSeNecessario();
       _refreshProdutosDaCategoriaAtual();
     } catch (e) {
       state = state.copyWith(errorMessage: 'Falha ao criar produto.');
@@ -552,6 +557,7 @@ class GestaoController extends Notifier<GestaoState> {
     if (novoPreco != null) {
       try {
         await _updateProdutoPrice(id: produtoId, novoPreco: novoPreco);
+        _clearPerfilSeNecessario();
       } catch (e) {
         state = state.copyWith(errorMessage: 'Falha ao salvar o preço.');
       }
@@ -575,6 +581,7 @@ class GestaoController extends Notifier<GestaoState> {
   Future<void> atualizarStatusProduto(String id, bool isAtivo) async {
     try {
       await _updateProdutoStatus(id: id, isAtivo: isAtivo);
+      _clearPerfilSeNecessario();
       _refreshProdutosDaCategoriaAtual();
     } catch (e) {
       state =

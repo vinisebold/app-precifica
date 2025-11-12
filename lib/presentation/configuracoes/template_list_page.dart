@@ -49,7 +49,8 @@ class TemplateListPage extends ConsumerWidget {
                       separatorBuilder: (_, __) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Divider(
-                          color: colorScheme.outlineVariant.withOpacity(0.5),
+                          color: colorScheme.outlineVariant
+                              .withValues(alpha: 0.5),
                           thickness: 1,
                         ),
                       ),
@@ -137,7 +138,8 @@ class _TemplateCard extends ConsumerWidget {
                 IconButton(
                   icon: Icon(
                     Icons.lock,
-                    color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+          color: colorScheme.onSurfaceVariant
+            .withValues(alpha: 0.5),
                   ),
                   onPressed: null,
                   tooltip: 'Não editável',
@@ -164,35 +166,6 @@ class _TemplateCard extends ConsumerWidget {
     AppSnackbar.show(
       context,
       'Modelo "${template.nome}" selecionado',
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  final String label;
-  final Color backgroundColor;
-  final Color foregroundColor;
-
-  const _StatusChip({
-    required this.label,
-    required this.backgroundColor,
-    required this.foregroundColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      label: Text(
-        label,
-        style: TextStyle(
-          color: foregroundColor,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      backgroundColor: backgroundColor,
-      visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
     );
   }
 }

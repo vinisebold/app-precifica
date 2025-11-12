@@ -21,7 +21,7 @@ class ReportImageService {
   }) async {
     try {
       // Captura o widget como imagem
-      final Uint8List? imageBytes = await _screenshotController.captureFromWidget(
+      final Uint8List imageBytes = await _screenshotController.captureFromWidget(
         Material(
           child: ReportImageWidget(
             template: template,
@@ -33,10 +33,6 @@ class ReportImageService {
         delay: const Duration(milliseconds: 200),
       );
 
-      if (imageBytes == null) {
-        throw Exception('Falha ao capturar imagem do relatório');
-      }
-
       // Salva temporariamente o arquivo
       final tempDir = await getTemporaryDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -44,7 +40,7 @@ class ReportImageService {
       await file.writeAsBytes(imageBytes);
 
       // Compartilha a imagem e aguarda a conclusão
-      final result = await Share.shareXFiles(
+      await Share.shareXFiles(
         [XFile(file.path)],
         text: 'Relatório de Produtos - ${template.titulo}',
       );

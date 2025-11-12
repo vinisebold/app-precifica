@@ -88,14 +88,32 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
     // Apenas recria os FocusNodes se o número de produtos mudar
     if (_produtos.length != newProdutos.length) {
       _produtos = newProdutos;
-      _disposeFocusNodes();
-      _focusNodes = List.generate(_produtos.length, (index) => FocusNode());
+      _ensureFocusNodesCount(_produtos);
     }
   }
 
   void _disposeFocusNodes() {
     for (var node in _focusNodes) {
       node.dispose();
+    }
+  }
+
+  void _ensureFocusNodesCount(List<Produto> produtos) {
+    if (_focusNodes.length == produtos.length) {
+      return;
+    }
+
+    if (_focusNodes.length > produtos.length) {
+      for (var i = produtos.length; i < _focusNodes.length; i++) {
+        _focusNodes[i].dispose();
+      }
+      _focusNodes = List<FocusNode>.from(_focusNodes.take(produtos.length));
+    } else {
+      final additional = produtos.length - _focusNodes.length;
+      _focusNodes = [
+        ..._focusNodes,
+        for (var i = 0; i < additional; i++) FocusNode(),
+      ];
     }
   }
 
@@ -112,17 +130,11 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
   final produtos = ref.watch(gestaoControllerProvider.select((state) =>
     state.produtosPorCategoria[widget.categoriaId] ?? const <Produto>[]));
 
+    _ensureFocusNodesCount(produtos);
+
     // Garante que temos a quantidade correta de FocusNodes
     if (produtos.length != _focusNodes.length) {
-      // Usa um PostFrameCallback para evitar erros de build
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          setState(() {
-            _disposeFocusNodes();
-            _focusNodes = List.generate(produtos.length, (index) => FocusNode());
-          });
-        }
-      });
+      return const SizedBox.shrink();
     }
 
     final textTheme = Theme.of(context).textTheme;

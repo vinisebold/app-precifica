@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:precifica/data/services/ai_service.dart';
 import 'package:precifica/domain/entities/report_template.dart';
 import 'package:precifica/domain/services/report_generator_service.dart';
+import 'package:precifica/domain/services/report_image_service.dart';
 import 'package:precifica/domain/usecases/ai/organize_ai.dart';
 import 'package:precifica/domain/usecases/produto/update_produto_status.dart';
 
@@ -607,5 +608,26 @@ class GestaoController extends Notifier<GestaoState> {
       categorias: categorias,
       todosProdutos: todosProdutos,
     );
+  }
+
+  Future<void> compartilharRelatorioComoImagem(ReportTemplate template) async {
+    final categorias = _getCategorias();
+    final todosProdutos = _getAllProdutos();
+    final reportImageService = ReportImageService();
+
+    try {
+      await reportImageService.compartilharRelatorioComoImagem(
+        template: template,
+        categorias: categorias,
+        todosProdutos: todosProdutos,
+      );
+    } catch (e) {
+      // Não seta isLoading aqui para evitar conflito com o indicador da UI
+      state = state.copyWith(
+        errorMessage: 'Falha ao compartilhar imagem: ${e.toString()}',
+        isLoading: false, // Garante que o loading está desativado
+      );
+      rethrow;
+    }
   }
 }

@@ -10,6 +10,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:showcaseview/showcaseview.dart';
 
 import 'package:precifica/domain/entities/produto.dart';
+import 'package:precifica/domain/entities/report_template.dart';
 import 'package:precifica/app/core/toast/global_toast_controller.dart';
 import 'package:precifica/app/core/snackbar/app_snackbar.dart';
 
@@ -18,6 +19,7 @@ import 'gestao_state.dart';
 
 import '../configuracoes/configuracoes_page.dart';
 import '../configuracoes/settings_controller.dart';
+import '../shared/widgets/share_options_drawer.dart';
 import 'widgets/categoria_nav_bar.dart';
 import 'widgets/product_list_view.dart';
 import '../shared/showcase/tutorial_controller.dart';
@@ -1175,7 +1177,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                   icon: const Icon(Icons.share),
                   onPressed: () {
                     HapticFeedback.lightImpact();
-                    _compartilharRelatorio(context, ref);
+                    _mostrarOpcoesCompartilhamento(context, ref);
                   },
                   splashRadius: 26,
                 ),
@@ -2603,7 +2605,19 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
   }
 }
 
-void _compartilharRelatorio(BuildContext context, WidgetRef ref) {
+void _mostrarOpcoesCompartilhamento(BuildContext context, WidgetRef ref) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (context) => ShareOptionsDrawer(
+      onShareText: () => _compartilharRelatorioTexto(context, ref),
+      onShareImage: () => _compartilharRelatorioImagem(context, ref),
+    ),
+  );
+}
+
+void _compartilharRelatorioTexto(BuildContext context, WidgetRef ref) {
   final settingsNotifier = ref.read(settingsControllerProvider.notifier);
   final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
 
@@ -2617,4 +2631,59 @@ void _compartilharRelatorio(BuildContext context, WidgetRef ref) {
         gestaoNotifier.gerarTextoRelatorioComTemplate(template);
     Share.share(textoRelatorio);
   }
+}
+
+Future<void> _compartilharRelatorioImagem(BuildContext context, WidgetRef ref) async {
+  final settingsNotifier = ref.read(settingsControllerProvider.notifier);
+  final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
+
+  // Obtém o template selecionado ou usa o padrão
+  final template = settingsNotifier.getTemplateSelecionadoObjeto() ?? 
+      ReportTemplate.padrao();
+
+  // Guarda uma referência ao navigator antes de operações assíncronas
+  final navigator = Navigator.of(context);
+  bool dialogShown = false;
+  
+  try {
+    // Mostra indicador de carregamento
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => PopScope(
+        canPop: false,
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),
+    );
+    dialogShown = true;
+
+    await gestaoNotifier.compartilharRelatorioComoImagem(template);
+    
+  } catch (e) {
+    // Mostra mensagem de erro após fechar o loading
+    if (context.mounted) {
+      // Aguarda um pouco para garantir que a UI está pronta
+      await Future.delayed(const Duration(milliseconds: 100));
+      AppSnackbar.show(
+        context,
+        'Erro ao gerar imagem: ${e.toString()}',
+      );
+    }
+  } finally {
+    // Sempre fecha o indicador de carregamento no finally
+    if (dialogShown) {
+      try {
+        navigator.pop();
+      } catch (_) {
+        // Ignora erro se o diálogo já foi fechado
+      }
+    }
+  }
+}
+
+// Função antiga mantida para compatibilidade se necessário
+void _compartilharRelatorio(BuildContext context, WidgetRef ref) {
+  _compartilharRelatorioTexto(context, ref);
 }

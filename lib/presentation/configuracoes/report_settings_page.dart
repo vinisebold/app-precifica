@@ -205,7 +205,8 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
                         width: 40,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+                          color: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(2.5),
                         ),
                       ),
@@ -229,7 +230,6 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
 
   Widget _buildConfigPanel(BuildContext context, ReportTemplate template) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
     return Container(
       color: colorScheme.surface,

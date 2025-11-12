@@ -29,12 +29,14 @@ class TutorialTooltip extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final backgroundColor = colorScheme.surfaceContainerHigh;
-    final titleColor = colorScheme.onSurface.withOpacity(isDark ? 0.92 : 0.86);
-    final descriptionColor = colorScheme.onSurfaceVariant
-        .withOpacity(isDark ? 0.88 : 0.72);
-    final skipColor = colorScheme.onSurfaceVariant
-        .withOpacity(isDark ? 0.75 : 0.6);
-    final primaryShadow = colorScheme.shadow.withOpacity(isDark ? 0.55 : 0.2);
+  final titleColor =
+    colorScheme.onSurface.withValues(alpha: isDark ? 0.92 : 0.86);
+  final descriptionColor = colorScheme.onSurfaceVariant
+    .withValues(alpha: isDark ? 0.88 : 0.72);
+  final skipColor = colorScheme.onSurfaceVariant
+    .withValues(alpha: isDark ? 0.75 : 0.6);
+  final primaryShadow =
+    colorScheme.shadow.withValues(alpha: isDark ? 0.55 : 0.2);
     final filledButtonStyle = FilledButton.styleFrom(
       backgroundColor: colorScheme.primaryContainer,
       foregroundColor: colorScheme.onPrimaryContainer,
@@ -123,17 +125,17 @@ Widget buildTutorialShowcase({
 
   final titleStyle = textTheme.titleMedium?.copyWith(
     fontWeight: FontWeight.w700,
-    color: colorScheme.onSurface.withOpacity(isDark ? 0.92 : 0.86),
+  color: colorScheme.onSurface.withValues(alpha: isDark ? 0.92 : 0.86),
   );
 
   final descriptionStyle = textTheme.bodyMedium?.copyWith(
-    color: colorScheme.onSurfaceVariant.withOpacity(isDark ? 0.88 : 0.68),
+  color: colorScheme.onSurfaceVariant.withValues(alpha: isDark ? 0.88 : 0.68),
     height: 1.35,
   );
 
   final tooltipBackground = colorScheme.surfaceContainerHigh;
   final overlayTint =
-      overlayColor ?? colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32);
+    overlayColor ?? colorScheme.scrim.withValues(alpha: isDark ? 0.65 : 0.32);
 
   final effectiveOnTargetClick = onTargetClick ?? () {};
 

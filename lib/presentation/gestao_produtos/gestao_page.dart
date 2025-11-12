@@ -89,15 +89,6 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     });
   }
 
-  void _checkAndShowTutorial() {
-    final tutorialState = ref.read(tutorialControllerProvider);
-
-    // Mostra os showcases baseado no estado atual do tutorial
-    if (tutorialState.isActive) {
-      _showTutorialStep(tutorialState.currentStep);
-    }
-  }
-
   void _showTutorialStep(TutorialStep step) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -503,6 +494,17 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               });
             }
 
+            void selectProfile(String? value) {
+              if (value == null) return;
+              final hasChanged = perfilSelecionado != value;
+              if (hasChanged) {
+                setState(() => perfilSelecionado = value);
+              }
+              if (value == TutorialConfig.sampleProfileName) {
+                showApplyButtonShowcase();
+              }
+            }
+
             void applySelectedProfile() {
               if (perfilSelecionado != null &&
                   perfilSelecionado != perfilInicial) {
@@ -617,74 +619,54 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                             ? const Center(
                                 child: Text('Nenhum perfil salvo.'),
                               )
-                            : Scrollbar(
-                                thumbVisibility: true,
-                                child: ListView.builder(
-                                  itemCount: perfis.length,
-                                  itemBuilder: (context, index) {
-                                    final nomePerfil = perfis[index];
-                                    Widget tile = ListTile(
-                                      title: Text(nomePerfil),
-                                      leading: Radio<String>(
-                                        value: nomePerfil,
-                                        groupValue: perfilSelecionado,
-                                        onChanged: (value) {
-                                          setState(
-                                              () => perfilSelecionado = value);
-                                          if (value ==
-                                              TutorialConfig
-                                                  .sampleProfileName) {
-                                            showApplyButtonShowcase();
-                                          }
-                                        },
-                                      ),
-                                      onTap: () {
-                                        setState(() =>
-                                            perfilSelecionado = nomePerfil);
-                                        if (nomePerfil ==
-                                            TutorialConfig.sampleProfileName) {
-                                          showApplyButtonShowcase();
-                                        }
-                                      },
-                                    );
-
-                                    final isSampleProfile = nomePerfil ==
-                                        TutorialConfig.sampleProfileName;
-
-                                    if (shouldShowProfileSelectionTutorial &&
-                                        isSampleProfile) {
-                                      tile = buildTutorialShowcase(
-                                        context: context,
-                                        key: TutorialKeys.sampleProfileTile,
-                                        title: TutorialConfig
-                                            .profileSelectionTitle,
-                                        description: TutorialConfig
-                                            .profileSelectionDescription,
-                                        targetShapeBorder:
-                                            RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
+                            : RadioGroup<String>(
+                                groupValue: perfilSelecionado,
+                                onChanged: selectProfile,
+                                child: Scrollbar(
+                                  thumbVisibility: true,
+                                  child: ListView.builder(
+                                    itemCount: perfis.length,
+                                    itemBuilder: (context, index) {
+                                      final nomePerfil = perfis[index];
+                                      Widget tile = ListTile(
+                                        title: Text(nomePerfil),
+                                        leading: Radio<String>(
+                                          value: nomePerfil,
                                         ),
-                                        targetPadding:
-                                            const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
-                                        ),
-                                        onTargetClick: () {
-                                          if (perfilSelecionado != nomePerfil) {
-                                            setState(() =>
-                                                perfilSelecionado = nomePerfil);
-                                            showApplyButtonShowcase();
-                                          } else {
-                                            showApplyButtonShowcase();
-                                          }
-                                        },
-                                        child: tile,
+                                        onTap: () => selectProfile(nomePerfil),
                                       );
-                                    }
 
-                                    return tile;
-                                  },
+                                      final isSampleProfile = nomePerfil ==
+                                          TutorialConfig.sampleProfileName;
+
+                                      if (shouldShowProfileSelectionTutorial &&
+                                          isSampleProfile) {
+                                        tile = buildTutorialShowcase(
+                                          context: context,
+                                          key: TutorialKeys.sampleProfileTile,
+                                          title: TutorialConfig
+                                              .profileSelectionTitle,
+                                          description: TutorialConfig
+                                              .profileSelectionDescription,
+                                          targetShapeBorder:
+                                              RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          targetPadding:
+                                              const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 6,
+                                          ),
+                                          onTargetClick: () =>
+                                              selectProfile(nomePerfil),
+                                          child: tile,
+                                        );
+                                      }
+
+                                      return tile;
+                                    },
+                                  ),
                                 ),
                               ),
                       ),
@@ -726,13 +708,13 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                     titleTextStyle:
                                         textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.w700,
-                                      color: colorScheme.onSurface
-                                          .withOpacity(isDark ? 0.92 : 0.86),
+                    color: colorScheme.onSurface
+                      .withValues(alpha: isDark ? 0.92 : 0.86),
                                     ),
                                     descTextStyle:
                                         textTheme.bodyMedium?.copyWith(
-                                      color: colorScheme.onSurfaceVariant
-                                          .withOpacity(isDark ? 0.88 : 0.68),
+                    color: colorScheme.onSurfaceVariant
+                      .withValues(alpha: isDark ? 0.88 : 0.68),
                                       height: 1.35,
                                     ),
                                     tooltipPadding: const EdgeInsets.all(16),
@@ -741,8 +723,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                     onTargetClick: applySelectedProfile,
                                     disposeOnTap: true,
                                     disableDefaultTargetGestures: false,
-                                    overlayColor: colorScheme.scrim
-                                        .withOpacity(isDark ? 0.65 : 0.32),
+                  overlayColor: colorScheme.scrim
+                    .withValues(alpha: isDark ? 0.65 : 0.32),
                                     disableBarrierInteraction: false,
                                     disableMovingAnimation: false,
                                     scaleAnimationDuration:
@@ -1375,7 +1357,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               rect: _navigationSpotlightRect,
               visible: isNavigationShowcaseActive,
               borderRadius: 28.0,
-              overlayColor: colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32),
+        overlayColor:
+          colorScheme.scrim.withValues(alpha: isDark ? 0.65 : 0.32),
             ),
           ),
         ),
@@ -1385,7 +1368,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               rect: _swipeSpotlightRect,
               visible: isSwipeShowcaseActive,
               borderRadius: 18.0,
-              overlayColor: colorScheme.scrim.withOpacity(isDark ? 0.65 : 0.32),
+        overlayColor:
+          colorScheme.scrim.withValues(alpha: isDark ? 0.65 : 0.32),
               padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
             ),
           ),
@@ -2066,7 +2050,7 @@ class _SwipeGestureGuideState extends State<_SwipeGestureGuide>
               color: colorScheme.primary,
               shadows: [
                 Shadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -2086,7 +2070,6 @@ class _SpotlightFadeOverlay extends StatelessWidget {
     required this.borderRadius,
     required this.overlayColor,
     this.padding = EdgeInsets.zero,
-    this.duration = _GestaoPageState._spotlightFadeDuration,
   });
 
   final Rect? rect;
@@ -2094,7 +2077,6 @@ class _SpotlightFadeOverlay extends StatelessWidget {
   final double borderRadius;
   final Color overlayColor;
   final EdgeInsets padding;
-  final Duration duration;
 
   @override
   Widget build(BuildContext context) {
@@ -2113,7 +2095,7 @@ class _SpotlightFadeOverlay extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: ValueKey<Rect>(paddedRect),
       tween: Tween<double>(begin: 0, end: visible ? 1 : 0),
-      duration: duration,
+      duration: _GestaoPageState._spotlightFadeDuration,
       curve: Curves.easeOutCubic,
       builder: (context, opacity, child) {
         if (opacity <= 0.001) {
@@ -2151,11 +2133,11 @@ class _SpotlightPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final effectiveOpacity =
-        (color.opacity * opacity).clamp(0.0, 1.0).toDouble();
+        (color.a * opacity).clamp(0.0, 1.0).toDouble();
     if (effectiveOpacity <= 0.0) return;
 
     final overlayPaint = Paint()
-      ..color = color.withOpacity(effectiveOpacity)
+      ..color = color.withValues(alpha: effectiveOpacity)
       ..style = PaintingStyle.fill;
 
     final screenPath = Path()..addRect(Offset.zero & size);
@@ -2650,9 +2632,9 @@ Future<void> _compartilharRelatorioImagem(BuildContext context, WidgetRef ref) a
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => PopScope(
+      builder: (dialogContext) => const PopScope(
         canPop: false,
-        child: const Center(
+        child: Center(
           child: CircularProgressIndicator(),
         ),
       ),
@@ -2663,9 +2645,9 @@ Future<void> _compartilharRelatorioImagem(BuildContext context, WidgetRef ref) a
     
   } catch (e) {
     // Mostra mensagem de erro após fechar o loading
+    // Aguarda um pouco para garantir que a UI está pronta
+    await Future.delayed(const Duration(milliseconds: 100));
     if (context.mounted) {
-      // Aguarda um pouco para garantir que a UI está pronta
-      await Future.delayed(const Duration(milliseconds: 100));
       AppSnackbar.show(
         context,
         'Erro ao gerar imagem: ${e.toString()}',
@@ -2681,9 +2663,4 @@ Future<void> _compartilharRelatorioImagem(BuildContext context, WidgetRef ref) a
       }
     }
   }
-}
-
-// Função antiga mantida para compatibilidade se necessário
-void _compartilharRelatorio(BuildContext context, WidgetRef ref) {
-  _compartilharRelatorioTexto(context, ref);
 }

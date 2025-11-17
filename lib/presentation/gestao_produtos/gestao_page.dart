@@ -1417,6 +1417,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
+      useSafeArea: false,
+      barrierColor: Colors.transparent,
       builder: (dialogContext) => _ConfirmacaoIAOverlay(
         onConfirmar: () {
           Navigator.of(dialogContext).pop();
@@ -2259,8 +2261,11 @@ class _GlobalProcessingOverlayState extends State<_GlobalProcessingOverlay>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+  final colorScheme = Theme.of(context).colorScheme;
+  final textTheme = Theme.of(context).textTheme;
+  final overlayColor = Theme.of(context).brightness == Brightness.light
+    ? Colors.black.withOpacity(0.1)
+    : Colors.black.withOpacity(0.02);
 
     return Positioned.fill(
       child: AnimatedBuilder(
@@ -2522,29 +2527,34 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
+  final textTheme = theme.textTheme;
+  final overlayColor = theme.brightness == Brightness.light
+    ? Colors.black.withOpacity(0.82)
+    : Colors.black.withOpacity(0.02);
 
     return Material(
       color: Colors.transparent,
       child: Stack(
         children: [
+          // Overlay de blur cobrindo toda a tela sem restrições
           Positioned.fill(
-            child: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.02),
-                ),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                color: overlayColor,
               ),
             ),
           ),
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 340),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+          // Conteúdo do diálogo respeitando SafeArea
+          SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 340),
                 child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -2559,7 +2569,7 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
                         'Organizar com IA?',
                         style: textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
+                          color: Colors.white,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -2567,7 +2577,7 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
                       Text(
                         'Tem certeza que deseja reorganizar seus produtos automaticamente?',
                         style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                          color: Colors.white,
                           height: 1.4,
                         ),
                         textAlign: TextAlign.center,
@@ -2610,7 +2620,7 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
               ),
             ),
           ),
-        ],
+          )],
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:precifica/domain/entities/produto.dart';
@@ -10,12 +11,14 @@ class ProductListView extends ConsumerStatefulWidget {
   final Function(Produto) onProdutoDoubleTap;
   final Function(Produto) onProdutoTap;
   final String categoriaId;
+  final ValueChanged<bool>? onFabVisibilityRequest;
 
   const ProductListView({
     super.key,
     required this.onProdutoDoubleTap,
     required this.onProdutoTap,
     required this.categoriaId,
+    this.onFabVisibilityRequest,
   });
 
   @override
@@ -27,6 +30,7 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
   late List<Produto> _produtos;
   final ScrollController _scrollController = ScrollController();
   bool _isRestoringScroll = false;
+  bool _isFabCurrentlyVisible = true;
 
   @override
   void initState() {
@@ -37,6 +41,9 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
     
     // Adiciona listener para salvar a posição de rolagem
     _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onFabVisibilityRequest?.call(true);
+    });
     
     // Restaura a posição de rolagem após o build
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -51,6 +58,24 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
       ref.read(gestaoControllerProvider.notifier)
           .saveScrollPosition(widget.categoriaId, position);
     }
+
+    if (!_scrollController.hasClients) return;
+    final direction = _scrollController.position.userScrollDirection;
+    final offset = _scrollController.offset;
+
+    if (direction == ScrollDirection.reverse && offset > 56) {
+      _notifyFabVisibility(false);
+    } else if (direction == ScrollDirection.forward ||
+        direction == ScrollDirection.idle ||
+        offset <= 32) {
+      _notifyFabVisibility(true);
+    }
+  }
+
+  void _notifyFabVisibility(bool visible) {
+    if (_isFabCurrentlyVisible == visible) return;
+    _isFabCurrentlyVisible = visible;
+    widget.onFabVisibilityRequest?.call(visible);
   }
 
   Future<void> _restoreScrollPosition() async {
@@ -122,6 +147,7 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _disposeFocusNodes();
+    widget.onFabVisibilityRequest?.call(true);
     super.dispose();
   }
 
@@ -176,10 +202,14 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
     final modoCompacto = ref.watch(modoCompactoProvider);
     final dividerHeight = modoCompacto ? 8.0 : 14.0;
 
+    final verticalPadding = modoCompacto ? 4.0 : 8.0;
+    final bottomSpacer = modoCompacto ? 92.0 : 112.0;
+
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: modoCompacto ? 4.0 : 8.0),
+      padding: EdgeInsets.symmetric(vertical: verticalPadding),
       child: ListView.separated(
         controller: _scrollController,
+        padding: EdgeInsets.fromLTRB(0, 0, 0, bottomSpacer),
         itemCount: produtos.length,
         itemBuilder: (context, index) {
           final produto = produtos[index];

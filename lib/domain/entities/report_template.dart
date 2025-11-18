@@ -57,7 +57,7 @@ class ReportTemplate {
     this.formatoNomeProduto = ProductNameFormatting.firstWordBold,
     this.ocultarPrecos = false,
     this.textoPrecoZero = 'Consulte',
-    this.mostrarCifraoPreco = false,
+  this.mostrarCifraoPreco = true,
     this.isPadrao = false,
   });
 
@@ -132,7 +132,7 @@ class ReportTemplate {
       formatoNomeProduto: ProductNameFormatting.values[json['formatoNomeProduto'] as int? ?? 0],
       ocultarPrecos: json['ocultarPrecos'] as bool? ?? false,
       textoPrecoZero: json['textoPrecoZero'] as String? ?? 'Consulte',
-      mostrarCifraoPreco: json['mostrarCifraoPreco'] as bool? ?? false,
+  mostrarCifraoPreco: json['mostrarCifraoPreco'] as bool? ?? true,
       isPadrao: json['isPadrao'] as bool? ?? false,
     );
   }
@@ -153,7 +153,7 @@ class ReportTemplate {
       formatoNomeProduto: ProductNameFormatting.firstWordBold,
       ocultarPrecos: false,
       textoPrecoZero: 'Consulte',
-      mostrarCifraoPreco: false,
+  mostrarCifraoPreco: true,
       isPadrao: true,
     );
   }

@@ -1525,7 +1525,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               return Padding(
                 padding: const EdgeInsets.fromLTRB(28, 0, 28, 24),
                 child: Text(
-                  'v${snapshot.data!.version}',
+                  _formatVersion(snapshot.data!.version),
                   style: tt.labelSmall?.copyWith(
                     color: cs.outline,
                   ),
@@ -1536,6 +1536,15 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         ],
       ),
     );
+  }
+
+  String _formatVersion(String? version) {
+    if (version == null || version.isEmpty) return '';
+    final normalized = version.trim();
+    if (normalized.startsWith(RegExp(r'[vV]'))) {
+      return normalized.startsWith('v') ? normalized : 'v${normalized.substring(1)}';
+    }
+    return 'v$normalized';
   }
 
   void _abrirConfiguracoes(BuildContext context) {

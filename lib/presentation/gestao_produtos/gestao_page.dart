@@ -1143,61 +1143,74 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             elevation: 0,
             backgroundColor: Colors.transparent,
             automaticallyImplyLeading: false,
-            leading: buildTutorialShowcase(
-              context: context,
-              key: TutorialKeys.menuButton,
-              title: TutorialConfig.menuButtonTitle,
-              description: TutorialConfig.menuButtonDescription,
-              targetShapeBorder: const CircleBorder(),
-              onTargetClick: () {
-                ShowcaseView.get().dismiss();
-                _scaffoldKey.currentState?.openDrawer();
-              },
-              child: IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () {
-                  HapticFeedback.lightImpact();
+            leadingWidth: 58,
+            titleSpacing: 0,
+            leading: Center(
+              child: buildTutorialShowcase(
+                context: context,
+                key: TutorialKeys.menuButton,
+                title: TutorialConfig.menuButtonTitle,
+                description: TutorialConfig.menuButtonDescription,
+                targetShapeBorder: const CircleBorder(),
+                onTargetClick: () {
+                  ShowcaseView.get().dismiss();
                   _scaffoldKey.currentState?.openDrawer();
                 },
-                splashRadius: 26,
+                child: IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    _scaffoldKey.currentState?.openDrawer();
+                  },
+                  splashRadius: 24,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 48,
+                    minHeight: 48,
+                  ),
+                ),
               ),
             ),
             title: Text('Precifica', style: textTheme.titleLarge),
             actions: [
-              const SizedBox(width: 6),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: IconButton(
-                  icon: const Icon(Icons.share),
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    _mostrarOpcoesCompartilhamento(context, ref);
-                  },
-                  splashRadius: 26,
+              IconButton(
+                icon: const Icon(Icons.share),
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  _mostrarOpcoesCompartilhamento(context, ref);
+                },
+                splashRadius: 24,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 48,
+                  minHeight: 48,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(right: 8, left: 2),
-                child: buildTutorialShowcase(
-                  context: context,
-                  key: TutorialKeys.addCategoryButton,
-                  title: TutorialConfig.step1Title,
-                  description: TutorialConfig.step1Description,
-                  targetShapeBorder: const CircleBorder(),
-                  onTargetClick: () {
-                    ShowcaseView.get().dismiss();
+              buildTutorialShowcase(
+                context: context,
+                key: TutorialKeys.addCategoryButton,
+                title: TutorialConfig.step1Title,
+                description: TutorialConfig.step1Description,
+                targetShapeBorder: const CircleBorder(),
+                onTargetClick: () {
+                  ShowcaseView.get().dismiss();
+                  _mostrarDialogoNovaCategoria(context, ref);
+                },
+                child: IconButton(
+                  icon: const Icon(Icons.add_box_outlined),
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
                     _mostrarDialogoNovaCategoria(context, ref);
                   },
-                  child: IconButton(
-                    icon: const Icon(Icons.add_box_outlined),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      _mostrarDialogoNovaCategoria(context, ref);
-                    },
-                    splashRadius: 26,
+                  splashRadius: 24,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 48,
+                    minHeight: 48,
                   ),
                 ),
               ),
+              const SizedBox(width: 6),
             ],
           ),
           body: Container(

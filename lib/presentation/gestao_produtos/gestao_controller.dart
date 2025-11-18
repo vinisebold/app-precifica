@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:precifica/data/services/ai_service.dart';
@@ -11,6 +12,7 @@ import 'package:precifica/domain/services/report_generator_service.dart';
 import 'package:precifica/domain/services/report_image_service.dart';
 import 'package:precifica/domain/usecases/ai/organize_ai.dart';
 import 'package:precifica/domain/usecases/produto/update_produto_status.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:precifica/data/repositories/gestao_repository_impl.dart';
 import 'package:precifica/data/services/preferences_service.dart';
@@ -239,23 +241,71 @@ class GestaoController extends Notifier<GestaoState> {
     }
   }
 
-  Future<void> exportarPerfil(String nomePerfil) async {
+  Future<void> exportarPerfil([String? nomePerfil]) async {
     try {
       final repository = ref.read(gestaoRepositoryProvider);
-      final jsonString = await repository.getProfileContent(nomePerfil);
 
-      final result = await FilePicker.platform.saveFile(
-        dialogTitle: 'Exportar Perfil',
-        fileName: '$nomePerfil.json',
+      final exportName = _sanitizeNomePerfil(
+        nomePerfil ?? state.perfilAtual ?? _gerarNomeExportacaoPadrao(),
       );
 
-      if (result != null) {
-        final file = File(result);
-        await file.writeAsString(jsonString);
+      final jsonString = (nomePerfil != null && nomePerfil.trim().isNotEmpty)
+          ? await repository.getProfileContent(nomePerfil)
+          : await repository.exportCurrentDataToJson();
+
+      if (Platform.isAndroid || Platform.isIOS) {
+        await _compartilharPerfilComoJson(exportName, jsonString);
+      } else {
+        await _salvarPerfilComoJson(exportName, jsonString);
       }
     } catch (e) {
       state = state.copyWith(errorMessage: 'Falha ao exportar o perfil.');
     }
+  }
+
+  String _gerarNomeExportacaoPadrao() {
+    final formatter = DateFormat('yyyyMMdd_HHmm');
+    return 'perfil_atual_${formatter.format(DateTime.now())}';
+  }
+
+  String _sanitizeNomePerfil(String nome) {
+    final sanitized = nome.trim().isEmpty ? _gerarNomeExportacaoPadrao() : nome;
+    return sanitized.replaceAll(RegExp(r'[^a-zA-Z0-9_\-]'), '_');
+  }
+
+  Future<void> _compartilharPerfilComoJson(
+      String nomePerfil, String jsonString) async {
+    final tempDir = await getTemporaryDirectory();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final tempPath = p.join(tempDir.path, '${nomePerfil}_$timestamp.json');
+    final file = File(tempPath);
+    await file.writeAsString(jsonString);
+
+    await Share.shareXFiles(
+      [
+        XFile(
+          file.path,
+          mimeType: 'application/json',
+          name: '$nomePerfil.json',
+        ),
+      ],
+      subject: 'Exportação do perfil "$nomePerfil"',
+      text:
+          'Segue o arquivo JSON com os dados do perfil "$nomePerfil" exportado no app Precifica.',
+    );
+  }
+
+  Future<void> _salvarPerfilComoJson(
+      String nomePerfil, String jsonString) async {
+    final result = await FilePicker.platform.saveFile(
+      dialogTitle: 'Exportar Perfil',
+      fileName: '$nomePerfil.json',
+    );
+
+    if (result == null) return;
+
+    final file = File(result);
+    await file.writeAsString(jsonString);
   }
 
   Future<void> resetAndSeedDatabase(List<Map<String, dynamic>> seedData) async {

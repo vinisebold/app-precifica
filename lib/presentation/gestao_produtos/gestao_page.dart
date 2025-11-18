@@ -578,9 +578,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                               _ActionCard(
                                 label: 'Exportar',
                                 icon: Icons.file_upload_outlined,
-                                isEnabled: perfilInicial != null,
                                 onTap: () {
-                                  if (perfilInicial == null) return;
                                   Navigator.of(sheetContext).pop();
                                   gestaoNotifier.exportarPerfil(perfilInicial);
                                 },
@@ -2274,11 +2272,11 @@ class _GlobalProcessingOverlayState extends State<_GlobalProcessingOverlay>
 
   @override
   Widget build(BuildContext context) {
-  final colorScheme = Theme.of(context).colorScheme;
-  final textTheme = Theme.of(context).textTheme;
-  final overlayColor = Theme.of(context).brightness == Brightness.light
-    ? Colors.black.withOpacity(0.1)
-    : Colors.black.withOpacity(0.02);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final overlayOpacity = Theme.of(context).brightness == Brightness.light
+        ? 0.1
+        : 0.02;
 
     return Positioned.fill(
       child: AnimatedBuilder(
@@ -2308,7 +2306,8 @@ class _GlobalProcessingOverlayState extends State<_GlobalProcessingOverlay>
                                 colorScheme: colorScheme,
                               ),
                               child: Container(
-                                color: Colors.black.withValues(alpha: 0.02 * v),
+                                color: Colors.black
+                                    .withValues(alpha: overlayOpacity * v),
                               ),
                             );
                           },
@@ -2540,12 +2539,12 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  final theme = Theme.of(context);
-  final colorScheme = theme.colorScheme;
-  final textTheme = theme.textTheme;
-  final overlayColor = theme.brightness == Brightness.light
-    ? Colors.black.withOpacity(0.82)
-    : Colors.black.withOpacity(0.02);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final overlayColor = theme.brightness == Brightness.light
+        ? Colors.black.withValues(alpha: 0.82)
+        : Colors.black.withValues(alpha: 0.02);
 
     return Material(
       color: Colors.transparent,

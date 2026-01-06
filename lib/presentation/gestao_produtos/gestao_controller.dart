@@ -259,7 +259,7 @@ class GestaoController extends Notifier<GestaoState> {
         await _salvarPerfilComoJson(exportName, jsonString);
       }
     } catch (e) {
-      state = state.copyWith(errorMessage: 'Falha ao exportar o perfil.');
+      state = state.copyWith(errorMessage: 'Falha ao exportar o catálogo.');
     }
   }
 
@@ -289,16 +289,16 @@ class GestaoController extends Notifier<GestaoState> {
           name: '$nomePerfil.json',
         ),
       ],
-      subject: 'Exportação do perfil "$nomePerfil"',
+      subject: 'Exportação do catálogo "$nomePerfil"',
       text:
-          'Segue o arquivo JSON com os dados do perfil "$nomePerfil" exportado no app Precifica.',
+          'Segue o arquivo JSON com os dados do catálogo "$nomePerfil" exportado no app Precifica.',
     );
   }
 
   Future<void> _salvarPerfilComoJson(
       String nomePerfil, String jsonString) async {
     final result = await FilePicker.platform.saveFile(
-      dialogTitle: 'Exportar Perfil',
+      dialogTitle: 'Exportar Catálogo',
       fileName: '$nomePerfil.json',
     );
 
@@ -316,7 +316,7 @@ class GestaoController extends Notifier<GestaoState> {
       await _carregarDadosIniciais();
     } catch (e) {
       state = state.copyWith(
-          errorMessage: 'Falha ao carregar o perfil.', isLoading: false);
+          errorMessage: 'Falha ao carregar o catálogos.', isLoading: false);
     }
   }
 

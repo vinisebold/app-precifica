@@ -173,7 +173,7 @@ class GestaoRepositoryImpl implements IGestaoRepository {
     if (await file.exists()) {
       return file.readAsString();
     }
-    throw Exception('Perfil não encontrado');
+    throw Exception('Catálogo não encontrado');
   }
 
   @override

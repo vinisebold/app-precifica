@@ -543,7 +543,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Gerir Perfis',
+                      'Catálogos',
                       style: textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -1506,7 +1506,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                     Navigator.of(drawerContext).pop();
                     _mostrarDialogoGerenciarPerfis(drawerContext, ref);
                   },
-                  child: const Text('Gerir Perfis'),
+                  child: const Text('Catálogos'),
                 );
               },
             ),

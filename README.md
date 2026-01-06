@@ -1,85 +1,82 @@
-# Precifica
+<p align="center">
+  <img src="assets/icon.png" alt="Precifica" width="120"/>
+</p>
 
-Aplicativo Flutter para organização, categorização e gestão de produtos com apoio de IA (Gemini), pensado para pequenos negócios, hortifrutis, mercearias ou qualquer contexto onde seja útil manter uma lista de itens organizada, editável e facilmente compartilhável.
+<h1 align="center">Precifica</h1>
 
-## Objetivo
-Fornecer uma experiência simples e poderosa para:
-- Criar e gerenciar categorias de produtos.
-- Adicionar, editar, ativar/desativar e remover produtos rapidamente.
-- Reordenar categorias e produtos via drag & drop (com áreas de deleção).
-- Salvar, carregar, exportar e importar “perfís” completos (estado da aplicação).
-- Gerar um relatório textual compartilhável (ex.: para enviar pelo WhatsApp / e-mail).
-- Reorganizar automaticamente a taxonomia usando IA (Gemini) mantendo todos os dados originais.
+<p align="center">
+  Gerencie produtos, preços e compartilhe listas de forma simples e inteligente.
+</p>
 
-## Integração com IA
-O app envia o JSON atual das categorias/produtos para o modelo Gemini (Google Generative AI) e recebe um JSON reorganizado, seguindo regras rígidas de preservação de dados. Nenhum item é descartado: apenas reagrupado, normalizado ou inserido em uma categoria “Outros” quando apropriado.
+---
 
-Principais cuidados no prompt:
-1. Garantir resposta em JSON puro (sem texto extra ou Markdown).
-2. Manter propriedades originais de cada produto.
-3. Impedir categorias vazias.
-4. Ordenação alfabética de categorias e produtos.
-5. Possibilidade de criar/mesclar/renomear categorias.
+## 📱 Sobre o Aplicativo
 
-## Arquitetura
-- **Flutter** (Material 3 / theming).
-- **Gerência de estado:** Riverpod.
-- **Camadas:** `domain` (entidades, casos de uso) / `data` (services) / `presentation` (UI widgets + pages).
-- **Perfis:** Persistidos/exportados como JSON (import/export manual + compartilhamento externo).
-- **Serviço de IA:** `AIService` (HTTP + Gemini API).
+**Precifica** é um aplicativo voltado para pequenos negócios, como hortifrutis, mercearias e feiras, que precisam gerenciar listas de produtos e preços de forma prática. Com ele, você pode criar relatórios prontos para enviar pelo WhatsApp, organizar categorias com ajuda de inteligência artificial e salvar diferentes perfis de produtos.
 
-## Executando localmente
-Antes de rodar com IA, defina a chave via `--dart-define`.
+---
 
-Rodar em debug:
+## ✨ Principais Funcionalidades
+
+| Funcionalidade | Descrição |
+|----------------|-----------|
+| **Categorias e Produtos** | Crie categorias e adicione produtos com nome e preço |
+| **Ativar/Desativar** | Toque em um produto para ativar ou desativar rapidamente |
+| **Arrastar e Soltar** | Reorganize categorias arrastando-as para a posição desejada |
+| **Organização com IA** | Reorganize automaticamente seus produtos em categorias usando Gemini AI |
+| **Perfis** | Salve, carregue, importe e exporte configurações completas |
+| **Relatórios** | Gere listas de preços formatadas para compartilhar via WhatsApp ou e-mail |
+| **Modelos de Relatório** | Personalize título, formatação e filtros dos seus relatórios |
+
+---
+
+## 🚀 Como Usar
+
+### Primeiro Acesso
+Ao abrir o app pela primeira vez, um tutorial interativo guiará você pelos passos básicos:
+1. Criar sua primeira categoria
+2. Adicionar seu primeiro produto
+3. Experimentar um perfil de exemplo (Hortifruti)
+
+### Uso Diário
+1. **Abra o app** e selecione uma categoria na barra inferior
+2. **Atualize os preços** tocando no campo de preço de cada produto
+3. **Ative ou desative produtos** com um toque simples
+4. **Compartilhe** o relatório pelo botão de compartilhar no topo
+
+### Organização com IA
+1. Abra o menu lateral (☰)
+2. Toque em **"Organizar com IA"**
+3. Confirme a reorganização
+4. A IA agrupará seus produtos em categorias coerentes automaticamente
+
+### Gerenciamento de Perfis
+- **Salvar**: Guarde sua configuração atual como um perfil
+- **Carregar**: Restaure um perfil salvo anteriormente
+- **Importar/Exportar**: Compartilhe perfis via arquivo JSON
+
+---
+
+## 🛠️ Configuração para Desenvolvedores
+
+### Pré-requisitos
+- Flutter SDK 3.4.0 ou superior
+- Chave de API do [Google AI Studio](https://aistudio.google.com/apikey)
+
+### Executar em modo debug
+```bash
+flutter run --dart-define=GEMINI_API_KEY=SUA_CHAVE
 ```
-flutter run --dart-define=GEMINI_API_KEY=SUA_CHAVE_AQUI
+
+### Gerar APK de release
+```bash
+flutter build apk --release --dart-define=GEMINI_API_KEY=SUA_CHAVE
 ```
 
-Rodar em release (APK):
-```
-flutter build apk --release --dart-define=GEMINI_API_KEY=SUA_CHAVE_AQUI
-```
-
-Se a variável não for definida, o app lançará uma exceção ao tentar usar a IA.
-
-## Segurança da Chave
-
-Exemplo (GitHub Actions):
+### CI/CD (GitHub Actions)
 ```yaml
 - name: Build APK
-	run: flutter build apk --release --dart-define=GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+  run: flutter build apk --release --dart-define=GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
 ```
 
-## Possíveis Melhorias Futuras
-- Testes de widget para sincronização de PageView e estado.
-- Botão de cancelar organização com IA.
-- Suporte offline/“rascunho” de alterações.
-- Internacionalização (i18n).
-
-## Tratamento de Erros
-O serviço de IA lança exceção textual quando:
-- Chave não configurada.
-- Resposta da API não possui `candidates`.
-- Código HTTP diferente de 200.
-
-Os erros são consumidos e exibidos via SnackBar.
-
-## Exportação / Importação de Perfis
-- Exportação gera um arquivo/JSON compartilhável.
-- Importação substitui o estado atual (confirmação obrigatória).
-
-## Compartilhamento de Relatório
-O relatório textual inclui categorias e produtos organizados para fácil envio a outras pessoas (WhatsApp, email etc.).
-
-## Variável de Ambiente (IMPORTANTE)
-Defina a sua chave Gemini:
-```
-GEMINI_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxx
-```
-Chamada em runtime via `String.fromEnvironment('GEMINI_API_KEY')`.
-
-Se estiver rodando em CI / build automatizado, inclua:
-```
-flutter build apk --release --dart-define=GEMINI_API_KEY=${GEMINI_API_KEY}
-```
+---

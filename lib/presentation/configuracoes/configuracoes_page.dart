@@ -81,33 +81,10 @@ class ConfiguracoesPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const _SectionHeader(label: 'Aplicativo'),
-          _SurfaceCard(
-            child: ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              leading: Icon(
-                Icons.restart_alt_outlined,
-                color: colorScheme.onSurfaceVariant,
-              ),
-              title: Text(
-                'Reset',
-                style: textTheme.titleMedium?.copyWith(
-                  // Aparência mais discreta
-                  fontWeight: FontWeight.w500,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              subtitle: Text(
-                'Remove dados, perfis e configurações, voltando ao estado inicial',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              // Sem ícone de navegação para reduzir destaque
-              enableFeedback: true,
-              splashColor: Colors.transparent,
-              onTap: () async {
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton(
+              onPressed: () async {
                 final confirmed = await _confirmarResetAplicativo(context);
                 if (confirmed != true) return;
 
@@ -154,8 +131,15 @@ class ConfiguracoesPage extends ConsumerWidget {
                   }
                 }
               },
+              child: Text(
+                'Resetar Aplicativo',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.error.withValues(alpha: 0.7),
+                ),
+              ),
             ),
           ),
+          const SizedBox(height: 24),
         ],
       ),
     );

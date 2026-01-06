@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/report_template.dart';
 import '../../domain/services/report_generator_service.dart';
 import '../../domain/services/sample_data_service.dart';
+import '../../app/core/l10n/app_localizations.dart';
 import 'settings_controller.dart';
 import 'widgets/whatsapp_formatted_text.dart';
 import '../../app/core/snackbar/app_snackbar.dart';
@@ -140,28 +141,31 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
                     _showDeleteDialog(context, template);
                   }
                 },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'rename',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit_outlined),
-                        SizedBox(width: 12),
-                        Text('Renomear'),
-                      ],
+                itemBuilder: (context) {
+                  final l10n = AppLocalizations.of(context);
+                  return [
+                    PopupMenuItem(
+                      value: 'rename',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.edit_outlined),
+                          const SizedBox(width: 12),
+                          Text(l10n?.rename ?? 'Renomear'),
+                        ],
+                      ),
                     ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete_outline, color: Colors.red),
-                        SizedBox(width: 12),
-                        Text('Excluir', style: TextStyle(color: Colors.red)),
-                      ],
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.delete_outline, color: Colors.red),
+                          const SizedBox(width: 12),
+                          Text(l10n?.delete ?? 'Excluir', style: const TextStyle(color: Colors.red)),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ];
+                },
               ),
             const SizedBox(width: 8),
           ],

@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   dynamic_color: ^1.7.0
   hive: ^2.2.3
@@ -17,7 +19,7 @@ dependencies:
   flutter_riverpod: ^3.0.0-dev.3
   uuid: ^4.4.0
   share_plus: ^9.0.0
-  intl: ^0.19.0
+  intl: ^0.20.2
   cupertino_icons: ^1.0.8
   file_picker: ^8.0.0+1
   permission_handler: ^11.3.1
@@ -40,6 +42,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - assets/profiles/
     - assets/introduction/

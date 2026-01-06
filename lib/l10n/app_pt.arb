@@ -1,0 +1,157 @@
+{
+  "@@locale": "pt",
+  "appTitle": "Precifica",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "settings": "Configurações",
+  "@settings": {
+    "description": "Settings page title"
+  },
+  "report": "Relatório",
+  "@report": {
+    "description": "Report section header"
+  },
+  "reportTemplates": "Modelos de Relatório",
+  "@reportTemplates": {
+    "description": "Report templates option"
+  },
+  "defaultTemplate": "Modelo Padrão",
+  "@defaultTemplate": {
+    "description": "Default template name"
+  },
+  "visualization": "Visualização",
+  "@visualization": {
+    "description": "Visualization section header"
+  },
+  "compactMode": "Modo Compacto",
+  "@compactMode": {
+    "description": "Compact mode option"
+  },
+  "compactModeDescription": "Reduz espaçamentos para telas menores e muitos produtos",
+  "@compactModeDescription": {
+    "description": "Compact mode description"
+  },
+  "compactModeEnabled": "Modo compacto ativado",
+  "@compactModeEnabled": {
+    "description": "Compact mode enabled message"
+  },
+  "compactModeDisabled": "Modo compacto desativado",
+  "@compactModeDisabled": {
+    "description": "Compact mode disabled message"
+  },
+  "language": "Idioma",
+  "@language": {
+    "description": "Language section header"
+  },
+  "appLanguage": "Idioma do Aplicativo",
+  "@appLanguage": {
+    "description": "App language option"
+  },
+  "appLanguageDescription": "Selecione o idioma da interface",
+  "@appLanguageDescription": {
+    "description": "App language description"
+  },
+  "languageChanged": "Idioma alterado para {language}",
+  "@languageChanged": {
+    "description": "Language changed message",
+    "placeholders": {
+      "language": {
+        "type": "String",
+        "example": "Português"
+      }
+    }
+  },
+  "resetApp": "Resetar Aplicativo",
+  "@resetApp": {
+    "description": "Reset app button"
+  },
+  "resetAppTitle": "Reset do Aplicativo",
+  "@resetAppTitle": {
+    "description": "Reset app dialog title"
+  },
+  "resetAppMessage": "Todos os dados, perfis salvos e preferências serão removidos. O aplicativo ficará como se estivesse sendo aberto pela primeira vez.\n\nEsta ação não pode ser desfeita. Deseja continuar?",
+  "@resetAppMessage": {
+    "description": "Reset app confirmation message"
+  },
+  "cancel": "Cancelar",
+  "@cancel": {
+    "description": "Cancel button"
+  },
+  "reset": "Resetar",
+  "@reset": {
+    "description": "Reset button"
+  },
+  "resetError": "Não foi possível resetar o aplicativo.",
+  "@resetError": {
+    "description": "Reset error message"
+  },
+  "products": "Produtos",
+  "@products": {
+    "description": "Products label"
+  },
+  "categories": "Categorias",
+  "@categories": {
+    "description": "Categories label"
+  },
+  "add": "Adicionar",
+  "@add": {
+    "description": "Add button"
+  },
+  "edit": "Editar",
+  "@edit": {
+    "description": "Edit button"
+  },
+  "delete": "Excluir",
+  "@delete": {
+    "description": "Delete button"
+  },
+  "save": "Salvar",
+  "@save": {
+    "description": "Save button"
+  },
+  "name": "Nome",
+  "@name": {
+    "description": "Name label"
+  },
+  "price": "Preço",
+  "@price": {
+    "description": "Price label"
+  },
+  "cost": "Custo",
+  "@cost": {
+    "description": "Cost label"
+  },
+  "margin": "Margem",
+  "@margin": {
+    "description": "Margin label"
+  },
+  "search": "Buscar",
+  "@search": {
+    "description": "Search label"
+  },
+  "noResults": "Nenhum resultado encontrado",
+  "@noResults": {
+    "description": "No results message"
+  },
+  "loading": "Carregando...",
+  "@loading": {
+    "description": "Loading message"
+  },
+  "error": "Erro",
+  "@error": {
+    "description": "Error label"
+  },
+  "success": "Sucesso",
+  "@success": {
+    "description": "Success label"
+  },
+  "confirm": "Confirmar",
+  "@confirm": {
+    "description": "Confirm button"
+  },
+  "close": "Fechar",
+  "@close": {
+    "description": "Close button"
+  }
+}

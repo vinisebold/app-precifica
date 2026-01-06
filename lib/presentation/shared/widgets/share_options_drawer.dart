@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Widget de drawer para opções de compartilhamento
@@ -66,6 +67,7 @@ class ShareOptionsDrawer extends ConsumerWidget {
                 description: 'Enviar texto para WhatsApp',
                 color: colorScheme.primary,
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   Navigator.pop(context);
                   onShareText();
                 },
@@ -79,6 +81,7 @@ class ShareOptionsDrawer extends ConsumerWidget {
                 description: 'Gerar imagem para impressão',
                 color: colorScheme.secondary,
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   Navigator.pop(context);
                   onShareImage();
                 },
@@ -113,20 +116,19 @@ class _ShareOptionCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Material(
-      color: Colors.transparent,
+      color: colorScheme.surfaceContainerHighest,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Container(
+        child: Padding(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-              width: 1,
-            ),
-          ),
           child: Row(
             children: [
               // Ícone

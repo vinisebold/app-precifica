@@ -105,28 +105,63 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
                   _resetAutoPlay();
                 }
               },
-              itemBuilder: (context, index) => Column(
-                children: [
-                  Expanded(
-                    flex: 8,
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[900],
-                      ),
-                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
-                      child: _buildMediaContent(context, pages[index]),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-                      child: _buildTextContent(context, pages[index]),
-                    ),
-                  ),
-                ],
-              ),
+              itemBuilder: (context, index) {
+                return AnimatedBuilder(
+                  animation: _pageController,
+                  builder: (context, child) {
+                    double value = 0.0;
+                    if (_pageController.position.haveDimensions) {
+                      value = index.toDouble() - (_pageController.page ?? 0.0);
+                    } else {
+                      value = (index - _currentPage).toDouble();
+                    }
+
+                    final double scale = 1.0 - (value.abs() * 0.15).clamp(0.0, 1.0);
+                    final double opacity = 1.0 - (value.abs() * 0.8).clamp(0.0, 1.0);
+                    final double mediaParallax = value * 40;
+                    final double textParallax = value * 20;
+
+                    return Column(
+                      children: [
+                        Expanded(
+                          flex: 8,
+                          child: Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[900],
+                            ),
+                            padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+                            child: Transform.translate(
+                              offset: Offset(mediaParallax, 0),
+                              child: Transform.scale(
+                                scale: scale,
+                                alignment: Alignment.bottomCenter,
+                                child: Opacity(
+                                  opacity: opacity,
+                                  child: _buildMediaContent(context, pages[index]),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                            child: Transform.translate(
+                              offset: Offset(textParallax, 0),
+                              child: Opacity(
+                                opacity: opacity,
+                                child: _buildTextContent(context, pages[index]),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
             ),
           ),
           _buildBottomBar(context, pages.length),
@@ -196,7 +231,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
         Text(
           page.title,
           textAlign: TextAlign.center,
-          style: textTheme.headlineMedium?.copyWith(
+          style: textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
             color: colorScheme.onSurface,
           ),
@@ -205,7 +240,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
         Text(
           page.body,
           textAlign: TextAlign.center,
-          style: textTheme.bodyLarge?.copyWith(
+          style: textTheme.bodyMedium?.copyWith(
             color: colorScheme.onSurfaceVariant,
             height: 1.4,
           ),
@@ -264,46 +299,49 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
               ),
             ),
             Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(totalPages, (index) {
-                  final isActive = index == _currentPage;
-                  final isPast = index < _currentPage;
-                  
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    height: 10,
-                    width: 24,
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: TweenAnimationBuilder<double>(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOutCubic,
-                          tween: Tween<double>(
-                            begin: isPast ? 24 : (isActive ? 24 * _progress : 0),
-                            end: isPast ? 24 : (isActive ? 24 * _progress : 0),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(totalPages, (index) {
+                    final isActive = index == _currentPage;
+                    final isPast = index < _currentPage;
+                    
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      height: 10,
+                      width: 24,
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: TweenAnimationBuilder<double>(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutCubic,
+                            tween: Tween<double>(
+                              begin: isPast ? 24 : (isActive ? 24 * _progress : 0),
+                              end: isPast ? 24 : (isActive ? 24 * _progress : 0),
+                            ),
+                            builder: (context, value, child) {
+                              return Container(
+                                height: 10,
+                                width: value,
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                              );
+                            },
                           ),
-                          builder: (context, value, child) {
-                            return Container(
-                              height: 10,
-                              width: value,
-                              decoration: BoxDecoration(
-                                color: colorScheme.primary,
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                            );
-                          },
                         ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ),
             ),
             SizedBox(

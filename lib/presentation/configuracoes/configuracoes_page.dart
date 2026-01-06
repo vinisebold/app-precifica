@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'template_list_page.dart';
 import 'settings_controller.dart';
@@ -248,38 +249,47 @@ class _SwitchSettingTile extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      child: Row(
-        children: [
-          Icon(icon, color: colorScheme.primary),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onChanged(!value);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, color: colorScheme.primary),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Switch.adaptive(
-            value: value,
-            onChanged: onChanged,
-          ),
-        ],
+            const SizedBox(width: 12),
+            Switch.adaptive(
+              value: value,
+              onChanged: (newValue) {
+                HapticFeedback.lightImpact();
+                onChanged(newValue);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

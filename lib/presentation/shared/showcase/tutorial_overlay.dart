@@ -88,7 +88,7 @@ class TutorialInstructionOverlay extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            TutorialConfig.buttonGotIt,
+                            TutorialConfig.buttonGotIt(context),
                             style: textTheme.labelLarge,
                           ),
                         ),

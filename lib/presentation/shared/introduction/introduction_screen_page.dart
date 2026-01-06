@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/core/l10n/app_localizations.dart';
 import '../../gestao_produtos/gestao_page.dart';
 import 'introduction_service.dart';
 
@@ -136,32 +137,30 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
 
   List<_IntroductionPageData> _buildPages(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return [
       _IntroductionPageData(
-        title: 'Preços desorganizados?',
-        body:
-        'Atualizar preços em listas de papel, planilhas ou anotações é trabalhoso e lento.',
+        title: l10n.introTitle1,
+        body: l10n.introBody1,
         assetPath: 'assets/introduction/wrong-way.png',
   primaryColor: colorScheme.errorContainer.withValues(alpha: 0.3),
       ),
       _IntroductionPageData(
-        title: 'Precifica resolve isso!',
-        body:
-        'Centralize todos os seus produtos e preços em um só lugar. Organize por categorias de forma prática.',
+        title: l10n.introTitle2,
+        body: l10n.introBody2,
         assetPath: 'assets/introduction/in-app.png',
         primaryColor: colorScheme.primaryContainer,
       ),
       _IntroductionPageData(
-        title: 'Compartilhe facilmente',
-        body:
-        'Envie suas listas de preços atualizadas pelo WhatsApp ou imprima de forma rápida e profissional.',
+        title: l10n.introTitle3,
+        body: l10n.introBody3,
         assetPath: 'assets/introduction/sharing.png',
         primaryColor: colorScheme.secondaryContainer,
       ),
       _IntroductionPageData(
-        title: 'Pronto para começar!',
-        body: 'Vamos configurar seu primeiro catálogo de produtos. É rápido e fácil!',
+        title: l10n.introTitle4,
+        body: l10n.introBody4,
         assetPath: 'assets/introduction/correct-way.png',
         primaryColor: colorScheme.primary,
       ),
@@ -221,6 +220,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final isLastPage = _currentPage == totalPages - 1;
+    final l10n = AppLocalizations.of(context)!;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
@@ -259,7 +259,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
                           foregroundColor: colorScheme.primary,
                           textStyle: const TextStyle(fontWeight: FontWeight.w600),
                         ),
-                        child: const Text('Pular'),
+                        child: Text(l10n.skip),
                       ),
               ),
             ),
@@ -314,7 +314,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
                   foregroundColor: colorScheme.primary,
                   textStyle: const TextStyle(fontWeight: FontWeight.w600),
                 ),
-                child: Text(isLastPage ? 'Começar' : 'Próximo'),
+                child: Text(isLastPage ? l10n.start : l10n.next),
               ),
             ),
           ],

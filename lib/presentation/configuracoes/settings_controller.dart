@@ -160,6 +160,16 @@ class SettingsController extends Notifier<SettingsState> {
     return repository.getModoCompacto();
   }
 
+  Future<void> setLanguage(String languageCode) async {
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setLanguage(languageCode);
+  }
+
+  String? getLanguage() {
+    final repository = ref.read(settingsRepositoryProvider);
+    return repository.getLanguage();
+  }
+
   Future<void> setTemplateSelecionado(String? templateId) async {
     final repository = ref.read(settingsRepositoryProvider);
     await repository.setTemplateSelecionado(templateId);

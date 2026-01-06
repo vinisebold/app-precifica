@@ -9,7 +9,7 @@ class TutorialTooltip extends StatelessWidget {
   final VoidCallback? onNext;
   final VoidCallback? onSkip;
   final bool showSkip;
-  final String buttonText;
+  final String? buttonText;
 
   const TutorialTooltip({
     required this.title,
@@ -17,7 +17,7 @@ class TutorialTooltip extends StatelessWidget {
     this.onNext,
     this.onSkip,
     this.showSkip = true,
-    this.buttonText = TutorialConfig.buttonNext,
+    this.buttonText,
     super.key,
   });
 
@@ -27,6 +27,7 @@ class TutorialTooltip extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final isDark = theme.brightness == Brightness.dark;
+    final effectiveButtonText = buttonText ?? TutorialConfig.buttonNext(context);
 
     final backgroundColor = colorScheme.surfaceContainerHigh;
   final titleColor =
@@ -83,7 +84,7 @@ class TutorialTooltip extends StatelessWidget {
                   style: TextButton.styleFrom(
                     foregroundColor: skipColor,
                   ),
-                  child: const Text(TutorialConfig.buttonSkip),
+                  child: Text(TutorialConfig.buttonSkip(context)),
                 ),
                 const SizedBox(width: 8),
               ],
@@ -91,7 +92,7 @@ class TutorialTooltip extends StatelessWidget {
                 FilledButton(
                   onPressed: onNext,
                   style: filledButtonStyle,
-                  child: Text(buttonText),
+                  child: Text(effectiveButtonText),
                 ),
             ],
           ),

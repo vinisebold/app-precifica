@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/core/l10n/app_localizations.dart';
+
 /// Widget de drawer para opções de compartilhamento
 class ShareOptionsDrawer extends ConsumerWidget {
   final VoidCallback onShareText;
@@ -17,6 +19,7 @@ class ShareOptionsDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       decoration: BoxDecoration(
@@ -45,7 +48,7 @@ class ShareOptionsDrawer extends ConsumerWidget {
               
               // Título
               Text(
-                'Compartilhar Relatório',
+                l10n.shareReport,
                 style: textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: colorScheme.onSurface,
@@ -53,7 +56,7 @@ class ShareOptionsDrawer extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Escolha o formato para compartilhar',
+                l10n.chooseFormat,
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -63,8 +66,8 @@ class ShareOptionsDrawer extends ConsumerWidget {
               // Opção: Compartilhar (Texto)
               _ShareOptionCard(
                 icon: Icons.share_outlined,
-                title: 'Compartilhar',
-                description: 'Enviar texto para WhatsApp',
+                title: l10n.share,
+                description: l10n.shareToWhatsApp,
                 color: colorScheme.primary,
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -77,8 +80,8 @@ class ShareOptionsDrawer extends ConsumerWidget {
               // Opção: Imprimir (Imagem)
               _ShareOptionCard(
                 icon: Icons.print_outlined,
-                title: 'Imprimir',
-                description: 'Gerar imagem para impressão',
+                title: l10n.print,
+                description: l10n.generateImage,
                 color: colorScheme.secondary,
                 onTap: () {
                   HapticFeedback.lightImpact();

@@ -13,6 +13,7 @@ import 'package:precifica/domain/entities/produto.dart';
 import 'package:precifica/domain/entities/report_template.dart';
 import 'package:precifica/app/core/toast/global_toast_controller.dart';
 import 'package:precifica/app/core/snackbar/app_snackbar.dart';
+import 'package:precifica/app/core/l10n/app_localizations.dart';
 
 import 'gestao_controller.dart';
 import 'gestao_state.dart';
@@ -388,8 +389,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       ShowcaseView.get().dismiss();
       showTutorialInstruction(
         context: context,
-        title: TutorialConfig.finalTitle,
-        message: TutorialConfig.finalDescription,
+        title: TutorialConfig.finalTitle(context),
+        message: TutorialConfig.finalDescription(context),
         onDismiss: _handleTutorialCompletion,
         barrierDismissible: false,
       );
@@ -411,7 +412,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       } catch (_) {
         ref
             .read(globalToastControllerProvider.notifier)
-            .showError('Não foi possível restaurar seus dados do tutorial.');
+            .showError(AppLocalizations.of(context)?.aiRestoreError ?? 'Não foi possível restaurar seus dados do tutorial.');
       } finally {
         ref.read(tutorialControllerProvider.notifier).clearUserDataSnapshot();
       }
@@ -511,8 +512,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                   perfilSelecionado != perfilInicial) {
                 _mostrarDialogoConfirmarAcao(
                   context: sheetContext,
-                  titulo: 'Carregar Perfil?',
-                  mensagem:
+                  titulo: AppLocalizations.of(context)?.loadProfile ?? 'Carregar Perfil?',
+                  mensagem: AppLocalizations.of(context)?.loadProfileMessage(perfilSelecionado!) ??
                       'Isto substituirá todos os seus dados atuais com o perfil "${perfilSelecionado!}".',
                   onConfirmar: () {
                     Navigator.of(sheetContext).pop();
@@ -543,7 +544,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Catálogos',
+                      AppLocalizations.of(context)?.catalogs ?? 'Catálogos',
                       style: textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -556,7 +557,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                           Row(
                             children: [
                               _ActionCard(
-                                label: 'Importar',
+                                label: AppLocalizations.of(context)?.importProfile ?? 'Importar',
                                 icon: Icons.file_download_outlined,
                                 onTap: () {
                                   Navigator.of(sheetContext).pop();
@@ -565,7 +566,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                               ),
                               const SizedBox(width: 8),
                               _ActionCard(
-                                label: 'Salvar',
+                                label: AppLocalizations.of(context)?.saveProfile ?? 'Salvar',
                                 icon: Icons.save_outlined,
                                 onTap: () => _mostrarDialogoSalvarPerfil(
                                     sheetContext, ref),
@@ -576,7 +577,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                           Row(
                             children: [
                               _ActionCard(
-                                label: 'Exportar',
+                                label: AppLocalizations.of(context)?.exportProfile ?? 'Exportar',
                                 icon: Icons.file_upload_outlined,
                                 onTap: () {
                                   Navigator.of(sheetContext).pop();
@@ -585,15 +586,15 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                               ),
                               const SizedBox(width: 8),
                               _ActionCard(
-                                label: 'Excluir',
+                                label: AppLocalizations.of(context)?.delete ?? 'Excluir',
                                 icon: Icons.delete_outline,
                                 isEnabled: perfilInicial != null,
                                 onTap: () {
                                   if (perfilInicial == null) return;
                                   _mostrarDialogoConfirmarAcao(
                                     context: sheetContext,
-                                    titulo: 'Excluir Perfil?',
-                                    mensagem:
+                                    titulo: AppLocalizations.of(context)?.deleteProfileTitle ?? 'Excluir Perfil?',
+                                    mensagem: AppLocalizations.of(context)?.deleteProfileMessage(perfilInicial) ??
                                         'O perfil "$perfilInicial" será excluído permanentemente.',
                                     onConfirmar: () {
                                       gestaoNotifier
@@ -615,8 +616,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: perfis.isEmpty
-                            ? const Center(
-                                child: Text('Nenhum perfil salvo.'),
+                            ? Center(
+                                child: Text(AppLocalizations.of(context)?.noProfilesSaved ?? 'Nenhum perfil salvo.'),
                               )
                             : RadioGroup<String>(
                                 groupValue: perfilSelecionado,
@@ -644,9 +645,9 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                           context: context,
                                           key: TutorialKeys.sampleProfileTile,
                                           title: TutorialConfig
-                                              .profileSelectionTitle,
+                                              .profileSelectionTitle(context),
                                           description: TutorialConfig
-                                              .profileSelectionDescription,
+                                              .profileSelectionDescription(context),
                                           targetShapeBorder:
                                               RoundedRectangleBorder(
                                             borderRadius:
@@ -678,7 +679,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                           Expanded(
                             child: OutlinedButton(
                               onPressed: () => Navigator.of(sheetContext).pop(),
-                              child: const Text('Cancelar'),
+                              child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancelar'),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -687,7 +688,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                               builder: (context) {
                                 Widget okButton = FilledButton(
                                   onPressed: applySelectedProfile,
-                                  child: const Text('OK'),
+                                  child: Text(AppLocalizations.of(context)?.ok ?? 'OK'),
                                 );
 
                                 if (shouldShowProfileSelectionTutorial) {
@@ -699,9 +700,9 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
                                   okButton = Showcase(
                                     key: TutorialKeys.applyProfileButton,
-                                    title: TutorialConfig.profileApplyTitle,
+                                    title: TutorialConfig.profileApplyTitle(context),
                                     description:
-                                        TutorialConfig.profileApplyDescription,
+                                        TutorialConfig.profileApplyDescription(context),
                                     tooltipBackgroundColor:
                                         colorScheme.surfaceContainerHigh,
                                     titleTextStyle:
@@ -756,6 +757,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     required String mensagem,
     required VoidCallback onConfirmar,
   }) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -764,14 +766,14 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
+            child: Text(l10n?.cancel ?? 'Cancelar'),
           ),
           FilledButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
               onConfirmar();
             },
-            child: const Text('Confirmar'),
+            child: Text(l10n?.confirm ?? 'Confirmar'),
           ),
         ],
       ),
@@ -780,19 +782,20 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
   void _mostrarDialogoSalvarPerfil(BuildContext context, WidgetRef ref) {
     final controller = TextEditingController();
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Salvar Perfil Atual'),
+        title: Text(l10n?.saveCurrentProfile ?? 'Salvar Perfil Atual'),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(hintText: 'Nome do Perfil'),
+          decoration: InputDecoration(hintText: l10n?.profileName ?? 'Nome do Perfil'),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
+            child: Text(l10n?.cancel ?? 'Cancelar'),
           ),
           TextButton(
             onPressed: () {
@@ -801,7 +804,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                   .salvarPerfilAtual(controller.text);
               Navigator.of(dialogContext).pop();
             },
-            child: const Text('Salvar'),
+            child: Text(l10n?.save ?? 'Salvar'),
           ),
         ],
       ),
@@ -817,6 +820,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   }) {
     final controller = TextEditingController(text: valorAtual);
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     showDialog(
       context: context,
@@ -824,13 +828,13 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         title: Text(titulo, style: textTheme.headlineSmall),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(hintText: "Novo nome"),
+          decoration: InputDecoration(hintText: l10n?.newName ?? "Novo nome"),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text('Cancelar', style: textTheme.labelLarge),
+            child: Text(l10n?.cancel ?? 'Cancelar', style: textTheme.labelLarge),
           ),
           TextButton(
             onPressed: () {
@@ -840,7 +844,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 Navigator.of(dialogContext).pop();
               }
             },
-            child: Text('Salvar', style: textTheme.labelLarge),
+            child: Text(l10n?.save ?? 'Salvar', style: textTheme.labelLarge),
           ),
         ],
       ),
@@ -964,11 +968,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             newState.ultimoProdutoDeletado !=
                 previousState?.ultimoProdutoDeletado) {
           final produtoDeletado = newState.ultimoProdutoDeletado!;
+          final l10n = AppLocalizations.of(context);
           toastController.show(
-            '${produtoDeletado.nome} deletado',
+            l10n?.deleted(produtoDeletado.nome) ?? '${produtoDeletado.nome} deletado',
             variant: ToastVariant.warning,
             action: ToastAction(
-              label: 'Desfazer',
+              label: l10n?.undo ?? 'Desfazer',
               onPressed: () {
                 ref
                     .read(gestaoControllerProvider.notifier)
@@ -1147,8 +1152,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               child: buildTutorialShowcase(
                 context: context,
                 key: TutorialKeys.menuButton,
-                title: TutorialConfig.menuButtonTitle,
-                description: TutorialConfig.menuButtonDescription,
+                title: TutorialConfig.menuButtonTitle(context),
+                description: TutorialConfig.menuButtonDescription(context),
                 targetShapeBorder: const CircleBorder(),
                 onTargetClick: () {
                   ShowcaseView.get().dismiss();
@@ -1187,8 +1192,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               buildTutorialShowcase(
                 context: context,
                 key: TutorialKeys.addCategoryButton,
-                title: TutorialConfig.step1Title,
-                description: TutorialConfig.step1Description,
+                title: TutorialConfig.step1Title(context),
+                description: TutorialConfig.step1Description(context),
                 targetShapeBorder: const CircleBorder(),
                 onTargetClick: () {
                   ShowcaseView.get().dismiss();
@@ -1257,7 +1262,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                       _mostrarDialogoEditarNome(
                                     context,
                                     ref,
-                                    titulo: 'Editar Produto',
+                                    titulo: AppLocalizations.of(context)?.editProduct ?? 'Editar Produto',
                                     valorAtual: produto.nome,
                                     onSalvar: (novoNome) =>
                                         gestaoNotifier.atualizarNomeProduto(
@@ -1318,8 +1323,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               child: buildTutorialShowcase(
                 context: context,
                 key: TutorialKeys.categoryNavBar,
-                title: TutorialConfig.step4Title,
-                description: TutorialConfig.step4Description,
+                title: TutorialConfig.step4Title(context),
+                description: TutorialConfig.step4Description(context),
                 targetShapeBorder: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(28.0),
                 ),
@@ -1331,7 +1336,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                     _mostrarDialogoEditarNome(
                       context,
                       ref,
-                      titulo: 'Editar Categoria',
+                      titulo: AppLocalizations.of(context)?.editCategory ?? 'Editar Categoria',
                       valorAtual: categoria.nome,
                       onSalvar: (novoNome) => gestaoNotifier
                           .atualizarNomeCategoria(categoria.id, novoNome),
@@ -1355,8 +1360,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 child: buildTutorialShowcase(
                   context: context,
                   key: TutorialKeys.addProductFab,
-                  title: TutorialConfig.step2Title,
-                  description: TutorialConfig.step2Description,
+                  title: TutorialConfig.step2Title(context),
+                  description: TutorialConfig.step2Description(context),
                   targetShapeBorder: const CircleBorder(),
                   targetPadding: const EdgeInsets.all(14),
                   onTargetClick: () {
@@ -1484,7 +1489,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           NavigationDrawerDestination(
             icon: const Icon(Icons.auto_awesome_outlined),
             selectedIcon: const Icon(Icons.auto_awesome),
-            label: const Text('Organizar com IA'),
+            label: Text(AppLocalizations.of(context)?.organizeWithAI ?? 'Organizar com IA'),
             enabled: !gestaoState.isLoading,
           ),
           NavigationDrawerDestination(
@@ -1495,8 +1500,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 return buildTutorialShowcase(
                   context: context,
                   key: TutorialKeys.manageProfilesDestination,
-                  title: TutorialConfig.profileDrawerTitle,
-                  description: TutorialConfig.profileDrawerDescription,
+                  title: TutorialConfig.profileDrawerTitle(context),
+                  description: TutorialConfig.profileDrawerDescription(context),
                   targetShapeBorder: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(56),
                   ),
@@ -1506,15 +1511,15 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                     Navigator.of(drawerContext).pop();
                     _mostrarDialogoGerenciarPerfis(drawerContext, ref);
                   },
-                  child: const Text('Catálogos'),
+                  child: Text(AppLocalizations.of(context)?.catalogs ?? 'Catálogos'),
                 );
               },
             ),
           ),
-          const NavigationDrawerDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: Text('Configurações'),
+          NavigationDrawerDestination(
+            icon: const Icon(Icons.settings_outlined),
+            selectedIcon: const Icon(Icons.settings),
+            label: Text(AppLocalizations.of(context)?.settings ?? 'Configurações'),
           ),
           const SizedBox(height: 12),
           // Version footer - minimalista
@@ -1696,6 +1701,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     final controller = TextEditingController();
     final textTheme = Theme.of(pageContext).textTheme;
     final colorScheme = Theme.of(pageContext).colorScheme;
+    final l10n = AppLocalizations.of(pageContext);
 
     final tutorialState = ref.read(tutorialControllerProvider);
     final isAwaitingFirstProductTutorial = tutorialState.isActive &&
@@ -1759,11 +1765,11 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         }
 
         return AlertDialog(
-          title: Text('Novo Produto', style: textTheme.headlineSmall),
+          title: Text(l10n?.newProduct ?? 'Novo Produto', style: textTheme.headlineSmall),
           content: TextField(
             controller: controller,
             decoration: InputDecoration(
-              labelText: "Nome do produto",
+              labelText: l10n?.productName ?? "Nome do produto",
               filled: true,
               fillColor: colorScheme.surfaceContainerHighest,
               border: OutlineInputBorder(
@@ -1788,21 +1794,21 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           actions: [
             TextButton(
               onPressed: handleCancel,
-              child: Text('Cancelar', style: textTheme.labelLarge),
+              child: Text(l10n?.cancel ?? 'Cancelar', style: textTheme.labelLarge),
             ),
             Builder(
               builder: (context) {
                 Widget saveButton = TextButton(
                   onPressed: handleSave,
-                  child: Text('Salvar', style: textTheme.labelLarge),
+                  child: Text(l10n?.save ?? 'Salvar', style: textTheme.labelLarge),
                 );
 
                 if (isAwaitingFirstProductTutorial) {
                   saveButton = buildTutorialShowcase(
                     context: context,
                     key: TutorialKeys.productDialogSaveButton,
-                    title: TutorialConfig.productSaveTitle,
-                    description: TutorialConfig.productSaveDescription,
+                    title: TutorialConfig.productSaveTitle(context),
+                    description: TutorialConfig.productSaveDescription(context),
                     targetShapeBorder: const CircleBorder(),
                     targetPadding: const EdgeInsets.all(4),
                     onTargetClick: () {
@@ -1847,9 +1853,10 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       // Exibe feedback de sucesso
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
+          final l10n = AppLocalizations.of(context);
           AppSnackbar.showSuccess(
             context,
-            'Produto "$nomeProduto" adicionado com sucesso!',
+            l10n?.productAdded(nomeProduto) ?? 'Produto "$nomeProduto" adicionado com sucesso!',
           );
         }
       });
@@ -1860,6 +1867,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     final controller = TextEditingController();
     final textTheme = Theme.of(pageContext).textTheme;
     final colorScheme = Theme.of(pageContext).colorScheme;
+    final l10n = AppLocalizations.of(pageContext);
 
     final tutorialState = ref.read(tutorialControllerProvider);
     final isAwaitingFirstCategoryTutorial = tutorialState.isActive &&
@@ -1923,11 +1931,11 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         }
 
         return AlertDialog(
-          title: Text('Nova Categoria', style: textTheme.headlineSmall),
+          title: Text(l10n?.newCategory ?? 'Nova Categoria', style: textTheme.headlineSmall),
           content: TextField(
             controller: controller,
             decoration: InputDecoration(
-              labelText: "Nome da categoria",
+              labelText: l10n?.categoryName ?? "Nome da categoria",
               filled: true,
               fillColor: colorScheme.surfaceContainerHighest,
               border: OutlineInputBorder(
@@ -1952,21 +1960,21 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           actions: [
             TextButton(
               onPressed: handleCancel,
-              child: Text('Cancelar', style: textTheme.labelLarge),
+              child: Text(l10n?.cancel ?? 'Cancelar', style: textTheme.labelLarge),
             ),
             Builder(
               builder: (context) {
                 Widget saveButton = TextButton(
                   onPressed: handleSave,
-                  child: Text('Salvar', style: textTheme.labelLarge),
+                  child: Text(l10n?.save ?? 'Salvar', style: textTheme.labelLarge),
                 );
 
                 if (isAwaitingFirstCategoryTutorial) {
                   saveButton = buildTutorialShowcase(
                     context: context,
                     key: TutorialKeys.categoryDialogSaveButton,
-                    title: TutorialConfig.categorySaveTitle,
-                    description: TutorialConfig.categorySaveDescription,
+                    title: TutorialConfig.categorySaveTitle(context),
+                    description: TutorialConfig.categorySaveDescription(context),
                     targetShapeBorder: const CircleBorder(),
                     targetPadding: const EdgeInsets.all(4),
                     onTargetClick: () {
@@ -2011,9 +2019,10 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       // Exibe feedback de sucesso
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
+          final l10n = AppLocalizations.of(context);
           AppSnackbar.showSuccess(
             context,
-            'Categoria "$nomeCategoria" adicionada com sucesso!',
+            l10n?.categoryAdded(nomeCategoria) ?? 'Categoria "$nomeCategoria" adicionada com sucesso!',
           );
         }
       });
@@ -2224,12 +2233,15 @@ class _GlobalProcessingOverlay extends StatefulWidget {
 
 class _GlobalProcessingOverlayState extends State<_GlobalProcessingOverlay>
     with TickerProviderStateMixin {
-  static const _messages = [
-    'Organizando os itens para você...',
-    'Analisando categorias e agrupamentos...',
-    'Separando os itens com carinho...',
-    'Quase pronto! Ajustando os últimos detalhes...'
-  ];
+  List<String> _getMessages(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return [
+      l10n?.aiProcessing1 ?? 'Organizando os itens para você...',
+      l10n?.aiProcessing2 ?? 'Analisando categorias e agrupamentos...',
+      l10n?.aiProcessing3 ?? 'Separando os itens com carinho...',
+      l10n?.aiProcessing4 ?? 'Quase pronto! Ajustando os últimos detalhes...',
+    ];
+  }
 
   late Timer _timer;
   int _currentMessageIndex = 0;
@@ -2242,7 +2254,7 @@ class _GlobalProcessingOverlayState extends State<_GlobalProcessingOverlay>
     _timer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (!mounted) return;
       setState(() {
-        _currentMessageIndex = (_currentMessageIndex + 1) % _messages.length;
+        _currentMessageIndex = (_currentMessageIndex + 1) % 4;
       });
     });
     _glowController = AnimationController(
@@ -2353,7 +2365,7 @@ class _GlobalProcessingOverlayState extends State<_GlobalProcessingOverlay>
                               key: ValueKey('${_currentMessageIndex}_$v'),
                               opacity: v.clamp(0, 1),
                               child: Text(
-                                _messages[_currentMessageIndex],
+                                _getMessages(context)[_currentMessageIndex],
                                 textAlign: TextAlign.center,
                                 style: textTheme.titleMedium?.copyWith(
                                   color: colorScheme.onSurface,
@@ -2375,7 +2387,7 @@ class _GlobalProcessingOverlayState extends State<_GlobalProcessingOverlay>
                           Opacity(
                             opacity: (v * 0.95).clamp(0, 1),
                             child: Text(
-                              'Nossa IA está cuidando de tudo, só um instante.',
+                              AppLocalizations.of(context)?.aiProcessingSubtitle ?? 'Nossa IA está cuidando de tudo, só um instante.',
                               textAlign: TextAlign.center,
                               style: textTheme.bodyMedium?.copyWith(
                                 color: colorScheme.onSurfaceVariant
@@ -2551,6 +2563,7 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final l10n = AppLocalizations.of(context);
     final overlayColor = theme.brightness == Brightness.light
         ? Colors.black.withValues(alpha: 0.82)
         : Colors.black.withValues(alpha: 0.02);
@@ -2587,7 +2600,7 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        'Organizar com IA?',
+                        l10n?.organizeWithAIQuestion ?? 'Organizar com IA?',
                         style: textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -2596,7 +2609,7 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Tem certeza que deseja reorganizar seus produtos automaticamente?',
+                        l10n?.organizeWithAIConfirmation ?? 'Tem certeza que deseja reorganizar seus produtos automaticamente?',
                         style: textTheme.bodyMedium?.copyWith(
                           color: Colors.white,
                           height: 1.4,
@@ -2616,7 +2629,7 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                               ),
-                              child: const Text('Cancelar'),
+                              child: Text(l10n?.cancel ?? 'Cancelar'),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -2630,7 +2643,7 @@ class _ConfirmacaoIAOverlay extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                               ),
-                              child: const Text('Confirmar'),
+                              child: Text(l10n?.confirm ?? 'Confirmar'),
                             ),
                           ),
                         ],

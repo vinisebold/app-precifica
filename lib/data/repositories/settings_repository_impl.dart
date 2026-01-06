@@ -9,6 +9,7 @@ class SettingsRepositoryImpl implements ISettingsRepository {
   static const _keyNaoPerguntarTemplate = 'nao_perguntar_template';
   static const _keyModoCompacto = 'modo_compacto';
   static const _keyTemplateSelecionado = 'template_selecionado';
+  static const _keyLanguage = 'app_language';
 
   @override
   Future<void> init() async {
@@ -115,6 +116,18 @@ class SettingsRepositoryImpl implements ISettingsRepository {
   bool getModoCompacto() {
     final box = Hive.box(_preferencesBox);
     return box.get(_keyModoCompacto, defaultValue: false) as bool;
+  }
+
+  @override
+  Future<void> setLanguage(String languageCode) async {
+    final box = Hive.box(_preferencesBox);
+    await box.put(_keyLanguage, languageCode);
+  }
+
+  @override
+  String? getLanguage() {
+    final box = Hive.box(_preferencesBox);
+    return box.get(_keyLanguage) as String?;
   }
 
   @override

@@ -25,4 +25,8 @@ abstract class ISettingsRepository {
   // Modo compacto/densidade
   Future<void> setModoCompacto(bool valor);
   bool getModoCompacto();
+
+  // Idioma do aplicativo
+  Future<void> setLanguage(String languageCode);
+  String? getLanguage();
 }

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/icon.png" alt="Precifica" width="120"/>
+  <img src="assets/icon_foreground.png" alt="Precifica" width="120"/>
 </p>
 
 <h1 align="center">Precifica</h1>

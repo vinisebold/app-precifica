@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.precifica"
+    namespace = "dev.vinisebold.precifica"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

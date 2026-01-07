@@ -122,4 +122,78 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get close => 'Close';
+
+  @override
+  String get alwaysUseDefaultTemplateBanner =>
+      'Always use Default Template when sharing';
+
+  @override
+  String get change => 'Change';
+
+  @override
+  String get newTemplate => 'New Template';
+
+  @override
+  String get notEditable => 'Not editable';
+
+  @override
+  String templateSelected(String name) {
+    return 'Template \"$name\" selected';
+  }
+
+  @override
+  String get noTemplatesFound => 'No templates found';
+
+  @override
+  String get createFirstTemplateDescription =>
+      'Create your first template to customize reports.';
+
+  @override
+  String get categoryEmoji => 'Category Emoji';
+
+  @override
+  String get categoryEmojiHint => 'Ex: ⬇️, 🔽, or leave empty';
+
+  @override
+  String get productsToInclude => 'Products to Include';
+
+  @override
+  String get productNameFormat => 'Product Name Format';
+
+  @override
+  String get firstWordBold => 'First word bold';
+
+  @override
+  String get fullNameBold => 'Full name bold';
+
+  @override
+  String get hidePrices => 'Hide Prices';
+
+  @override
+  String get hidePricesSubtitle => 'Useful for conference lists';
+
+  @override
+  String get showCurrencySymbol => 'Show currency symbol';
+
+  @override
+  String get showCurrencySymbolSubtitle =>
+      'If disabled, only numeric values are shown';
+
+  @override
+  String get zeroPriceText => 'Text for Zero Price';
+
+  @override
+  String get zeroPriceTextHint => 'Ex: Consult, To be agreed';
+
+  @override
+  String get footer => 'Footer';
+
+  @override
+  String get footerMessage => 'Footer Message';
+
+  @override
+  String get footerMessageHint => 'Ex: Order now! (47) 99999-9999';
+
+  @override
+  String get loadingSampleData => 'Loading sample data...';
 }

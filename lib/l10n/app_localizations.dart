@@ -321,6 +321,144 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Fechar'**
   String get close;
+
+  /// Banner message when always using default template
+  ///
+  /// In pt, this message translates to:
+  /// **'Usando sempre o Modelo Padrão ao compartilhar'**
+  String get alwaysUseDefaultTemplateBanner;
+
+  /// Change button
+  ///
+  /// In pt, this message translates to:
+  /// **'Alterar'**
+  String get change;
+
+  /// New template button label
+  ///
+  /// In pt, this message translates to:
+  /// **'Novo Modelo'**
+  String get newTemplate;
+
+  /// Not editable tooltip
+  ///
+  /// In pt, this message translates to:
+  /// **'Não editável'**
+  String get notEditable;
+
+  /// Template selected message
+  ///
+  /// In pt, this message translates to:
+  /// **'Modelo \"{name}\" selecionado'**
+  String templateSelected(String name);
+
+  /// Empty state message for templates
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum modelo encontrado'**
+  String get noTemplatesFound;
+
+  /// Empty state description for templates
+  ///
+  /// In pt, this message translates to:
+  /// **'Crie seu primeiro modelo para personalizar relatórios.'**
+  String get createFirstTemplateDescription;
+
+  /// Category emoji label
+  ///
+  /// In pt, this message translates to:
+  /// **'Emoji da Categoria'**
+  String get categoryEmoji;
+
+  /// Category emoji hint
+  ///
+  /// In pt, this message translates to:
+  /// **'Ex: ⬇️, 🔽, ou deixe vazio'**
+  String get categoryEmojiHint;
+
+  /// Products filter dropdown label
+  ///
+  /// In pt, this message translates to:
+  /// **'Produtos a Incluir'**
+  String get productsToInclude;
+
+  /// Product name format dropdown label
+  ///
+  /// In pt, this message translates to:
+  /// **'Formato do Nome do Produto'**
+  String get productNameFormat;
+
+  /// First word bold format option
+  ///
+  /// In pt, this message translates to:
+  /// **'Primeira palavra em negrito'**
+  String get firstWordBold;
+
+  /// Full name bold format option
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome completo em negrito'**
+  String get fullNameBold;
+
+  /// Hide prices toggle label
+  ///
+  /// In pt, this message translates to:
+  /// **'Ocultar Preços'**
+  String get hidePrices;
+
+  /// Hide prices toggle subtitle
+  ///
+  /// In pt, this message translates to:
+  /// **'Útil para listas de conferência'**
+  String get hidePricesSubtitle;
+
+  /// Show currency symbol toggle label
+  ///
+  /// In pt, this message translates to:
+  /// **'Mostrar \"R\$\" nos Preços'**
+  String get showCurrencySymbol;
+
+  /// Show currency symbol toggle subtitle
+  ///
+  /// In pt, this message translates to:
+  /// **'Se desabilitado, mostra apenas os valores numéricos'**
+  String get showCurrencySymbolSubtitle;
+
+  /// Zero price text field label
+  ///
+  /// In pt, this message translates to:
+  /// **'Texto para Preço Zerado'**
+  String get zeroPriceText;
+
+  /// Zero price text field hint
+  ///
+  /// In pt, this message translates to:
+  /// **'Ex: Consulte, A combinar'**
+  String get zeroPriceTextHint;
+
+  /// Footer section header
+  ///
+  /// In pt, this message translates to:
+  /// **'Rodapé'**
+  String get footer;
+
+  /// Footer message field label
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem de Rodapé'**
+  String get footerMessage;
+
+  /// Footer message field hint
+  ///
+  /// In pt, this message translates to:
+  /// **'Ex: Peça já! (47) 99999-9999'**
+  String get footerMessageHint;
+
+  /// Loading sample data message
+  ///
+  /// In pt, this message translates to:
+  /// **'Carregando dados de exemplo...'**
+  String get loadingSampleData;
 }
 
 class _AppLocalizationsDelegate

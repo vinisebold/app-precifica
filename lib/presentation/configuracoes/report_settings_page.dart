@@ -234,6 +234,7 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
 
   Widget _buildConfigPanel(BuildContext context, ReportTemplate template) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       color: colorScheme.surface,
@@ -244,7 +245,7 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
           TextField(
             controller: _nomeController,
             decoration: InputDecoration(
-              labelText: 'Nome do Modelo',
+              labelText: l10n?.templateName ?? 'Nome do Modelo',
               filled: true,
               fillColor: colorScheme.surfaceContainerHighest,
               border: OutlineInputBorder(
@@ -270,14 +271,14 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
           const SizedBox(height: 32),
 
           // Seção: Cabeçalho
-          _buildSectionHeader(context, 'Cabeçalho'),
+          _buildSectionHeader(context, l10n?.header ?? 'Cabeçalho'),
           const SizedBox(height: 16),
           
           TextField(
             controller: _tituloController,
             decoration: InputDecoration(
-              labelText: 'Título do Relatório',
-              hintText: 'Ex: Preços, Ofertas da Semana',
+              labelText: l10n?.reportTitle ?? 'Título do Relatório',
+              hintText: l10n?.reportTitleHint ?? 'Ex: Preços, Ofertas da Semana',
               filled: true,
               fillColor: colorScheme.surfaceContainerHighest,
               border: OutlineInputBorder(
@@ -304,7 +305,7 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
 
           _buildSwitchTile(
             context,
-            title: 'Mostrar Dia da Semana',
+            title: l10n?.showDayOfWeek ?? 'Mostrar Dia da Semana',
             value: template.mostrarDiaSemana,
             onChanged: (value) {
               _atualizarTemplate(template.copyWith(mostrarDiaSemana: value));
@@ -313,7 +314,7 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
 
           _buildSwitchTile(
             context,
-            title: 'Mostrar Data',
+            title: l10n?.showDate ?? 'Mostrar Data',
             value: template.mostrarData,
             onChanged: (value) {
               _atualizarTemplate(template.copyWith(mostrarData: value));
@@ -322,12 +323,12 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
           const SizedBox(height: 32),
 
           // Seção: Categorias
-          _buildSectionHeader(context, 'Categorias'),
+          _buildSectionHeader(context, l10n?.categories ?? 'Categorias'),
           const SizedBox(height: 16),
 
           _buildSwitchTile(
             context,
-            title: 'Agrupar por Categoria',
+            title: l10n?.groupByCategory ?? 'Agrupar por Categoria',
             value: template.agruparPorCategoria,
             onChanged: (value) {
               _atualizarTemplate(template.copyWith(agruparPorCategoria: value));
@@ -339,7 +340,7 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
             DropdownButtonFormField<CategoryFormatting>(
               initialValue: template.formatoCategoria,
               decoration: InputDecoration(
-                labelText: 'Formato do Nome',
+                labelText: l10n?.nameFormat ?? 'Formato do Nome',
                 filled: true,
                 fillColor: colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
@@ -358,18 +359,18 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
                   ),
                 ),
               ),
-              items: const [
+              items: [
                 DropdownMenuItem(
                   value: CategoryFormatting.normal,
-                  child: Text('Normal'),
+                  child: Text(l10n?.normal ?? 'Normal'),
                 ),
                 DropdownMenuItem(
                   value: CategoryFormatting.uppercase,
-                  child: Text('MAIÚSCULAS'),
+                  child: Text(l10n?.uppercase ?? 'MAIÚSCULAS'),
                 ),
                 DropdownMenuItem(
                   value: CategoryFormatting.bold,
-                  child: Text('Negrito'),
+                  child: Text(l10n?.bold ?? 'Negrito'),
                 ),
               ],
               onChanged: (value) {
@@ -382,8 +383,8 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
             TextField(
               controller: _emojiController,
               decoration: InputDecoration(
-                labelText: 'Emoji da Categoria',
-                hintText: 'Ex: ⬇️, 🔽, ou deixe vazio',
+                labelText: l10n?.categoryEmoji ?? 'Emoji da Categoria',
+                hintText: l10n?.categoryEmojiHint ?? 'Ex: ⬇️, 🔽, ou deixe vazio',
                 filled: true,
                 fillColor: colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
@@ -410,13 +411,13 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
           const SizedBox(height: 32),
 
           // Seção: Produtos
-          _buildSectionHeader(context, 'Produtos'),
+          _buildSectionHeader(context, l10n?.products ?? 'Produtos'),
           const SizedBox(height: 16),
 
           DropdownButtonFormField<ProductFilter>(
             initialValue: template.filtroProdutos,
             decoration: InputDecoration(
-              labelText: 'Produtos a Incluir',
+              labelText: l10n?.productsToInclude ?? 'Produtos a Incluir',
               filled: true,
               fillColor: colorScheme.surfaceContainerHighest,
               border: OutlineInputBorder(
@@ -435,18 +436,18 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
                 ),
               ),
             ),
-            items: const [
+            items: [
               DropdownMenuItem(
                 value: ProductFilter.activeWithPrice,
-                child: Text('Apenas ativos com preço'),
+                child: Text(l10n?.onlyActiveWithPrice ?? 'Apenas ativos com preço'),
               ),
               DropdownMenuItem(
                 value: ProductFilter.allActive,
-                child: Text('Todos os ativos'),
+                child: Text(l10n?.allActive ?? 'Todos os ativos'),
               ),
               DropdownMenuItem(
                 value: ProductFilter.all,
-                child: Text('Todos (incluindo inativos)'),
+                child: Text(l10n?.allIncludingInactive ?? 'Todos (incluindo inativos)'),
               ),
             ],
             onChanged: (value) {
@@ -460,7 +461,7 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
           DropdownButtonFormField<ProductNameFormatting>(
             initialValue: template.formatoNomeProduto,
             decoration: InputDecoration(
-              labelText: 'Formato do Nome do Produto',
+              labelText: l10n?.productNameFormat ?? 'Formato do Nome do Produto',
               filled: true,
               fillColor: colorScheme.surfaceContainerHighest,
               border: OutlineInputBorder(
@@ -479,18 +480,18 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
                 ),
               ),
             ),
-            items: const [
+            items: [
               DropdownMenuItem(
                 value: ProductNameFormatting.firstWordBold,
-                child: Text('Primeira palavra em negrito'),
+                child: Text(l10n?.firstWordBold ?? 'Primeira palavra em negrito'),
               ),
               DropdownMenuItem(
                 value: ProductNameFormatting.fullBold,
-                child: Text('Nome completo em negrito'),
+                child: Text(l10n?.fullNameBold ?? 'Nome completo em negrito'),
               ),
               DropdownMenuItem(
                 value: ProductNameFormatting.normal,
-                child: Text('Sem formatação'),
+                child: Text(l10n?.noFormatting ?? 'Sem formatação'),
               ),
             ],
             onChanged: (value) {
@@ -503,8 +504,8 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
 
           _buildSwitchTile(
             context,
-            title: 'Ocultar Preços',
-            subtitle: 'Útil para listas de conferência',
+            title: l10n?.hidePrices ?? 'Ocultar Preços',
+            subtitle: l10n?.hidePricesSubtitle ?? 'Útil para listas de conferência',
             value: template.ocultarPrecos,
             onChanged: (value) {
               _atualizarTemplate(template.copyWith(ocultarPrecos: value));
@@ -515,8 +516,8 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
             const SizedBox(height: 12),
             _buildSwitchTile(
               context,
-              title: 'Mostrar "R\$" nos Preços',
-              subtitle: 'Se desabilitado, mostra apenas os valores numéricos',
+              title: l10n?.showCurrencySymbol ?? 'Mostrar "R\$" nos Preços',
+              subtitle: l10n?.showCurrencySymbolSubtitle ?? 'Se desabilitado, mostra apenas os valores numéricos',
               value: template.mostrarCifraoPreco,
               onChanged: (value) {
                 _atualizarTemplate(template.copyWith(mostrarCifraoPreco: value));
@@ -526,8 +527,8 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
             TextField(
               controller: _textoPrecoZeroController,
               decoration: InputDecoration(
-                labelText: 'Texto para Preço Zerado',
-                hintText: 'Ex: Consulte, A combinar',
+                labelText: l10n?.zeroPriceText ?? 'Texto para Preço Zerado',
+                hintText: l10n?.zeroPriceTextHint ?? 'Ex: Consulte, A combinar',
                 filled: true,
                 fillColor: colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
@@ -554,14 +555,14 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
           const SizedBox(height: 32),
 
           // Seção: Rodapé
-          _buildSectionHeader(context, 'Rodapé'),
+          _buildSectionHeader(context, l10n?.footer ?? 'Rodapé'),
           const SizedBox(height: 16),
 
           TextField(
             controller: _rodapeController,
             decoration: InputDecoration(
-              labelText: 'Mensagem de Rodapé',
-              hintText: 'Ex: Peça já! (47) 99999-9999',
+              labelText: l10n?.footerMessage ?? 'Mensagem de Rodapé',
+              hintText: l10n?.footerMessageHint ?? 'Ex: Peça já! (47) 99999-9999',
               filled: true,
               fillColor: colorScheme.surfaceContainerHighest,
               border: OutlineInputBorder(
@@ -593,10 +594,11 @@ class _ReportSettingsPageState extends ConsumerState<ReportSettingsPage> {
 
   Widget _buildPreview(BuildContext context, ReportTemplate template) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     String previewText;
     if (!_sampleDataLoaded) {
-      previewText = 'Carregando dados de exemplo...';
+      previewText = l10n?.loadingSampleData ?? 'Carregando dados de exemplo...';
     } else {
       final categorias = SampleDataService.getCategoriasSample(limit: 2);
       final produtos = SampleDataService.getProdutosSample(

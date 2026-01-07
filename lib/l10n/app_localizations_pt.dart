@@ -122,4 +122,78 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get close => 'Fechar';
+
+  @override
+  String get alwaysUseDefaultTemplateBanner =>
+      'Usando sempre o Modelo Padrão ao compartilhar';
+
+  @override
+  String get change => 'Alterar';
+
+  @override
+  String get newTemplate => 'Novo Modelo';
+
+  @override
+  String get notEditable => 'Não editável';
+
+  @override
+  String templateSelected(String name) {
+    return 'Modelo \"$name\" selecionado';
+  }
+
+  @override
+  String get noTemplatesFound => 'Nenhum modelo encontrado';
+
+  @override
+  String get createFirstTemplateDescription =>
+      'Crie seu primeiro modelo para personalizar relatórios.';
+
+  @override
+  String get categoryEmoji => 'Emoji da Categoria';
+
+  @override
+  String get categoryEmojiHint => 'Ex: ⬇️, 🔽, ou deixe vazio';
+
+  @override
+  String get productsToInclude => 'Produtos a Incluir';
+
+  @override
+  String get productNameFormat => 'Formato do Nome do Produto';
+
+  @override
+  String get firstWordBold => 'Primeira palavra em negrito';
+
+  @override
+  String get fullNameBold => 'Nome completo em negrito';
+
+  @override
+  String get hidePrices => 'Ocultar Preços';
+
+  @override
+  String get hidePricesSubtitle => 'Útil para listas de conferência';
+
+  @override
+  String get showCurrencySymbol => 'Mostrar \"R\$\" nos Preços';
+
+  @override
+  String get showCurrencySymbolSubtitle =>
+      'Se desabilitado, mostra apenas os valores numéricos';
+
+  @override
+  String get zeroPriceText => 'Texto para Preço Zerado';
+
+  @override
+  String get zeroPriceTextHint => 'Ex: Consulte, A combinar';
+
+  @override
+  String get footer => 'Rodapé';
+
+  @override
+  String get footerMessage => 'Mensagem de Rodapé';
+
+  @override
+  String get footerMessageHint => 'Ex: Peça já! (47) 99999-9999';
+
+  @override
+  String get loadingSampleData => 'Carregando dados de exemplo...';
 }

@@ -4,6 +4,7 @@ import '../../domain/entities/report_template.dart';
 import 'report_settings_page.dart';
 import 'settings_controller.dart';
 import '../../app/core/snackbar/app_snackbar.dart';
+import '../../app/core/l10n/app_localizations.dart';
 
 class TemplateListPage extends ConsumerWidget {
   const TemplateListPage({super.key});
@@ -14,17 +15,18 @@ class TemplateListPage extends ConsumerWidget {
     final settingsNotifier = ref.read(settingsControllerProvider.notifier);
     final colorScheme = Theme.of(context).colorScheme;
     final naoPerguntarAtivo = settingsNotifier.getNaoPerguntarTemplate();
+    final l10n = AppLocalizations.of(context);
 
     if (settingsState.isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Modelos de Relatório')),
+        appBar: AppBar(title: Text(l10n?.reportTemplates ?? 'Modelos de Relatório')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Modelos de Relatório'),
+        title: Text(l10n?.reportTemplates ?? 'Modelos de Relatório'),
       ),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -33,8 +35,8 @@ class TemplateListPage extends ConsumerWidget {
             if (naoPerguntarAtivo)
               _BannerCard(
                 icon: Icons.info_outline,
-                message: 'Usando sempre o Modelo Padrão ao compartilhar',
-                actionLabel: 'Alterar',
+                message: l10n?.alwaysUseDefaultTemplateBanner ?? 'Usando sempre o Modelo Padrão ao compartilhar',
+                actionLabel: l10n?.change ?? 'Alterar',
                 onActionPressed: () async {
                   await settingsNotifier.setNaoPerguntarTemplate(false);
                   ref.invalidate(settingsControllerProvider);
@@ -73,7 +75,7 @@ class TemplateListPage extends ConsumerWidget {
           );
         },
         icon: const Icon(Icons.add),
-        label: const Text('Novo Modelo'),
+        label: Text(l10n?.newTemplate ?? 'Novo Modelo'),
       ),
     );
   }
@@ -131,18 +133,18 @@ class _TemplateCard extends ConsumerWidget {
                       ),
                     );
                   },
-                  tooltip: 'Editar',
+                  tooltip: AppLocalizations.of(context)?.edit ?? 'Editar',
                 ),
               ] else ...[
                 const SizedBox(width: 8),
                 IconButton(
                   icon: Icon(
                     Icons.lock,
-          color: colorScheme.onSurfaceVariant
-            .withValues(alpha: 0.5),
+                    color: colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.5),
                   ),
                   onPressed: null,
-                  tooltip: 'Não editável',
+                  tooltip: AppLocalizations.of(context)?.notEditable ?? 'Não editável',
                 ),
               ],
             ],
@@ -163,9 +165,10 @@ class _TemplateCard extends ConsumerWidget {
 
     if (!context.mounted) return;
 
+    final l10n = AppLocalizations.of(context);
     AppSnackbar.show(
       context,
-      'Modelo "${template.nome}" selecionado',
+      l10n?.templateSelected(template.nome) ?? 'Modelo "${template.nome}" selecionado',
     );
   }
 }
@@ -225,6 +228,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -236,12 +240,12 @@ class _EmptyState extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         Text(
-          'Nenhum modelo encontrado',
+          l10n?.noTemplatesFound ?? 'Nenhum modelo encontrado',
           style: textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
         Text(
-          'Crie seu primeiro modelo para personalizar relatórios.',
+          l10n?.createFirstTemplateDescription ?? 'Crie seu primeiro modelo para personalizar relatórios.',
           style: textTheme.bodyMedium?.copyWith(
             color: colorScheme.onSurfaceVariant,
           ),

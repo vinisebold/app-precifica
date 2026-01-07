@@ -122,4 +122,78 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get close => 'Cerrar';
+
+  @override
+  String get alwaysUseDefaultTemplateBanner =>
+      'Usando siempre la Plantilla Predeterminada al compartir';
+
+  @override
+  String get change => 'Cambiar';
+
+  @override
+  String get newTemplate => 'Nueva Plantilla';
+
+  @override
+  String get notEditable => 'No editable';
+
+  @override
+  String templateSelected(String name) {
+    return 'Plantilla \"$name\" seleccionada';
+  }
+
+  @override
+  String get noTemplatesFound => 'No se encontraron plantillas';
+
+  @override
+  String get createFirstTemplateDescription =>
+      'Cree su primera plantilla para personalizar informes.';
+
+  @override
+  String get categoryEmoji => 'Emoji de Categoría';
+
+  @override
+  String get categoryEmojiHint => 'Ej: ⬇️, 🔽, o dejar vacío';
+
+  @override
+  String get productsToInclude => 'Productos a Incluir';
+
+  @override
+  String get productNameFormat => 'Formato del Nombre del Producto';
+
+  @override
+  String get firstWordBold => 'Primera palabra en negrita';
+
+  @override
+  String get fullNameBold => 'Nombre completo en negrita';
+
+  @override
+  String get hidePrices => 'Ocultar Precios';
+
+  @override
+  String get hidePricesSubtitle => 'Útil para listas de verificación';
+
+  @override
+  String get showCurrencySymbol => 'Mostrar símbolo de moneda';
+
+  @override
+  String get showCurrencySymbolSubtitle =>
+      'Si está deshabilitado, solo se muestran valores numéricos';
+
+  @override
+  String get zeroPriceText => 'Texto para Precio Cero';
+
+  @override
+  String get zeroPriceTextHint => 'Ej: Consulte, A convenir';
+
+  @override
+  String get footer => 'Pie de página';
+
+  @override
+  String get footerMessage => 'Mensaje de Pie de página';
+
+  @override
+  String get footerMessageHint => 'Ej: ¡Ordene ahora! (47) 99999-9999';
+
+  @override
+  String get loadingSampleData => 'Cargando datos de ejemplo...';
 }

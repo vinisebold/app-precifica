@@ -404,6 +404,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       return;
     }
 
+    final l10n = AppLocalizations.of(context);
     Future.microtask(() async {
       try {
         await ref
@@ -412,7 +413,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       } catch (_) {
         ref
             .read(globalToastControllerProvider.notifier)
-            .showError(AppLocalizations.of(context)?.aiRestoreError ?? 'Não foi possível restaurar seus dados do tutorial.');
+            .showError(l10n?.aiRestoreError ?? 'Não foi possível restaurar seus dados do tutorial.');
       } finally {
         ref.read(tutorialControllerProvider.notifier).clearUserDataSnapshot();
       }

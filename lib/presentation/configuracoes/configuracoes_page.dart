@@ -95,9 +95,11 @@ class ConfiguracoesPage extends ConsumerWidget {
               onLanguageChanged: (language) async {
                 await localeNotifier.setLocale(language);
                 if (!context.mounted) return;
+                // Get the new l10n after locale change
+                final newL10n = AppLocalizations.of(context);
                 AppSnackbar.show(
                   context,
-                  l10n.languageChanged(language.displayName),
+                  newL10n?.languageChanged(language.displayName) ?? 'Idioma alterado',
                 );
               },
             ),

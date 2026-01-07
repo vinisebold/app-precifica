@@ -40,7 +40,11 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            // Only use release signing config if keystore file is provided
+            val keystoreFile = System.getenv("KEY_STORE_FILE")
+            if (keystoreFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
         }

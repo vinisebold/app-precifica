@@ -1,4 +1,4 @@
-package com.example.precifica
+package dev.vinisebold.precifica
 
 import io.flutter.embedding.android.FlutterActivity
 

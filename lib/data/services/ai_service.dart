@@ -5,7 +5,7 @@ import 'package:precifica/data/api_key.dart';
 
 class AIService {
   final String _apiUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
 
   /// Envia os dados JSON para a IA (Gemini) e retorna a versão reorganizada.
   ///

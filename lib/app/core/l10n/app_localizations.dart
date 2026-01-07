@@ -214,6 +214,31 @@ class AppLocalizations {
       'tutorialButtonGotIt': 'Entendi',
       'tutorialButtonFinish': 'Começar',
       'tutorialButtonSkip': 'Pular tutorial',
+      
+      // Report Templates
+      'alwaysUseDefaultTemplateBanner': 'Usando sempre o Modelo Padrão ao compartilhar',
+      'change': 'Alterar',
+      'newTemplate': 'Novo Modelo',
+      'notEditable': 'Não editável',
+      'templateSelected': 'Modelo "{name}" selecionado',
+      'noTemplatesFound': 'Nenhum modelo encontrado',
+      'createFirstTemplateDescription': 'Crie seu primeiro modelo para personalizar relatórios.',
+      'categoryEmoji': 'Emoji da Categoria',
+      'categoryEmojiHint': 'Ex: ⬇️, 🔽, ou deixe vazio',
+      'productsToInclude': 'Produtos a Incluir',
+      'productNameFormat': 'Formato do Nome do Produto',
+      'firstWordBold': 'Primeira palavra em negrito',
+      'fullNameBold': 'Nome completo em negrito',
+      'hidePrices': 'Ocultar Preços',
+      'hidePricesSubtitle': 'Útil para listas de conferência',
+      'showCurrencySymbol': 'Mostrar "R\$" nos Preços',
+      'showCurrencySymbolSubtitle': 'Se desabilitado, mostra apenas os valores numéricos',
+      'zeroPriceText': 'Texto para Preço Zerado',
+      'zeroPriceTextHint': 'Ex: Consulte, A combinar',
+      'footer': 'Rodapé',
+      'footerMessage': 'Mensagem de Rodapé',
+      'footerMessageHint': 'Ex: Peça já! (47) 99999-9999',
+      'loadingSampleData': 'Carregando dados de exemplo...',
     },
     'en': {
       // App general
@@ -379,6 +404,31 @@ class AppLocalizations {
       'tutorialButtonGotIt': 'Got it',
       'tutorialButtonFinish': 'Start',
       'tutorialButtonSkip': 'Skip tutorial',
+
+      // Report Templates
+      'alwaysUseDefaultTemplateBanner': 'Always use Default Template when sharing',
+      'change': 'Change',
+      'newTemplate': 'New Template',
+      'notEditable': 'Not editable',
+      'templateSelected': 'Template "{name}" selected',
+      'noTemplatesFound': 'No templates found',
+      'createFirstTemplateDescription': 'Create your first template to customize reports.',
+      'categoryEmoji': 'Category Emoji',
+      'categoryEmojiHint': 'Ex: ⬇️, 🔽, or leave empty',
+      'productsToInclude': 'Products to Include',
+      'productNameFormat': 'Product Name Format',
+      'firstWordBold': 'First word bold',
+      'fullNameBold': 'Full name bold',
+      'hidePrices': 'Hide Prices',
+      'hidePricesSubtitle': 'Useful for conference lists',
+      'showCurrencySymbol': 'Show currency symbol',
+      'showCurrencySymbolSubtitle': 'If disabled, only numeric values are shown',
+      'zeroPriceText': 'Text for Zero Price',
+      'zeroPriceTextHint': 'Ex: Consult, To be agreed',
+      'footer': 'Footer',
+      'footerMessage': 'Footer Message',
+      'footerMessageHint': 'Ex: Order now! (47) 99999-9999',
+      'loadingSampleData': 'Loading sample data...',
     },
     'es': {
       // App general
@@ -544,6 +594,31 @@ class AppLocalizations {
       'tutorialButtonGotIt': 'Entendido',
       'tutorialButtonFinish': 'Comenzar',
       'tutorialButtonSkip': 'Omitir tutorial',
+      
+      // Report Templates
+      'alwaysUseDefaultTemplateBanner': 'Usando siempre la Plantilla Predeterminada al compartir',
+      'change': 'Cambiar',
+      'newTemplate': 'Nueva Plantilla',
+      'notEditable': 'No editable',
+      'templateSelected': 'Plantilla "{name}" seleccionada',
+      'noTemplatesFound': 'No se encontraron plantillas',
+      'createFirstTemplateDescription': 'Cree su primera plantilla para personalizar informes.',
+      'categoryEmoji': 'Emoji de Categoría',
+      'categoryEmojiHint': 'Ej: ⬇️, 🔽, o dejar vacío',
+      'productsToInclude': 'Productos a Incluir',
+      'productNameFormat': 'Formato del Nombre del Producto',
+      'firstWordBold': 'Primera palabra en negrita',
+      'fullNameBold': 'Nombre completo en negrita',
+      'hidePrices': 'Ocultar Precios',
+      'hidePricesSubtitle': 'Útil para listas de verificación',
+      'showCurrencySymbol': 'Mostrar símbolo de moneda',
+      'showCurrencySymbolSubtitle': 'Si está deshabilitado, solo se muestran valores numéricos',
+      'zeroPriceText': 'Texto para Precio Cero',
+      'zeroPriceTextHint': 'Ej: Consulte, A convenir',
+      'footer': 'Pie de página',
+      'footerMessage': 'Mensaje de Pie de página',
+      'footerMessageHint': 'Ej: ¡Ordene ahora! (47) 99999-9999',
+      'loadingSampleData': 'Cargando datos de ejemplo...',
     },
   };
 
@@ -598,6 +673,30 @@ class AppLocalizations {
   String get renameTemplate => _translate('renameTemplate');
   String get deleteTemplate => _translate('deleteTemplate');
   String get deleteTemplateMessage => _translate('deleteTemplateMessage');
+  
+  // Report Templates
+  String get alwaysUseDefaultTemplateBanner => _translate('alwaysUseDefaultTemplateBanner');
+  String get change => _translate('change');
+  String get newTemplate => _translate('newTemplate');
+  String get notEditable => _translate('notEditable');
+  String templateSelected(String name) =>
+      _translate('templateSelected').replaceAll('{name}', name);
+  String get noTemplatesFound => _translate('noTemplatesFound');
+  String get createFirstTemplateDescription => _translate('createFirstTemplateDescription');
+  String get categoryEmoji => _translate('categoryEmoji');
+  String get categoryEmojiHint => _translate('categoryEmojiHint');
+  String get productsToInclude => _translate('productsToInclude');
+  String get productNameFormat => _translate('productNameFormat');
+  String get hidePrices => _translate('hidePrices');
+  String get hidePricesSubtitle => _translate('hidePricesSubtitle');
+  String get showCurrencySymbol => _translate('showCurrencySymbol');
+  String get showCurrencySymbolSubtitle => _translate('showCurrencySymbolSubtitle');
+  String get zeroPriceText => _translate('zeroPriceText');
+  String get zeroPriceTextHint => _translate('zeroPriceTextHint');
+  String get footer => _translate('footer');
+  String get footerMessage => _translate('footerMessage');
+  String get footerMessageHint => _translate('footerMessageHint');
+  String get loadingSampleData => _translate('loadingSampleData');
   
   String get products => _translate('products');
   String get categories => _translate('categories');

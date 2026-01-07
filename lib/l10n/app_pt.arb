@@ -153,5 +153,103 @@
   "close": "Fechar",
   "@close": {
     "description": "Close button"
+  },
+  "alwaysUseDefaultTemplateBanner": "Usando sempre o Modelo Padrão ao compartilhar",
+  "@alwaysUseDefaultTemplateBanner": {
+    "description": "Banner message when always using default template"
+  },
+  "change": "Alterar",
+  "@change": {
+    "description": "Change button"
+  },
+  "newTemplate": "Novo Modelo",
+  "@newTemplate": {
+    "description": "New template button label"
+  },
+  "notEditable": "Não editável",
+  "@notEditable": {
+    "description": "Not editable tooltip"
+  },
+  "templateSelected": "Modelo \"{name}\" selecionado",
+  "@templateSelected": {
+    "description": "Template selected message",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Meu Modelo"
+      }
+    }
+  },
+  "noTemplatesFound": "Nenhum modelo encontrado",
+  "@noTemplatesFound": {
+    "description": "Empty state message for templates"
+  },
+  "createFirstTemplateDescription": "Crie seu primeiro modelo para personalizar relatórios.",
+  "@createFirstTemplateDescription": {
+    "description": "Empty state description for templates"
+  },
+  "categoryEmoji": "Emoji da Categoria",
+  "@categoryEmoji": {
+    "description": "Category emoji label"
+  },
+  "categoryEmojiHint": "Ex: ⬇️, 🔽, ou deixe vazio",
+  "@categoryEmojiHint": {
+    "description": "Category emoji hint"
+  },
+  "productsToInclude": "Produtos a Incluir",
+  "@productsToInclude": {
+    "description": "Products filter dropdown label"
+  },
+  "productNameFormat": "Formato do Nome do Produto",
+  "@productNameFormat": {
+    "description": "Product name format dropdown label"
+  },
+  "firstWordBold": "Primeira palavra em negrito",
+  "@firstWordBold": {
+    "description": "First word bold format option"
+  },
+  "fullNameBold": "Nome completo em negrito",
+  "@fullNameBold": {
+    "description": "Full name bold format option"
+  },
+  "hidePrices": "Ocultar Preços",
+  "@hidePrices": {
+    "description": "Hide prices toggle label"
+  },
+  "hidePricesSubtitle": "Útil para listas de conferência",
+  "@hidePricesSubtitle": {
+    "description": "Hide prices toggle subtitle"
+  },
+  "showCurrencySymbol": "Mostrar \"R$\" nos Preços",
+  "@showCurrencySymbol": {
+    "description": "Show currency symbol toggle label"
+  },
+  "showCurrencySymbolSubtitle": "Se desabilitado, mostra apenas os valores numéricos",
+  "@showCurrencySymbolSubtitle": {
+    "description": "Show currency symbol toggle subtitle"
+  },
+  "zeroPriceText": "Texto para Preço Zerado",
+  "@zeroPriceText": {
+    "description": "Zero price text field label"
+  },
+  "zeroPriceTextHint": "Ex: Consulte, A combinar",
+  "@zeroPriceTextHint": {
+    "description": "Zero price text field hint"
+  },
+  "footer": "Rodapé",
+  "@footer": {
+    "description": "Footer section header"
+  },
+  "footerMessage": "Mensagem de Rodapé",
+  "@footerMessage": {
+    "description": "Footer message field label"
+  },
+  "footerMessageHint": "Ex: Peça já! (47) 99999-9999",
+  "@footerMessageHint": {
+    "description": "Footer message field hint"
+  },
+  "loadingSampleData": "Carregando dados de exemplo...",
+  "@loadingSampleData": {
+    "description": "Loading sample data message"
   }
 }

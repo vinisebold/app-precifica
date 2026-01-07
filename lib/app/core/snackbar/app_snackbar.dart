@@ -50,16 +50,35 @@ class AppSnackbar {
     );
   }
 
-  /// Exibe uma SnackBar padrão com mensagem simples.
-  static void show(
+  /// Exibe uma SnackBar de aviso/warning.
+  static void showWarning(
     BuildContext context,
     String message, {
-    Duration duration = const Duration(seconds: 2),
+    Duration duration = const Duration(seconds: 3),
+    SnackBarAction? action,
   }) {
     _show(
       context,
       message,
       duration: duration,
+      backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+      textColor: Theme.of(context).colorScheme.onTertiaryContainer,
+      action: action,
+    );
+  }
+
+  /// Exibe uma SnackBar padrão com mensagem simples.
+  static void show(
+    BuildContext context,
+    String message, {
+    Duration duration = const Duration(seconds: 2),
+    SnackBarAction? action,
+  }) {
+    _show(
+      context,
+      message,
+      duration: duration,
+      action: action,
     );
   }
 
@@ -70,6 +89,7 @@ class AppSnackbar {
     required Duration duration,
     Color? backgroundColor,
     Color? textColor,
+    SnackBarAction? action,
   }) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -81,6 +101,7 @@ class AppSnackbar {
           ),
           duration: duration,
           backgroundColor: backgroundColor,
+          action: action,
         ),
       );
   }

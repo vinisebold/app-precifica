@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/l10n/app_localizations.dart';
 import '../presentation/shared/introduction/app_introduction_wrapper.dart';
-import 'core/toast/global_toast_host.dart';
 import '../presentation/shared/providers/locale_provider.dart';
 
 class AppWidget extends ConsumerWidget {
@@ -29,10 +28,6 @@ class AppWidget extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       home: const AppIntroductionWrapper(),
-      builder: (context, child) {
-        if (child == null) return const SizedBox.shrink();
-        return GlobalToastHost(child: child);
-      },
     );
   }
 }

@@ -11,7 +11,6 @@ import 'package:showcaseview/showcaseview.dart';
 
 import 'package:precifica/domain/entities/produto.dart';
 import 'package:precifica/domain/entities/report_template.dart';
-import 'package:precifica/app/core/toast/global_toast_controller.dart';
 import 'package:precifica/app/core/snackbar/app_snackbar.dart';
 import 'package:precifica/app/core/l10n/app_localizations.dart';
 
@@ -411,9 +410,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             .read(gestaoControllerProvider.notifier)
             .resetAndSeedDatabase(snapshot);
       } catch (_) {
-        ref
-            .read(globalToastControllerProvider.notifier)
-            .showError(l10n?.aiRestoreError ?? 'Não foi possível restaurar seus dados do tutorial.');
+        if (mounted) {
+          AppSnackbar.showError(
+            context,
+            l10n?.aiRestoreError ?? 'Não foi possível restaurar seus dados do tutorial.',
+          );
+        }
       } finally {
         ref.read(tutorialControllerProvider.notifier).clearUserDataSnapshot();
       }
@@ -956,12 +958,9 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     ref.listen<GestaoState>(
       gestaoControllerProvider,
       (previousState, newState) {
-        final toastController =
-            ref.read(globalToastControllerProvider.notifier);
-
         if (newState.errorMessage != null &&
             newState.errorMessage != previousState?.errorMessage) {
-          toastController.showError(newState.errorMessage!);
+          AppSnackbar.showError(context, newState.errorMessage!);
           ref.read(gestaoControllerProvider.notifier).clearError();
         }
 
@@ -970,10 +969,10 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 previousState?.ultimoProdutoDeletado) {
           final produtoDeletado = newState.ultimoProdutoDeletado!;
           final l10n = AppLocalizations.of(context);
-          toastController.show(
+          AppSnackbar.showWarning(
+            context,
             l10n?.deleted(produtoDeletado.nome) ?? '${produtoDeletado.nome} deletado',
-            variant: ToastVariant.warning,
-            action: ToastAction(
+            action: SnackBarAction(
               label: l10n?.undo ?? 'Desfazer',
               onPressed: () {
                 ref
@@ -1688,11 +1687,28 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             ),
           );
         },
-        onAcceptWithDetails: (details) {
+        onAcceptWithDetails: (details) async {
           HapticFeedback.lightImpact();
           final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
-          gestaoNotifier.deletarCategoria(details.data);
+          final stateBefore = ref.read(gestaoControllerProvider);
+          final categoriaIndex =
+              stateBefore.categorias.indexWhere((c) => c.id == details.data);
+          final categoriaNome = categoriaIndex != -1
+              ? stateBefore.categorias[categoriaIndex].nome
+              : null;
+
+          await gestaoNotifier.deletarCategoria(details.data);
           gestaoNotifier.setReordering(false);
+
+          final l10n = AppLocalizations.of(context);
+          if (mounted) {
+            AppSnackbar.showSuccess(
+              context,
+              categoriaNome != null
+                  ? (l10n?.deleted(categoriaNome) ?? 'Categoria "$categoriaNome" deletada')
+                  : (l10n?.deleted('Categoria') ?? 'Categoria deletada'),
+            );
+          }
         },
       ),
     );

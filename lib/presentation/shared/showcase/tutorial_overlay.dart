@@ -26,54 +26,73 @@ class TutorialInstructionOverlay extends StatelessWidget {
       color: Colors.transparent,
       child: Stack(
         children: [
-          // Blur backdrop
+          // Blur backdrop com leve escurecimento para contraste
           Positioned.fill(
             child: ClipRect(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                 child: Container(
-                  color: Colors.black.withValues(alpha: 0.02),
+                  color: Colors.black.withValues(alpha: 0.1),
                 ),
               ),
             ),
           ),
-          // Content
+          // Content Card
           Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 340),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 30,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Icon
-                    Icon(
-                      Icons.school_outlined,
-                      color: colorScheme.primary,
-                      size: 56,
+                    // Icon decorativo
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer.withValues(alpha: 0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.celebration_outlined,
+                        color: colorScheme.primary,
+                        size: 40,
+                      ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                     // Title
                     Text(
                       title,
                       style: textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.bold,
                         color: colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     // Message
                     Text(
                       message,
-                      style: textTheme.bodyMedium?.copyWith(
+                      style: textTheme.bodyLarge?.copyWith(
                         color: colorScheme.onSurfaceVariant,
-                        height: 1.4,
+                        height: 1.5,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     if (onDismiss != null) ...[
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton(
@@ -82,14 +101,20 @@ class TutorialInstructionOverlay extends StatelessWidget {
                             onDismiss?.call();
                           },
                           style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: colorScheme.onPrimary,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(16),
                             ),
+                            elevation: 0,
                           ),
                           child: Text(
-                            TutorialConfig.buttonGotIt(context),
-                            style: textTheme.labelLarge,
+                            TutorialConfig.buttonFinish(context),
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colorScheme.onPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -125,4 +150,3 @@ void showTutorialInstruction({
     ),
   );
 }
-

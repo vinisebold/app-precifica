@@ -1697,11 +1697,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               ? stateBefore.categorias[categoriaIndex].nome
               : null;
 
+          final l10n = AppLocalizations.of(context);
+
           await gestaoNotifier.deletarCategoria(details.data);
           gestaoNotifier.setReordering(false);
 
-          final l10n = AppLocalizations.of(context);
-          if (mounted) {
+          if (context.mounted) {
             AppSnackbar.showSuccess(
               context,
               categoriaNome != null

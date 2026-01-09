@@ -1,20 +1,10 @@
-<p align="center">
-  <img src="assets/icon_foreground.png" alt="Precifica" width="120"/>
-</p>
+<img align="left" width="80" height="80" src="assets/icon_foreground.png" alt="Precifica icon">
 
-<h1 align="center">Precifica</h1>
+# Precifica [![Flutter](https://img.shields.io/badge/Flutter-3.4.0+-02569B?logo=flutter)](https://flutter.dev) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-<p align="center">
-  Gerencie produtos, preços e compartilhe listas de forma simples e inteligente.
-</p>
+**Precifica** é um aplicativo gratuito e open-source para gerenciamento de produtos e preços, focado em pequenos negócios como hortifrutis, mercearias e feiras. Organize listas, gere relatórios e compartilhe com seus clientes de forma simples e inteligente.
 
----
-
-## 📱 Sobre o Aplicativo
-
-**Precifica** é um aplicativo voltado para pequenos negócios, como hortifrutis, mercearias e feiras, que precisam gerenciar listas de produtos e preços de forma prática. Com ele, você pode criar relatórios prontos para enviar pelo WhatsApp, organizar categorias com ajuda de inteligência artificial e salvar diferentes perfis de produtos.
-
----
+<br clear="left"/>
 
 ## ✨ Principais Funcionalidades
 
@@ -28,55 +18,120 @@
 | **Relatórios** | Gere listas de preços formatadas para compartilhar via WhatsApp ou e-mail |
 | **Modelos de Relatório** | Personalize título, formatação e filtros dos seus relatórios |
 
----
+## 📸 Capturas de Tela
 
-## 🚀 Como Usar
+<table>
+  <tr>
+    <td align="center">
+      <b>Tela Principal</b><br>
+      <img src="screenshots/main.png" width="200"/>
+    </td>
+    <td align="center">
+      <b>Organização com IA</b><br>
+      <img src="screenshots/ai.png" width="200"/>
+    </td>
+    <td align="center">
+      <b>Relatórios</b><br>
+      <img src="screenshots/report.png" width="200"/>
+    </td>
+  </tr>
+</table>
 
-### Primeiro Acesso
-Ao abrir o app pela primeira vez, um tutorial interativo guiará você pelos passos básicos:
-1. Criar sua primeira categoria
-2. Adicionar seu primeiro produto
-3. Experimentar um perfil de exemplo (Hortifruti)
+## 🚀 Começando
 
-### Uso Diário
-1. **Abra o app** e selecione uma categoria na barra inferior
-2. **Atualize os preços** tocando no campo de preço de cada produto
-3. **Ative ou desative produtos** com um toque simples
-4. **Compartilhe** o relatório pelo botão de compartilhar no topo
+### Para Usuários
 
-### Organização com IA
-1. Abra o menu lateral (☰)
-2. Toque em **"Organizar com IA"**
-3. Confirme a reorganização
-4. A IA agrupará seus produtos em categorias coerentes automaticamente
+#### Download Direto
+Baixe o APK mais recente na [página de releases](https://github.com/vinisebold/app-precifica/releases/latest).
 
-### Gerenciamento de Perfis
-- **Salvar**: Guarde sua configuração atual como um perfil
-- **Carregar**: Restaure um perfil salvo anteriormente
-- **Importar/Exportar**: Compartilhe perfis via arquivo JSON
+#### Primeiro Acesso
+1. Ao abrir pela primeira vez, siga o tutorial interativo
+2. Crie sua primeira categoria e adicione produtos
+3. Experimente o perfil de exemplo "Hortifruti" para ver o app em ação
 
----
+### Para Desenvolvedores
 
-## 🛠️ Configuração para Desenvolvedores
-
-### Pré-requisitos
+#### Pré-requisitos
 - Flutter SDK 3.4.0 ou superior
+- Dart 3.0+
 - Chave de API do [Google AI Studio](https://aistudio.google.com/apikey)
 
-### Executar em modo debug
+#### Configuração
+
+1. Clone o repositório:
 ```bash
-flutter run --dart-define=GEMINI_API_KEY=SUA_CHAVE
+git clone https://github.com/seu-usuario/precifica.git
+cd precifica
 ```
 
-### Gerar APK de release
+2. Instale as dependências:
 ```bash
-flutter build apk --release --dart-define=GEMINI_API_KEY=SUA_CHAVE
+flutter pub get
 ```
 
-### CI/CD (GitHub Actions)
+3. Configure sua chave da API:
+```bash
+# Executar em modo debug
+flutter run --dart-define=GEMINI_API_KEY=SUA_CHAVE_AQUI
+
+# Gerar APK de release
+flutter build apk --release --dart-define=GEMINI_API_KEY=SUA_CHAVE_AQUI
+```
+
+#### CI/CD com GitHub Actions
+
+Adicione sua chave como secret no repositório (`GEMINI_API_KEY`) e use:
+
 ```yaml
 - name: Build APK
   run: flutter build apk --release --dart-define=GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
 ```
 
----
+## 📖 Guia de Uso
+
+### Gerenciamento Básico
+
+| Ação | Como Fazer |
+|------|------------|
+| **Adicionar Produto** | Toque no botão "+" na categoria desejada |
+| **Editar Preço** | Toque no valor do preço para editar |
+| **Ativar/Desativar** | Toque no produto para alternar o estado |
+| **Reordenar Categorias** | Mantenha pressionado e arraste |
+| **Excluir Item** | Deslize para o lado e confirme |
+
+### Recursos Avançados
+
+**Organização com IA**
+1. Abra o menu lateral (☰)
+2. Selecione "Organizar com IA"
+3. Confirme a ação
+4. Aguarde enquanto a IA reorganiza seus produtos em categorias inteligentes
+
+**Perfis**
+- **Salvar**: Menu → Salvar Perfil → Escolha um nome
+- **Carregar**: Menu → Carregar Perfil → Selecione da lista
+- **Exportar**: Menu → Exportar → Compartilhe o arquivo JSON
+- **Importar**: Menu → Importar → Selecione o arquivo
+
+**Relatórios**
+1. Toque no ícone de compartilhar no topo
+2. Escolha um modelo de relatório ou crie um novo
+3. Personalize título, formatação e filtros
+4. Compartilhe via WhatsApp, email ou outra plataforma
+
+## 📄 Licença
+
+```
+Copyright 2024-2025 Os Contribuidores do Precifica
+
+Licensed under the MIT License
+You may obtain a copy of the License at
+
+https://opensource.org/licenses/MIT
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```

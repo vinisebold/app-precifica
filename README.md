@@ -60,7 +60,7 @@ Baixe o APK mais recente na [página de releases](https://github.com/vinisebold/
 
 1. Clone o repositório:
 ```bash
-git clone https://github.com/seu-usuario/precifica.git
+git clone https://github.com/vinisebold/app-precifica.git
 cd precifica
 ```
 

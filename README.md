@@ -24,15 +24,19 @@
   <tr>
     <td align="center">
       <b>Tela Principal</b><br>
-      <img src="screenshots/main.png" width="200"/>
-    </td>
-    <td align="center">
-      <b>Organização com IA</b><br>
-      <img src="screenshots/ai.png" width="200"/>
+      <img src="screenshots/main.jpg" width="200"/>
     </td>
     <td align="center">
       <b>Relatórios</b><br>
-      <img src="screenshots/report.png" width="200"/>
+      <img src="screenshots/report.jpg" width="200"/>
+    </td>
+    <td align="center">
+      <b>Configurações</b><br>
+      <img src="screenshots/config.jpg" width="200"/>
+    </td>
+    <td align="center">
+      <b>Organização com IA</b><br>
+      <img src="screenshots/ai.jpg" width="200"/>
     </td>
   </tr>
 </table>

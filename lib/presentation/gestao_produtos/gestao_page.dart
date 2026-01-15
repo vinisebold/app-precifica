@@ -1346,54 +1346,61 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               ),
             ),
           ),
-          floatingActionButton: AnimatedSlide(
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.easeOutCubic,
-            offset:
-                _isAddProductFabVisible ? Offset.zero : const Offset(0, 1.4),
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              opacity: _isAddProductFabVisible ? 1 : 0,
-              child: IgnorePointer(
-                ignoring: !_isAddProductFabVisible,
-                child: buildTutorialShowcase(
-                  context: context,
-                  key: TutorialKeys.addProductFab,
-                  title: TutorialConfig.step2Title(context),
-                  description: TutorialConfig.step2Description(context),
-                  targetShapeBorder: const CircleBorder(),
-                  targetPadding: const EdgeInsets.all(14),
-                  onTargetClick: () {
-                    if (gestaoState.categoriaSelecionadaId != null) {
-                      ShowcaseView.get().dismiss();
-                      HapticFeedback.lightImpact();
-                      _mostrarDialogoNovoProduto(context, ref);
-                    }
-                  },
-                  child: FloatingActionButton(
-                    heroTag: 'add-product-fab',
-                    onPressed: gestaoState.categoriaSelecionadaId != null
-                        ? () {
-                            HapticFeedback.lightImpact();
-                            _mostrarDialogoNovoProduto(context, ref);
-                          }
-                        : null,
-                    elevation:
-                        gestaoState.categoriaSelecionadaId != null ? 3.0 : 0.0,
-                    backgroundColor: gestaoState.categoriaSelecionadaId != null
-                        ? colorScheme.primaryContainer
-                        : colorScheme.surfaceContainer,
-                    child: Icon(
-                      Icons.add_shopping_cart,
-                      color: gestaoState.categoriaSelecionadaId != null
-                          ? colorScheme.onPrimaryContainer
-                          : colorScheme.outline,
+          floatingActionButton: Builder(
+            builder: (context) {
+              // Verifica se o teclado está aberto
+              final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+              final shouldShowFab = _isAddProductFabVisible && !isKeyboardOpen;
+              
+              return AnimatedSlide(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutCubic,
+                offset: shouldShowFab ? Offset.zero : const Offset(0, 1.4),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  opacity: shouldShowFab ? 1 : 0,
+                  child: IgnorePointer(
+                    ignoring: !shouldShowFab,
+                    child: buildTutorialShowcase(
+                      context: context,
+                      key: TutorialKeys.addProductFab,
+                      title: TutorialConfig.step2Title(context),
+                      description: TutorialConfig.step2Description(context),
+                      targetShapeBorder: const CircleBorder(),
+                      targetPadding: const EdgeInsets.all(14),
+                      onTargetClick: () {
+                        if (gestaoState.categoriaSelecionadaId != null) {
+                          ShowcaseView.get().dismiss();
+                          HapticFeedback.lightImpact();
+                          _mostrarDialogoNovoProduto(context, ref);
+                        }
+                      },
+                      child: FloatingActionButton(
+                        heroTag: 'add-product-fab',
+                        onPressed: gestaoState.categoriaSelecionadaId != null
+                            ? () {
+                                HapticFeedback.lightImpact();
+                                _mostrarDialogoNovoProduto(context, ref);
+                              }
+                            : null,
+                        elevation:
+                            gestaoState.categoriaSelecionadaId != null ? 3.0 : 0.0,
+                        backgroundColor: gestaoState.categoriaSelecionadaId != null
+                            ? colorScheme.primaryContainer
+                            : colorScheme.surfaceContainer,
+                        child: Icon(
+                          Icons.add_shopping_cart,
+                          color: gestaoState.categoriaSelecionadaId != null
+                              ? colorScheme.onPrimaryContainer
+                              : colorScheme.outline,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ),
         Positioned.fill(

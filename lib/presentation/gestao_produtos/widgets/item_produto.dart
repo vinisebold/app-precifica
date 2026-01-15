@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:precifica/domain/entities/produto.dart';
+import 'package:precifica/app/core/l10n/app_localizations.dart';
 
 import '../gestao_controller.dart';
 import '../../shared/providers/modo_compacto_provider.dart';
@@ -177,12 +178,22 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
     final isAtivo = widget.produto.isAtivo;
     final modoCompacto = ref.watch(modoCompactoProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     // Define os valores de padding e altura baseado no modo compacto
     final double verticalPadding = modoCompacto ? 4.0 : 8.0;
     final double horizontalPadding = modoCompacto ? 8.0 : 12.0;
     final double fontSize = modoCompacto ? 14.0 : 16.0;
     final double inputWidth = modoCompacto ? 100.0 : 120.0;
+    
+    // Formata o preço para acessibilidade
+    final formattedPrice = 'R\$ ${_precoController.text}';
+    final statusLabel = isAtivo ? l10n.activeStatus : l10n.inactiveStatus;
+    final productSemanticLabel = l10n.productItemLabel(
+      widget.produto.nome, 
+      formattedPrice, 
+      statusLabel,
+    );
 
     // A construção do conteúdo do item (ListTile)
     final itemContent = ListTile(
@@ -241,36 +252,43 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     );
 
     // O GestureDetector para onTap (reativar) agora envolve tudo.
-    return GestureDetector(
-      onTap: widget.onTap,
-      behavior: HitTestBehavior.translucent,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 300),
-        opacity: isAtivo ? 1.0 : 0.4,
-        child: AnimatedScale(
-          duration: const Duration(milliseconds: 250),
-          scale: _showPopAnimation 
-              ? 1.03 
-              : (_showPressAnimation ? 0.97 : 1.0),
-          curve: Curves.easeOutBack,
-          child: Opacity(
-            opacity: _isDragging ? 0.0 : 1.0,
-            child: IgnorePointer(
-              ignoring: !isAtivo,
-              child: LongPressDraggable<Produto>(
-                data: widget.produto,
-                hapticFeedbackOnStart: false,
-                onDragStarted: _startDrag,
-                onDragEnd: _endDrag,
-                onDraggableCanceled: _cancelDrag,
-                feedback: _buildDraggableFeedback(),
-                childWhenDragging: Opacity(
-                  opacity: 0.3,
-                  child: itemContent,
-                ),
-                child: GestureDetector(
-                  onDoubleTap: widget.onDoubleTap,
-                  child: itemContent,
+    return Semantics(
+      label: productSemanticLabel,
+      hint: isAtivo 
+          ? '${l10n.doubleTapToEditHint}. ${l10n.dragToReorderHint}'
+          : l10n.toggleProductStatusHint,
+      enabled: true,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.translucent,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 300),
+          opacity: isAtivo ? 1.0 : 0.4,
+          child: AnimatedScale(
+            duration: const Duration(milliseconds: 250),
+            scale: _showPopAnimation 
+                ? 1.03 
+                : (_showPressAnimation ? 0.97 : 1.0),
+            curve: Curves.easeOutBack,
+            child: Opacity(
+              opacity: _isDragging ? 0.0 : 1.0,
+              child: IgnorePointer(
+                ignoring: !isAtivo,
+                child: LongPressDraggable<Produto>(
+                  data: widget.produto,
+                  hapticFeedbackOnStart: false,
+                  onDragStarted: _startDrag,
+                  onDragEnd: _endDrag,
+                  onDraggableCanceled: _cancelDrag,
+                  feedback: _buildDraggableFeedback(),
+                  childWhenDragging: Opacity(
+                    opacity: 0.3,
+                    child: itemContent,
+                  ),
+                  child: GestureDetector(
+                    onDoubleTap: widget.onDoubleTap,
+                    child: itemContent,
+                  ),
                 ),
               ),
             ),

@@ -235,6 +235,33 @@ class AppLocalizations {
       'zeroPriceTextHint': 'Ex: Consulte, A combinar',
       'footerMessageHint': 'Ex: Peça já! (47) 99999-9999',
       'loadingSampleData': 'Carregando dados de exemplo...',
+      
+      // Accessibility labels
+      'menuButtonLabel': 'Abrir menu',
+      'shareButtonLabel': 'Compartilhar relatório',
+      'addCategoryButtonLabel': 'Adicionar nova categoria',
+      'addProductButtonLabel': 'Adicionar novo produto',
+      'editCategoryButtonLabel': 'Editar categoria',
+      'deleteCategoryButtonLabel': 'Excluir categoria',
+      'categorySelectedAnnouncement': 'Categoria {name} selecionada',
+      'productPriceLabel': 'Preço de {productName}: {price}',
+      'productActiveLabel': '{productName}, ativo',
+      'productInactiveLabel': '{productName}, inativo',
+      'dragToReorderHint': 'Pressione e segure para arrastar e reordenar',
+      'doubleTapToEditHint': 'Toque duas vezes para editar',
+      'tapToEditPriceHint': 'Toque para editar o preço',
+      'settingsButtonLabel': 'Abrir configurações',
+      'aiOrganizeButtonLabel': 'Organizar produtos com inteligência artificial',
+      'profilesButtonLabel': 'Gerenciar perfis salvos',
+      'closeMenuButtonLabel': 'Fechar menu',
+      'introductionImageLabel': 'Imagem de introdução: {description}',
+      'templateCardLabel': 'Modelo de relatório: {name}',
+      'categoryTabLabel': 'Aba da categoria {name}, {position} de {total}',
+      'productItemLabel': '{name}, preço {price}, {status}',
+      'activeStatus': 'ativo',
+      'inactiveStatus': 'inativo',
+      'toggleProductStatusHint': 'Toque para alternar entre ativo e inativo',
+      'swipeToDeleteHint': 'Deslize para a esquerda para excluir',
     },
     'en': {
       // App general
@@ -421,6 +448,33 @@ class AppLocalizations {
       'zeroPriceTextHint': 'Ex: Consult, To be agreed',
       'footerMessageHint': 'Ex: Order now! (47) 99999-9999',
       'loadingSampleData': 'Loading sample data...',
+      
+      // Accessibility labels
+      'menuButtonLabel': 'Open menu',
+      'shareButtonLabel': 'Share report',
+      'addCategoryButtonLabel': 'Add new category',
+      'addProductButtonLabel': 'Add new product',
+      'editCategoryButtonLabel': 'Edit category',
+      'deleteCategoryButtonLabel': 'Delete category',
+      'categorySelectedAnnouncement': 'Category {name} selected',
+      'productPriceLabel': 'Price of {productName}: {price}',
+      'productActiveLabel': '{productName}, active',
+      'productInactiveLabel': '{productName}, inactive',
+      'dragToReorderHint': 'Long press and drag to reorder',
+      'doubleTapToEditHint': 'Double tap to edit',
+      'tapToEditPriceHint': 'Tap to edit price',
+      'settingsButtonLabel': 'Open settings',
+      'aiOrganizeButtonLabel': 'Organize products with artificial intelligence',
+      'profilesButtonLabel': 'Manage saved profiles',
+      'closeMenuButtonLabel': 'Close menu',
+      'introductionImageLabel': 'Introduction image: {description}',
+      'templateCardLabel': 'Report template: {name}',
+      'categoryTabLabel': 'Category tab {name}, {position} of {total}',
+      'productItemLabel': '{name}, price {price}, {status}',
+      'activeStatus': 'active',
+      'inactiveStatus': 'inactive',
+      'toggleProductStatusHint': 'Tap to toggle between active and inactive',
+      'swipeToDeleteHint': 'Swipe left to delete',
     },
     'es': {
       // App general
@@ -607,6 +661,33 @@ class AppLocalizations {
       'zeroPriceTextHint': 'Ej: Consulte, A convenir',
       'footerMessageHint': 'Ej: ¡Ordene ahora! (47) 99999-9999',
       'loadingSampleData': 'Cargando datos de ejemplo...',
+      
+      // Accessibility labels
+      'menuButtonLabel': 'Abrir menú',
+      'shareButtonLabel': 'Compartir informe',
+      'addCategoryButtonLabel': 'Agregar nueva categoría',
+      'addProductButtonLabel': 'Agregar nuevo producto',
+      'editCategoryButtonLabel': 'Editar categoría',
+      'deleteCategoryButtonLabel': 'Eliminar categoría',
+      'categorySelectedAnnouncement': 'Categoría {name} seleccionada',
+      'productPriceLabel': 'Precio de {productName}: {price}',
+      'productActiveLabel': '{productName}, activo',
+      'productInactiveLabel': '{productName}, inactivo',
+      'dragToReorderHint': 'Mantenga presionado y arrastre para reordenar',
+      'doubleTapToEditHint': 'Toque dos veces para editar',
+      'tapToEditPriceHint': 'Toque para editar el precio',
+      'settingsButtonLabel': 'Abrir configuración',
+      'aiOrganizeButtonLabel': 'Organizar productos con inteligencia artificial',
+      'profilesButtonLabel': 'Gestionar perfiles guardados',
+      'closeMenuButtonLabel': 'Cerrar menú',
+      'introductionImageLabel': 'Imagen de introducción: {description}',
+      'templateCardLabel': 'Plantilla de informe: {name}',
+      'categoryTabLabel': 'Pestaña de categoría {name}, {position} de {total}',
+      'productItemLabel': '{name}, precio {price}, {status}',
+      'activeStatus': 'activo',
+      'inactiveStatus': 'inactivo',
+      'toggleProductStatusHint': 'Toque para alternar entre activo e inactivo',
+      'swipeToDeleteHint': 'Deslice a la izquierda para eliminar',
     },
   };
 
@@ -804,6 +885,49 @@ class AppLocalizations {
   String get tutorialButtonGotIt => _translate('tutorialButtonGotIt');
   String get tutorialButtonFinish => _translate('tutorialButtonFinish');
   String get tutorialButtonSkip => _translate('tutorialButtonSkip');
+  
+  // Accessibility labels
+  String get menuButtonLabel => _translate('menuButtonLabel');
+  String get shareButtonLabel => _translate('shareButtonLabel');
+  String get addCategoryButtonLabel => _translate('addCategoryButtonLabel');
+  String get addProductButtonLabel => _translate('addProductButtonLabel');
+  String get editCategoryButtonLabel => _translate('editCategoryButtonLabel');
+  String get deleteCategoryButtonLabel => _translate('deleteCategoryButtonLabel');
+  String categorySelectedAnnouncement(String name) =>
+      _translate('categorySelectedAnnouncement').replaceAll('{name}', name);
+  String productPriceLabel(String productName, String price) =>
+      _translate('productPriceLabel')
+          .replaceAll('{productName}', productName)
+          .replaceAll('{price}', price);
+  String productActiveLabel(String productName) =>
+      _translate('productActiveLabel').replaceAll('{productName}', productName);
+  String productInactiveLabel(String productName) =>
+      _translate('productInactiveLabel').replaceAll('{productName}', productName);
+  String get dragToReorderHint => _translate('dragToReorderHint');
+  String get doubleTapToEditHint => _translate('doubleTapToEditHint');
+  String get tapToEditPriceHint => _translate('tapToEditPriceHint');
+  String get settingsButtonLabel => _translate('settingsButtonLabel');
+  String get aiOrganizeButtonLabel => _translate('aiOrganizeButtonLabel');
+  String get profilesButtonLabel => _translate('profilesButtonLabel');
+  String get closeMenuButtonLabel => _translate('closeMenuButtonLabel');
+  String introductionImageLabel(String description) =>
+      _translate('introductionImageLabel').replaceAll('{description}', description);
+  String templateCardLabel(String name) =>
+      _translate('templateCardLabel').replaceAll('{name}', name);
+  String categoryTabLabel(String name, int position, int total) =>
+      _translate('categoryTabLabel')
+          .replaceAll('{name}', name)
+          .replaceAll('{position}', position.toString())
+          .replaceAll('{total}', total.toString());
+  String productItemLabel(String name, String price, String status) =>
+      _translate('productItemLabel')
+          .replaceAll('{name}', name)
+          .replaceAll('{price}', price)
+          .replaceAll('{status}', status);
+  String get activeStatus => _translate('activeStatus');
+  String get inactiveStatus => _translate('inactiveStatus');
+  String get toggleProductStatusHint => _translate('toggleProductStatusHint');
+  String get swipeToDeleteHint => _translate('swipeToDeleteHint');
 }
 
 class _AppLocalizationsDelegate

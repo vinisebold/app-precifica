@@ -19,6 +19,8 @@ class AppWidget extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
+      highContrastTheme: AppTheme.highContrastLightTheme,
+      highContrastDarkTheme: AppTheme.highContrastDarkTheme,
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [

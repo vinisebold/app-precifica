@@ -92,80 +92,86 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      body: Column(
-        children: [
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              physics: const ClampingScrollPhysics(),
-              itemCount: pages.length,
-              onPageChanged: (index) {
-                if (mounted) {
-                  setState(() => _currentPage = index);
-                  _resetAutoPlay();
-                }
-              },
-              itemBuilder: (context, index) {
-                return AnimatedBuilder(
-                  animation: _pageController,
-                  builder: (context, child) {
-                    double value = 0.0;
-                    if (_pageController.position.haveDimensions) {
-                      value = index.toDouble() - (_pageController.page ?? 0.0);
-                    } else {
-                      value = (index - _currentPage).toDouble();
-                    }
+      body: Semantics(
+        label: 'Tela de introdução',
+        child: Column(
+          children: [
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                physics: const ClampingScrollPhysics(),
+                itemCount: pages.length,
+                onPageChanged: (index) {
+                  if (mounted) {
+                    setState(() => _currentPage = index);
+                    _resetAutoPlay();
+                  }
+                },
+                itemBuilder: (context, index) {
+                  return AnimatedBuilder(
+                    animation: _pageController,
+                    builder: (context, child) {
+                      double value = 0.0;
+                      if (_pageController.position.haveDimensions) {
+                        value = index.toDouble() - (_pageController.page ?? 0.0);
+                      } else {
+                        value = (index - _currentPage).toDouble();
+                      }
 
-                    final double scale = 1.0 - (value.abs() * 0.15).clamp(0.0, 1.0);
-                    final double opacity = 1.0 - (value.abs() * 0.8).clamp(0.0, 1.0);
-                    final double mediaParallax = value * 40;
-                    final double textParallax = value * 20;
+                      final double scale = 1.0 - (value.abs() * 0.15).clamp(0.0, 1.0);
+                      final double opacity = 1.0 - (value.abs() * 0.8).clamp(0.0, 1.0);
+                      final double mediaParallax = value * 40;
+                      final double textParallax = value * 20;
 
-                    return Column(
-                      children: [
-                        Expanded(
-                          flex: 8,
-                          child: Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[900],
-                            ),
-                            padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
-                            child: Transform.translate(
-                              offset: Offset(mediaParallax, 0),
-                              child: Transform.scale(
-                                scale: scale,
-                                alignment: Alignment.bottomCenter,
-                                child: Opacity(
-                                  opacity: opacity,
-                                  child: _buildMediaContent(context, pages[index]),
+                      return Semantics(
+                        label: 'Página ${index + 1} de ${pages.length}: ${pages[index].title}',
+                        child: Column(
+                          children: [
+                            Expanded(
+                              flex: 8,
+                              child: Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[900],
+                                ),
+                                padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+                                child: Transform.translate(
+                                  offset: Offset(mediaParallax, 0),
+                                  child: Transform.scale(
+                                    scale: scale,
+                                    alignment: Alignment.bottomCenter,
+                                    child: Opacity(
+                                      opacity: opacity,
+                                      child: _buildMediaContent(context, pages[index]),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 3,
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-                            child: Transform.translate(
-                              offset: Offset(textParallax, 0),
-                              child: Opacity(
-                                opacity: opacity,
-                                child: _buildTextContent(context, pages[index]),
+                            Expanded(
+                              flex: 3,
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                                child: Transform.translate(
+                                  offset: Offset(textParallax, 0),
+                                  child: Opacity(
+                                    opacity: opacity,
+                                    child: _buildTextContent(context, pages[index]),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    );
-                  },
-                );
-              },
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-          _buildBottomBar(context, pages.length),
-        ],
+            _buildBottomBar(context, pages.length),
+          ],
+        ),
       ),
     );
   }
@@ -214,6 +220,7 @@ class _IntroductionScreenPageState extends ConsumerState<IntroductionScreenPage>
           page.assetPath,
           fit: BoxFit.contain,
           width: double.infinity,
+          semanticLabel: page.title,
         ),
       ),
     );

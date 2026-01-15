@@ -459,6 +459,156 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Carregando dados de exemplo...'**
   String get loadingSampleData;
+
+  /// Accessibility label for menu button
+  ///
+  /// In pt, this message translates to:
+  /// **'Abrir menu'**
+  String get menuButtonLabel;
+
+  /// Accessibility label for share button
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar relatório'**
+  String get shareButtonLabel;
+
+  /// Accessibility label for add category button
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar nova categoria'**
+  String get addCategoryButtonLabel;
+
+  /// Accessibility label for add product button
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar novo produto'**
+  String get addProductButtonLabel;
+
+  /// Accessibility label for edit category button
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar categoria'**
+  String get editCategoryButtonLabel;
+
+  /// Accessibility label for delete category button
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir categoria'**
+  String get deleteCategoryButtonLabel;
+
+  /// Screen reader announcement when category is selected
+  ///
+  /// In pt, this message translates to:
+  /// **'Categoria {name} selecionada'**
+  String categorySelectedAnnouncement(String name);
+
+  /// Screen reader label for product price
+  ///
+  /// In pt, this message translates to:
+  /// **'Preço de {productName}: {price}'**
+  String productPriceLabel(String productName, String price);
+
+  /// Screen reader label for active product
+  ///
+  /// In pt, this message translates to:
+  /// **'{productName}, ativo'**
+  String productActiveLabel(String productName);
+
+  /// Screen reader label for inactive product
+  ///
+  /// In pt, this message translates to:
+  /// **'{productName}, inativo'**
+  String productInactiveLabel(String productName);
+
+  /// Accessibility hint for drag to reorder
+  ///
+  /// In pt, this message translates to:
+  /// **'Pressione e segure para arrastar e reordenar'**
+  String get dragToReorderHint;
+
+  /// Accessibility hint for double tap to edit
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque duas vezes para editar'**
+  String get doubleTapToEditHint;
+
+  /// Accessibility hint for tap to edit price
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque para editar o preço'**
+  String get tapToEditPriceHint;
+
+  /// Accessibility label for settings button
+  ///
+  /// In pt, this message translates to:
+  /// **'Abrir configurações'**
+  String get settingsButtonLabel;
+
+  /// Accessibility label for AI organize button
+  ///
+  /// In pt, this message translates to:
+  /// **'Organizar produtos com inteligência artificial'**
+  String get aiOrganizeButtonLabel;
+
+  /// Accessibility label for profiles button
+  ///
+  /// In pt, this message translates to:
+  /// **'Gerenciar perfis salvos'**
+  String get profilesButtonLabel;
+
+  /// Accessibility label for close menu button
+  ///
+  /// In pt, this message translates to:
+  /// **'Fechar menu'**
+  String get closeMenuButtonLabel;
+
+  /// Accessibility label for introduction images
+  ///
+  /// In pt, this message translates to:
+  /// **'Imagem de introdução: {description}'**
+  String introductionImageLabel(String description);
+
+  /// Accessibility label for template card
+  ///
+  /// In pt, this message translates to:
+  /// **'Modelo de relatório: {name}'**
+  String templateCardLabel(String name);
+
+  /// Accessibility label for category tab
+  ///
+  /// In pt, this message translates to:
+  /// **'Aba da categoria {name}, {position} de {total}'**
+  String categoryTabLabel(String name, int position, int total);
+
+  /// Complete accessibility label for product item
+  ///
+  /// In pt, this message translates to:
+  /// **'{name}, preço {price}, {status}'**
+  String productItemLabel(String name, String price, String status);
+
+  /// Active status label
+  ///
+  /// In pt, this message translates to:
+  /// **'ativo'**
+  String get activeStatus;
+
+  /// Inactive status label
+  ///
+  /// In pt, this message translates to:
+  /// **'inativo'**
+  String get inactiveStatus;
+
+  /// Hint for toggling product status
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque para alternar entre ativo e inativo'**
+  String get toggleProductStatusHint;
+
+  /// Hint for swipe to delete action
+  ///
+  /// In pt, this message translates to:
+  /// **'Deslize para a esquerda para excluir'**
+  String get swipeToDeleteHint;
 }
 
 class _AppLocalizationsDelegate

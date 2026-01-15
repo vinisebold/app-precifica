@@ -196,4 +196,98 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get loadingSampleData => 'Cargando datos de ejemplo...';
+
+  @override
+  String get menuButtonLabel => 'Abrir menú';
+
+  @override
+  String get shareButtonLabel => 'Compartir informe';
+
+  @override
+  String get addCategoryButtonLabel => 'Agregar nueva categoría';
+
+  @override
+  String get addProductButtonLabel => 'Agregar nuevo producto';
+
+  @override
+  String get editCategoryButtonLabel => 'Editar categoría';
+
+  @override
+  String get deleteCategoryButtonLabel => 'Eliminar categoría';
+
+  @override
+  String categorySelectedAnnouncement(String name) {
+    return 'Categoría $name seleccionada';
+  }
+
+  @override
+  String productPriceLabel(String productName, String price) {
+    return 'Precio de $productName: $price';
+  }
+
+  @override
+  String productActiveLabel(String productName) {
+    return '$productName, activo';
+  }
+
+  @override
+  String productInactiveLabel(String productName) {
+    return '$productName, inactivo';
+  }
+
+  @override
+  String get dragToReorderHint =>
+      'Mantenga presionado y arrastre para reordenar';
+
+  @override
+  String get doubleTapToEditHint => 'Toque dos veces para editar';
+
+  @override
+  String get tapToEditPriceHint => 'Toque para editar el precio';
+
+  @override
+  String get settingsButtonLabel => 'Abrir configuración';
+
+  @override
+  String get aiOrganizeButtonLabel =>
+      'Organizar productos con inteligencia artificial';
+
+  @override
+  String get profilesButtonLabel => 'Gestionar perfiles guardados';
+
+  @override
+  String get closeMenuButtonLabel => 'Cerrar menú';
+
+  @override
+  String introductionImageLabel(String description) {
+    return 'Imagen de introducción: $description';
+  }
+
+  @override
+  String templateCardLabel(String name) {
+    return 'Plantilla de informe: $name';
+  }
+
+  @override
+  String categoryTabLabel(String name, int position, int total) {
+    return 'Pestaña de categoría $name, $position de $total';
+  }
+
+  @override
+  String productItemLabel(String name, String price, String status) {
+    return '$name, precio $price, $status';
+  }
+
+  @override
+  String get activeStatus => 'activo';
+
+  @override
+  String get inactiveStatus => 'inactivo';
+
+  @override
+  String get toggleProductStatusHint =>
+      'Toque para alternar entre activo e inactivo';
+
+  @override
+  String get swipeToDeleteHint => 'Deslice a la izquierda para eliminar';
 }

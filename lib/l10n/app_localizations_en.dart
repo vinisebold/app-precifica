@@ -196,4 +196,97 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loadingSampleData => 'Loading sample data...';
+
+  @override
+  String get menuButtonLabel => 'Open menu';
+
+  @override
+  String get shareButtonLabel => 'Share report';
+
+  @override
+  String get addCategoryButtonLabel => 'Add new category';
+
+  @override
+  String get addProductButtonLabel => 'Add new product';
+
+  @override
+  String get editCategoryButtonLabel => 'Edit category';
+
+  @override
+  String get deleteCategoryButtonLabel => 'Delete category';
+
+  @override
+  String categorySelectedAnnouncement(String name) {
+    return 'Category $name selected';
+  }
+
+  @override
+  String productPriceLabel(String productName, String price) {
+    return 'Price of $productName: $price';
+  }
+
+  @override
+  String productActiveLabel(String productName) {
+    return '$productName, active';
+  }
+
+  @override
+  String productInactiveLabel(String productName) {
+    return '$productName, inactive';
+  }
+
+  @override
+  String get dragToReorderHint => 'Long press and drag to reorder';
+
+  @override
+  String get doubleTapToEditHint => 'Double tap to edit';
+
+  @override
+  String get tapToEditPriceHint => 'Tap to edit price';
+
+  @override
+  String get settingsButtonLabel => 'Open settings';
+
+  @override
+  String get aiOrganizeButtonLabel =>
+      'Organize products with artificial intelligence';
+
+  @override
+  String get profilesButtonLabel => 'Manage saved profiles';
+
+  @override
+  String get closeMenuButtonLabel => 'Close menu';
+
+  @override
+  String introductionImageLabel(String description) {
+    return 'Introduction image: $description';
+  }
+
+  @override
+  String templateCardLabel(String name) {
+    return 'Report template: $name';
+  }
+
+  @override
+  String categoryTabLabel(String name, int position, int total) {
+    return 'Category tab $name, $position of $total';
+  }
+
+  @override
+  String productItemLabel(String name, String price, String status) {
+    return '$name, price $price, $status';
+  }
+
+  @override
+  String get activeStatus => 'active';
+
+  @override
+  String get inactiveStatus => 'inactive';
+
+  @override
+  String get toggleProductStatusHint =>
+      'Tap to toggle between active and inactive';
+
+  @override
+  String get swipeToDeleteHint => 'Swipe left to delete';
 }

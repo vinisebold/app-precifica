@@ -1104,6 +1104,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
 
     final gestaoState = ref.watch(gestaoControllerProvider);
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
+    final l10n = AppLocalizations.of(context)!;
 
     return Stack(
       children: [
@@ -1161,6 +1162,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 },
                 child: IconButton(
                   icon: const Icon(Icons.menu),
+                  tooltip: l10n.menuButtonLabel,
                   onPressed: () {
                     HapticFeedback.lightImpact();
                     _scaffoldKey.currentState?.openDrawer();
@@ -1178,6 +1180,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.share),
+                tooltip: l10n.shareButtonLabel,
                 onPressed: () {
                   HapticFeedback.lightImpact();
                   _mostrarOpcoesCompartilhamento(context, ref);
@@ -1201,6 +1204,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                 },
                 child: IconButton(
                   icon: const Icon(Icons.add_box_outlined),
+                  tooltip: l10n.addCategoryButtonLabel,
                   onPressed: () {
                     HapticFeedback.lightImpact();
                     _mostrarDialogoNovaCategoria(context, ref);
@@ -1376,24 +1380,30 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                           _mostrarDialogoNovoProduto(context, ref);
                         }
                       },
-                      child: FloatingActionButton(
-                        heroTag: 'add-product-fab',
-                        onPressed: gestaoState.categoriaSelecionadaId != null
-                            ? () {
-                                HapticFeedback.lightImpact();
-                                _mostrarDialogoNovoProduto(context, ref);
-                              }
-                            : null,
-                        elevation:
-                            gestaoState.categoriaSelecionadaId != null ? 3.0 : 0.0,
-                        backgroundColor: gestaoState.categoriaSelecionadaId != null
-                            ? colorScheme.primaryContainer
-                            : colorScheme.surfaceContainer,
-                        child: Icon(
-                          Icons.add_shopping_cart,
-                          color: gestaoState.categoriaSelecionadaId != null
-                              ? colorScheme.onPrimaryContainer
-                              : colorScheme.outline,
+                      child: Semantics(
+                        button: true,
+                        enabled: gestaoState.categoriaSelecionadaId != null,
+                        label: l10n.addProductButtonLabel,
+                        child: FloatingActionButton(
+                          heroTag: 'add-product-fab',
+                          tooltip: l10n.addProductButtonLabel,
+                          onPressed: gestaoState.categoriaSelecionadaId != null
+                              ? () {
+                                  HapticFeedback.lightImpact();
+                                  _mostrarDialogoNovoProduto(context, ref);
+                                }
+                              : null,
+                          elevation:
+                              gestaoState.categoriaSelecionadaId != null ? 3.0 : 0.0,
+                          backgroundColor: gestaoState.categoriaSelecionadaId != null
+                              ? colorScheme.primaryContainer
+                              : colorScheme.surfaceContainer,
+                          child: Icon(
+                            Icons.add_shopping_cart,
+                            color: gestaoState.categoriaSelecionadaId != null
+                                ? colorScheme.onPrimaryContainer
+                                : colorScheme.outline,
+                          ),
                         ),
                       ),
                     ),

@@ -251,5 +251,174 @@
   "loadingSampleData": "Carregando dados de exemplo...",
   "@loadingSampleData": {
     "description": "Loading sample data message"
+  },
+
+  "menuButtonLabel": "Abrir menu",
+  "@menuButtonLabel": {
+    "description": "Accessibility label for menu button"
+  },
+  "shareButtonLabel": "Compartilhar relatório",
+  "@shareButtonLabel": {
+    "description": "Accessibility label for share button"
+  },
+  "addCategoryButtonLabel": "Adicionar nova categoria",
+  "@addCategoryButtonLabel": {
+    "description": "Accessibility label for add category button"
+  },
+  "addProductButtonLabel": "Adicionar novo produto",
+  "@addProductButtonLabel": {
+    "description": "Accessibility label for add product button"
+  },
+  "editCategoryButtonLabel": "Editar categoria",
+  "@editCategoryButtonLabel": {
+    "description": "Accessibility label for edit category button"
+  },
+  "deleteCategoryButtonLabel": "Excluir categoria",
+  "@deleteCategoryButtonLabel": {
+    "description": "Accessibility label for delete category button"
+  },
+  "categorySelectedAnnouncement": "Categoria {name} selecionada",
+  "@categorySelectedAnnouncement": {
+    "description": "Screen reader announcement when category is selected",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Frutas"
+      }
+    }
+  },
+  "productPriceLabel": "Preço de {productName}: {price}",
+  "@productPriceLabel": {
+    "description": "Screen reader label for product price",
+    "placeholders": {
+      "productName": {
+        "type": "String",
+        "example": "Banana"
+      },
+      "price": {
+        "type": "String",
+        "example": "R$ 5,99"
+      }
+    }
+  },
+  "productActiveLabel": "{productName}, ativo",
+  "@productActiveLabel": {
+    "description": "Screen reader label for active product",
+    "placeholders": {
+      "productName": {
+        "type": "String",
+        "example": "Banana"
+      }
+    }
+  },
+  "productInactiveLabel": "{productName}, inativo",
+  "@productInactiveLabel": {
+    "description": "Screen reader label for inactive product",
+    "placeholders": {
+      "productName": {
+        "type": "String",
+        "example": "Banana"
+      }
+    }
+  },
+  "dragToReorderHint": "Pressione e segure para arrastar e reordenar",
+  "@dragToReorderHint": {
+    "description": "Accessibility hint for drag to reorder"
+  },
+  "doubleTapToEditHint": "Toque duas vezes para editar",
+  "@doubleTapToEditHint": {
+    "description": "Accessibility hint for double tap to edit"
+  },
+  "tapToEditPriceHint": "Toque para editar o preço",
+  "@tapToEditPriceHint": {
+    "description": "Accessibility hint for tap to edit price"
+  },
+  "settingsButtonLabel": "Abrir configurações",
+  "@settingsButtonLabel": {
+    "description": "Accessibility label for settings button"
+  },
+  "aiOrganizeButtonLabel": "Organizar produtos com inteligência artificial",
+  "@aiOrganizeButtonLabel": {
+    "description": "Accessibility label for AI organize button"
+  },
+  "profilesButtonLabel": "Gerenciar perfis salvos",
+  "@profilesButtonLabel": {
+    "description": "Accessibility label for profiles button"
+  },
+  "closeMenuButtonLabel": "Fechar menu",
+  "@closeMenuButtonLabel": {
+    "description": "Accessibility label for close menu button"
+  },
+  "introductionImageLabel": "Imagem de introdução: {description}",
+  "@introductionImageLabel": {
+    "description": "Accessibility label for introduction images",
+    "placeholders": {
+      "description": {
+        "type": "String",
+        "example": "Gestão de produtos"
+      }
+    }
+  },
+  "templateCardLabel": "Modelo de relatório: {name}",
+  "@templateCardLabel": {
+    "description": "Accessibility label for template card",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Meu Modelo"
+      }
+    }
+  },
+  "categoryTabLabel": "Aba da categoria {name}, {position} de {total}",
+  "@categoryTabLabel": {
+    "description": "Accessibility label for category tab",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Frutas"
+      },
+      "position": {
+        "type": "int",
+        "example": "1"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "productItemLabel": "{name}, preço {price}, {status}",
+  "@productItemLabel": {
+    "description": "Complete accessibility label for product item",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Banana"
+      },
+      "price": {
+        "type": "String",
+        "example": "R$ 5,99"
+      },
+      "status": {
+        "type": "String",
+        "example": "ativo"
+      }
+    }
+  },
+  "activeStatus": "ativo",
+  "@activeStatus": {
+    "description": "Active status label"
+  },
+  "inactiveStatus": "inativo",
+  "@inactiveStatus": {
+    "description": "Inactive status label"
+  },
+  "toggleProductStatusHint": "Toque para alternar entre ativo e inativo",
+  "@toggleProductStatusHint": {
+    "description": "Hint for toggling product status"
+  },
+  "swipeToDeleteHint": "Deslize para a esquerda para excluir",
+  "@swipeToDeleteHint": {
+    "description": "Hint for swipe to delete action"
   }
 }

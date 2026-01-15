@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:precifica/domain/entities/categoria.dart';
+import 'package:precifica/app/core/l10n/app_localizations.dart';
 import '../gestao_controller.dart';
 
 class CategoriaNavBar extends ConsumerStatefulWidget {
@@ -350,11 +351,19 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
               right: _rightPadding,
             ),
             child: Row(
-              children: categorias.map((categoria) {
+              children: categorias.asMap().entries.map((entry) {
+                final index = entry.key;
+                final categoria = entry.value;
                 final itemKey = _itemKeys[categoria.id]!;
                 final scale = _scales[categoria.id] ?? 1.0;
                 final opacity = _opacities[categoria.id] ?? 1.0;
                 final rotation = _rotations[categoria.id] ?? 0.0;
+                final l10n = AppLocalizations.of(context)!;
+                final categorySemanticLabel = l10n.categoryTabLabel(
+                  categoria.nome,
+                  index + 1,
+                  categorias.length,
+                );
                 return DragTarget<String>(
                   builder: (context, candidateData, rejectedData) {
                     final isBeingDraggedOver = candidateData.isNotEmpty;
@@ -425,20 +434,26 @@ class _CategoriaNavBarState extends ConsumerState<CategoriaNavBar> {
                               alignment: Alignment.center,
                               child: Opacity(
                                 opacity: opacity,
-                                child: _CategoriaItem(
-                                  key: itemKey,
-                                  categoria: categoria,
-                                  isSelected: state.categoriaSelecionadaId ==
-                                      categoria.id,
-                                  onTap: () {
-                                  },
-                                  onDoubleTap: () {
-                                    if (!ref
-                                        .read(gestaoControllerProvider)
-                                        .isReordering) {
-                                      widget.onCategoriaDoubleTap(categoria);
-                                    }
-                                  },
+                                child: Semantics(
+                                  label: categorySemanticLabel,
+                                  hint: l10n.dragToReorderHint,
+                                  selected: state.categoriaSelecionadaId == categoria.id,
+                                  button: true,
+                                  child: _CategoriaItem(
+                                    key: itemKey,
+                                    categoria: categoria,
+                                    isSelected: state.categoriaSelecionadaId ==
+                                        categoria.id,
+                                    onTap: () {
+                                    },
+                                    onDoubleTap: () {
+                                      if (!ref
+                                          .read(gestaoControllerProvider)
+                                          .isReordering) {
+                                        widget.onCategoriaDoubleTap(categoria);
+                                      }
+                                    },
+                                  ),
                                 ),
                               ),
                             ),

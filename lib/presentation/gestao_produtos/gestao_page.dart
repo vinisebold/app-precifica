@@ -1712,19 +1712,18 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
           final categoriaNome = categoriaIndex != -1
               ? stateBefore.categorias[categoriaIndex].nome
               : null;
+          final l10n = AppLocalizations.of(context);
 
           await gestaoNotifier.deletarCategoria(details.data);
           gestaoNotifier.setReordering(false);
 
-          final l10n = AppLocalizations.of(context);
-          if (mounted) {
-            AppSnackbar.showSuccess(
-              context,
-              categoriaNome != null
-                  ? (l10n?.deleted(categoriaNome) ?? 'Categoria "$categoriaNome" deletada')
-                  : (l10n?.deleted('Categoria') ?? 'Categoria deletada'),
-            );
-          }
+          if (!context.mounted) return;
+          AppSnackbar.showSuccess(
+            context,
+            categoriaNome != null
+                ? (l10n?.deleted(categoriaNome) ?? 'Categoria "$categoriaNome" deletada')
+                : (l10n?.deleted('Categoria') ?? 'Categoria deletada'),
+          );
         },
       ),
     );

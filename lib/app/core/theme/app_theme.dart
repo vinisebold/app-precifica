@@ -55,10 +55,10 @@ class AppTheme {
   /// Retorna o ThemeData para modo alto contraste claro.
   /// Usa cores com ratio de contraste mínimo de 7:1 (WCAG AAA).
   static ThemeData get highContrastLightTheme {
-    final colorScheme = ColorScheme.highContrastLight(
+    const colorScheme = ColorScheme.highContrastLight(
       primary: _highContrastPrimaryLight,
-      secondary: const Color(0xFF004D40), // Teal escuro
-      error: const Color(0xFFB00020), // Vermelho alto contraste
+      secondary: Color(0xFF004D40), // Teal escuro
+      error: Color(0xFFB00020), // Vermelho alto contraste
     );
 
     return ThemeData(
@@ -81,7 +81,7 @@ class AppTheme {
         thickness: 2,
         color: colorScheme.outline,
       ),
-      focusColor: colorScheme.primary.withOpacity(0.3),
+      focusColor: colorScheme.primary.withValues(alpha: 0.3),
       // Garante que textos tenham contraste adequado
       textTheme: const TextTheme().apply(
         bodyColor: Colors.black,
@@ -93,10 +93,10 @@ class AppTheme {
   /// Retorna o ThemeData para modo alto contraste escuro.
   /// Usa cores com ratio de contraste mínimo de 7:1 (WCAG AAA).
   static ThemeData get highContrastDarkTheme {
-    final colorScheme = ColorScheme.highContrastDark(
+    const colorScheme = ColorScheme.highContrastDark(
       primary: _highContrastPrimaryDark,
-      secondary: const Color(0xFF80CBC4), // Teal claro
-      error: const Color(0xFFFF6B6B), // Vermelho claro alto contraste
+      secondary: Color(0xFF80CBC4), // Teal claro
+      error: Color(0xFFFF6B6B), // Vermelho claro alto contraste
     );
 
     return ThemeData(
@@ -119,7 +119,7 @@ class AppTheme {
         thickness: 2,
         color: colorScheme.outline,
       ),
-      focusColor: colorScheme.primary.withOpacity(0.3),
+      focusColor: colorScheme.primary.withValues(alpha: 0.3),
       // Garante que textos tenham contraste adequado
       textTheme: const TextTheme().apply(
         bodyColor: Colors.white,

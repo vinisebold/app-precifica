@@ -928,6 +928,14 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
       if (notification is ScrollUpdateNotification) {
         if (notification.dragDetails != null && pageValue != null) {
           _handleSneakPeekPrefetch(pageValue);
+
+          // Durante o gesto de swipe horizontal, mostra a barra de categorias
+          if (!_isCategoryNavBarVisible || !_isAddProductFabVisible) {
+            setState(() {
+              _isCategoryNavBarVisible = true;
+              _isAddProductFabVisible = true;
+            });
+          }
         }
       } else if (notification is ScrollEndNotification && pageValue != null) {
         final settledPage = pageValue.round();
@@ -2362,8 +2370,8 @@ class _GlobalProcessingOverlayState extends State<_GlobalProcessingOverlay>
                     child: ClipRect(
                       child: BackdropFilter(
                         filter: ImageFilter.blur(
-                          sigmaX: 18 * v,
-                          sigmaY: 18 * v,
+                          sigmaX: 12,
+                          sigmaY: 12,
                         ),
                         child: AnimatedBuilder(
                           animation: _glowController,

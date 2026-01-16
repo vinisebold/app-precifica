@@ -32,6 +32,12 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
   bool _isRestoringScroll = false;
   bool _isFabCurrentlyVisible = true;
 
+  // Scroll threshold: distância mínima de rolagem (em pixels) antes de acionar
+  // a mudança de visibilidade do FAB. Evita que o FAB fique piscando
+  // durante pequenos movimentos de scroll.
+  static const double _scrollThreshold = 24.0;
+  double _lastScrollOffset = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -51,26 +57,39 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
     });
   }
 
+  double _accumulatedScroll = 0.0;
+
   void _onScroll() {
-    // Só salva se não estiver restaurando
-    if (!_isRestoringScroll && _scrollController.hasClients) {
-      final position = _scrollController.offset;
-      ref.read(gestaoControllerProvider.notifier)
-          .saveScrollPosition(widget.categoriaId, position);
-    }
-
     if (!_scrollController.hasClients) return;
-    final direction = _scrollController.position.userScrollDirection;
-    final offset = _scrollController.offset;
 
-    if (direction == ScrollDirection.reverse && offset > 56) {
-      _notifyFabVisibility(false);
-    } else if (direction == ScrollDirection.forward ||
-        direction == ScrollDirection.idle ||
-        offset <= 32) {
-      _notifyFabVisibility(true);
+    final offset = _scrollController.offset;
+    final delta = offset - _lastScrollOffset;
+
+    // Detecta mudança de direção → zera acúmulo
+    if (delta.sign != _accumulatedScroll.sign) {
+      _accumulatedScroll = 0.0;
     }
+
+    _accumulatedScroll += delta;
+
+    const hideThreshold = 48.0;
+    const showThreshold = 48.0;
+
+    // Scroll para baixo (acumulado)
+    if (_accumulatedScroll > hideThreshold && offset > 56) {
+      _notifyFabVisibility(false);
+      _accumulatedScroll = 0.0;
+    }
+    // Scroll para cima (acumulado)
+    else if (_accumulatedScroll < -showThreshold || offset <= 32) {
+      _notifyFabVisibility(true);
+      _accumulatedScroll = 0.0;
+    }
+
+    _lastScrollOffset = offset;
   }
+
+
 
   void _notifyFabVisibility(bool visible) {
     if (_isFabCurrentlyVisible == visible) return;

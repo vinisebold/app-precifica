@@ -1356,30 +1356,34 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
               final shouldShowFab = _isAddProductFabVisible && !isKeyboardOpen;
               
-              return AnimatedOpacity(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                opacity: shouldShowFab ? 1 : 0,
-                child: IgnorePointer(
-                  ignoring: !shouldShowFab,
-                  child: buildTutorialShowcase(
-                    context: context,
-                    key: TutorialKeys.addProductFab,
-                    title: TutorialConfig.step2Title(context),
-                    description: TutorialConfig.step2Description(context),
-                    targetShapeBorder: const CircleBorder(),
-                    targetPadding: const EdgeInsets.all(14),
-                    onTargetClick: () {
-                      if (gestaoState.categoriaSelecionadaId != null) {
-                        ShowcaseView.get().dismiss();
-                        HapticFeedback.lightImpact();
-                        _mostrarDialogoNovoProduto(context, ref);
-                      }
-                    },
-                    child: Semantics(
-                      button: true,
-                      enabled: gestaoState.categoriaSelecionadaId != null,
-                      label: l10n.addProductButtonLabel,
+              return buildTutorialShowcase(
+                context: context,
+                key: TutorialKeys.addProductFab,
+                title: TutorialConfig.step2Title(context),
+                description: TutorialConfig.step2Description(context),
+                targetShapeBorder: const CircleBorder(),
+                targetPadding: const EdgeInsets.all(14),
+                onTargetClick: () {
+                  if (gestaoState.categoriaSelecionadaId != null) {
+                    ShowcaseView.get().dismiss();
+                    HapticFeedback.lightImpact();
+                    _mostrarDialogoNovoProduto(context, ref);
+                  }
+                },
+                child: Semantics(
+                  button: true,
+                  enabled: gestaoState.categoriaSelecionadaId != null,
+                  label: l10n.addProductButtonLabel,
+                  // Usa AnimatedScale e AnimatedSlide para show/hide nativo do Material 3
+                  // Combinação recomendada para FABs conforme Material Design 3 guidelines
+                  child: AnimatedScale(
+                    scale: shouldShowFab ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    child: AnimatedSlide(
+                      offset: shouldShowFab ? Offset.zero : const Offset(0, 2),
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeInOut,
                       child: FloatingActionButton(
                         heroTag: 'add-product-fab',
                         tooltip: l10n.addProductButtonLabel,

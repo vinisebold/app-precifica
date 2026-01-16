@@ -58,6 +58,10 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   bool _isAddProductFabVisible = true;
   bool _isCategoryNavBarVisible = true;
 
+  // Debounce para prefetch durante swipe
+  Timer? _prefetchDebounceTimer;
+  int? _lastPrefetchedIndex;
+
   @override
   void initState() {
     super.initState();
@@ -430,6 +434,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     _cancelSwipeShowcaseTimers();
     _navigationSpotlightClearTimer?.cancel();
     _swipeSpotlightClearTimer?.cancel();
+    _prefetchDebounceTimer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -863,31 +868,30 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   }
 
   void _handleSneakPeekPrefetch(double pageValue) {
-    final gestaoState = ref.read(gestaoControllerProvider);
-    final categorias = gestaoState.categorias;
-    if (categorias.isEmpty) return;
+    // Cancela o timer anterior e usa debounce para evitar chamadas excessivas
+    _prefetchDebounceTimer?.cancel();
+    _prefetchDebounceTimer = Timer(const Duration(milliseconds: 100), () {
+      if (!mounted) return;
 
-    final selectedId = gestaoState.categoriaSelecionadaId;
-    final selectedIndex = selectedId != null
-        ? categorias.indexWhere((c) => c.id == selectedId)
-        : null;
+      final gestaoState = ref.read(gestaoControllerProvider);
+      final categorias = gestaoState.categorias;
+      if (categorias.isEmpty) return;
 
-    final total = categorias.length;
-    final candidates = <int>{
-      pageValue.floor().clamp(0, math.max(0, total - 1)),
-      pageValue.ceil().clamp(0, math.max(0, total - 1)),
-    };
+      final total = categorias.length;
 
-    final notifier = ref.read(gestaoControllerProvider.notifier);
+      // Determina o índice mais provável baseado na posição atual
+      final targetIndex = pageValue.round().clamp(0, math.max(0, total - 1)).toInt();
 
-    for (final index in candidates) {
-      if (selectedIndex != null && index == selectedIndex) continue;
-      if (index < 0 || index >= total) continue;
-      final visibility = 1 - (pageValue - index).abs();
-      if (visibility >= _sneakPeekVisibilityThreshold) {
-        notifier.prefetchCategoriaPorIndice(index);
+      // Só faz prefetch se mudou de índice alvo
+      if (_lastPrefetchedIndex != targetIndex) {
+        _lastPrefetchedIndex = targetIndex;
+        final notifier = ref.read(gestaoControllerProvider.notifier);
+        notifier.prefetchCategoriaPorIndice(targetIndex);
+        // Também faz prefetch das adjacentes
+        notifier.prefetchCategoriaPorIndice(targetIndex - 1);
+        notifier.prefetchCategoriaPorIndice(targetIndex + 1);
       }
-    }
+    });
   }
 
   void _settleToPage(int index) {
@@ -1277,6 +1281,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
                                   onFabVisibilityRequest:
                                       _handleFabVisibilityRequest,
                                   categoriaId: gestaoState.categorias[index].id,
+                                  forceBarVisible: _isCategoryNavBarVisible,
                                   onProdutoDoubleTap: (produto) =>
                                       _mostrarDialogoEditarNome(
                                     context,
@@ -1904,7 +1909,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     if (nomeProduto.isNotEmpty) {
       ref.read(gestaoControllerProvider.notifier).criarProduto(nomeProduto);
       Navigator.of(dialogContext).pop();
-      
+
       // Exibe feedback de sucesso
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -2070,7 +2075,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     if (nomeCategoria.isNotEmpty) {
       ref.read(gestaoControllerProvider.notifier).criarCategoria(nomeCategoria);
       Navigator.of(dialogContext).pop();
-      
+
       // Exibe feedback de sucesso
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -2085,7 +2090,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   }
 }
 
-class FastPageScrollPhysics extends PageScrollPhysics {
+class FastPageScrollPhysics extends ScrollPhysics {
   const FastPageScrollPhysics({super.parent});
 
   @override
@@ -2093,14 +2098,79 @@ class FastPageScrollPhysics extends PageScrollPhysics {
     return FastPageScrollPhysics(parent: buildParent(ancestor));
   }
 
+  // Clamping nas bordas para evitar overscroll/bounce
   @override
-  SpringDescription get spring {
-    final parentSpring = super.spring;
-    return SpringDescription(
-      mass: parentSpring.mass,
-      stiffness: parentSpring.stiffness * 2,
-      damping: parentSpring.damping * 1.2,
+  double applyBoundaryConditions(ScrollMetrics position, double value) {
+    if (value < position.minScrollExtent) {
+      return value - position.minScrollExtent;
+    }
+    if (value > position.maxScrollExtent) {
+      return value - position.maxScrollExtent;
+    }
+    return 0.0;
+  }
+
+  @override
+  Simulation? createBallisticSimulation(
+    ScrollMetrics position,
+    double velocity,
+  ) {
+    final tolerance = toleranceFor(position);
+    final target = _getTargetPixels(position, velocity);
+
+    // Se já está no target, não anima
+    if ((position.pixels - target).abs() < tolerance.distance) {
+      return null;
+    }
+
+    // Calcula a distância para o target
+    final distance = (target - position.pixels).abs();
+    final pageWidth = position.viewportDimension;
+
+    // Fração da página que falta percorrer (0.0 a 1.0)
+    final fraction = pageWidth > 0 ? (distance / pageWidth).clamp(0.0, 1.0) : 0.5;
+
+    // Ajusta stiffness e damping baseado na distância:
+    // - Distância pequena (< 30%): mais lento e suave
+    // - Distância grande (> 70%): mais rápido
+    // - Sempre sem oscilação (criticamente amortecido: damping = 2 * sqrt(stiffness * mass))
+    final stiffness = 300.0 + fraction * 200.0; // 300-500
+    const mass = 0.5;
+    final criticalDamping = 2.0 * math.sqrt(stiffness * mass);
+
+    return ScrollSpringSimulation(
+      SpringDescription(
+        mass: mass,
+        stiffness: stiffness,
+        damping: criticalDamping, // Criticamente amortecido = sem bounce
+      ),
+      position.pixels,
+      target,
+      velocity,
+      tolerance: tolerance,
     );
+  }
+
+  double _getTargetPixels(ScrollMetrics position, double velocity) {
+    final pageWidth = position.viewportDimension;
+    if (pageWidth == 0) return position.pixels;
+
+    double page = position.pixels / pageWidth;
+
+    // Threshold de velocidade para decidir se avança página
+    // Velocidade alta: avança/retrocede para a próxima página
+    if (velocity.abs() > 365.0) {
+      page = velocity > 0 ? page.ceilToDouble() : page.floorToDouble();
+    } else {
+      // Velocidade baixa: vai para a página mais próxima
+      page = page.roundToDouble();
+    }
+
+    // Clamp para os limites válidos
+    final maxPage = (position.maxScrollExtent / pageWidth).floorToDouble();
+    page = page.clamp(0.0, maxPage);
+
+    return page * pageWidth;
   }
 }
 

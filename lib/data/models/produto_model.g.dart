@@ -21,7 +21,7 @@ class ProdutoModelAdapter extends TypeAdapter<ProdutoModel> {
       nome: fields[1] as String,
       preco: fields[2] as double,
       categoriaId: fields[3] as String,
-      isAtivo: fields[4] == null ? true : fields[4] as bool,
+      isAtivo: fields[4] as bool,
     );
   }
 

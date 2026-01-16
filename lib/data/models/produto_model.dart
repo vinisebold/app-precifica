@@ -7,36 +7,47 @@ part 'produto_model.g.dart';
 class ProdutoModel extends Produto {
   @HiveField(0)
   @override
-  final String id;
+  String get id => super.id;
 
   @HiveField(1)
   @override
-  String nome;
+  String get nome => super.nome;
+
+  @HiveField(1)
+  @override
+  set nome(String value) => super.nome = value;
 
   @HiveField(2)
   @override
-  double preco;
+  double get preco => super.preco;
+
+  @HiveField(2)
+  @override
+  set preco(double value) => super.preco = value;
 
   @HiveField(3)
   @override
-  String categoriaId;
+  String get categoriaId => super.categoriaId;
+
+  @HiveField(3)
+  @override
+  set categoriaId(String value) => super.categoriaId = value;
 
   @HiveField(4, defaultValue: true)
   @override
-  bool isAtivo;
+  bool get isAtivo => super.isAtivo;
+
+  @HiveField(4)
+  @override
+  set isAtivo(bool value) => super.isAtivo = value;
 
   ProdutoModel({
-    required this.id,
-    required this.nome,
-    this.preco = 0.0,
-    required this.categoriaId,
-    this.isAtivo = true,
-  }) : super(
-            id: id,
-            nome: nome,
-            preco: preco,
-            categoriaId: categoriaId,
-            isAtivo: isAtivo);
+    required super.id,
+    required super.nome,
+    super.preco,
+    required super.categoriaId,
+    super.isAtivo,
+  });
 
   factory ProdutoModel.fromEntity(Produto produto) {
     return ProdutoModel(

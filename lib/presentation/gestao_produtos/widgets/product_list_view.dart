@@ -119,8 +119,18 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
   final newProdutos = ref.read(gestaoControllerProvider.select((state) =>
     state.produtosPorCategoria[widget.categoriaId] ?? const <Produto>[]));
 
-    // Se mudou de categoria, salva a posição da anterior e restaura a nova
+    // Se mudou de categoria, reseta o estado de scroll e restaura a posição
     if (oldWidget.categoriaId != widget.categoriaId) {
+      // Reseta o estado de scroll acumulado para evitar comportamentos inesperados
+      _accumulatedScroll = 0.0;
+      _lastScrollOffset = 0.0;
+
+      // Garante que a barra/FAB fiquem visíveis ao trocar de categoria
+      if (!_isFabCurrentlyVisible) {
+        _isFabCurrentlyVisible = true;
+        widget.onFabVisibilityRequest?.call(true);
+      }
+
       _restoreScrollPosition();
     }
 

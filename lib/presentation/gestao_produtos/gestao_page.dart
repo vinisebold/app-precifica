@@ -1356,54 +1356,49 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
               final shouldShowFab = _isAddProductFabVisible && !isKeyboardOpen;
               
-              return AnimatedSlide(
-                duration: const Duration(milliseconds: 260),
-                curve: Curves.easeOutCubic,
-                offset: shouldShowFab ? Offset.zero : const Offset(0, 1.4),
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  opacity: shouldShowFab ? 1 : 0,
-                  child: IgnorePointer(
-                    ignoring: !shouldShowFab,
-                    child: buildTutorialShowcase(
-                      context: context,
-                      key: TutorialKeys.addProductFab,
-                      title: TutorialConfig.step2Title(context),
-                      description: TutorialConfig.step2Description(context),
-                      targetShapeBorder: const CircleBorder(),
-                      targetPadding: const EdgeInsets.all(14),
-                      onTargetClick: () {
-                        if (gestaoState.categoriaSelecionadaId != null) {
-                          ShowcaseView.get().dismiss();
-                          HapticFeedback.lightImpact();
-                          _mostrarDialogoNovoProduto(context, ref);
-                        }
-                      },
-                      child: Semantics(
-                        button: true,
-                        enabled: gestaoState.categoriaSelecionadaId != null,
-                        label: l10n.addProductButtonLabel,
-                        child: FloatingActionButton(
-                          heroTag: 'add-product-fab',
-                          tooltip: l10n.addProductButtonLabel,
-                          onPressed: gestaoState.categoriaSelecionadaId != null
-                              ? () {
-                                  HapticFeedback.lightImpact();
-                                  _mostrarDialogoNovoProduto(context, ref);
-                                }
-                              : null,
-                          elevation:
-                              gestaoState.categoriaSelecionadaId != null ? 3.0 : 0.0,
-                          backgroundColor: gestaoState.categoriaSelecionadaId != null
-                              ? colorScheme.primaryContainer
-                              : colorScheme.surfaceContainer,
-                          child: Icon(
-                            Icons.add_shopping_cart,
-                            color: gestaoState.categoriaSelecionadaId != null
-                                ? colorScheme.onPrimaryContainer
-                                : colorScheme.outline,
-                          ),
+              return AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                opacity: shouldShowFab ? 1 : 0,
+                child: IgnorePointer(
+                  ignoring: !shouldShowFab,
+                  child: buildTutorialShowcase(
+                    context: context,
+                    key: TutorialKeys.addProductFab,
+                    title: TutorialConfig.step2Title(context),
+                    description: TutorialConfig.step2Description(context),
+                    targetShapeBorder: const CircleBorder(),
+                    targetPadding: const EdgeInsets.all(14),
+                    onTargetClick: () {
+                      if (gestaoState.categoriaSelecionadaId != null) {
+                        ShowcaseView.get().dismiss();
+                        HapticFeedback.lightImpact();
+                        _mostrarDialogoNovoProduto(context, ref);
+                      }
+                    },
+                    child: Semantics(
+                      button: true,
+                      enabled: gestaoState.categoriaSelecionadaId != null,
+                      label: l10n.addProductButtonLabel,
+                      child: FloatingActionButton(
+                        heroTag: 'add-product-fab',
+                        tooltip: l10n.addProductButtonLabel,
+                        onPressed: gestaoState.categoriaSelecionadaId != null
+                            ? () {
+                                HapticFeedback.lightImpact();
+                                _mostrarDialogoNovoProduto(context, ref);
+                              }
+                            : null,
+                        elevation:
+                            gestaoState.categoriaSelecionadaId != null ? 3.0 : 0.0,
+                        backgroundColor: gestaoState.categoriaSelecionadaId != null
+                            ? colorScheme.primaryContainer
+                            : colorScheme.surfaceContainer,
+                        child: Icon(
+                          Icons.add_shopping_cart,
+                          color: gestaoState.categoriaSelecionadaId != null
+                              ? colorScheme.onPrimaryContainer
+                              : colorScheme.outline,
                         ),
                       ),
                     ),
@@ -1419,8 +1414,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               rect: _navigationSpotlightRect,
               visible: isNavigationShowcaseActive,
               borderRadius: 28.0,
-        overlayColor:
-          colorScheme.scrim.withValues(alpha: isDark ? 0.65 : 0.32),
+              overlayColor:
+                colorScheme.scrim.withValues(alpha: isDark ? 0.65 : 0.32),
             ),
           ),
         ),
@@ -1430,8 +1425,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               rect: _swipeSpotlightRect,
               visible: isSwipeShowcaseActive,
               borderRadius: 18.0,
-        overlayColor:
-          colorScheme.scrim.withValues(alpha: isDark ? 0.65 : 0.32),
+              overlayColor:
+                colorScheme.scrim.withValues(alpha: isDark ? 0.65 : 0.32),
               padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
             ),
           ),

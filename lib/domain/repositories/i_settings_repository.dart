@@ -26,6 +26,10 @@ abstract class ISettingsRepository {
   Future<void> setModoCompacto(bool valor);
   bool getModoCompacto();
 
+  // Auto-hide da barra de categorias
+  Future<void> setAutoHideCategoryBar(bool valor);
+  bool getAutoHideCategoryBar();
+
   // Idioma do aplicativo
   Future<void> setLanguage(String languageCode);
   String? getLanguage();

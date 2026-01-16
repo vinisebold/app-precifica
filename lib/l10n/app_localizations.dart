@@ -160,6 +160,30 @@ abstract class AppLocalizations {
   /// **'Modo compacto desativado'**
   String get compactModeDisabled;
 
+  /// Auto-hide category bar option
+  ///
+  /// In pt, this message translates to:
+  /// **'Ocultar Barra ao Rolar'**
+  String get autoHideCategoryBar;
+
+  /// Auto-hide category bar description
+  ///
+  /// In pt, this message translates to:
+  /// **'Esconde a barra de categorias ao rolar o conteúdo para baixo'**
+  String get autoHideCategoryBarDescription;
+
+  /// Auto-hide category bar enabled message
+  ///
+  /// In pt, this message translates to:
+  /// **'Barra de categorias será ocultada ao rolar'**
+  String get autoHideCategoryBarEnabled;
+
+  /// Auto-hide category bar disabled message
+  ///
+  /// In pt, this message translates to:
+  /// **'Barra de categorias sempre visível'**
+  String get autoHideCategoryBarDisabled;
+
   /// Language section header
   ///
   /// In pt, this message translates to:

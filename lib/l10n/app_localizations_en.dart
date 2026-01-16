@@ -40,6 +40,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get compactModeDisabled => 'Compact mode disabled';
 
   @override
+  String get autoHideCategoryBar => 'Auto-Hide Category Bar';
+
+  @override
+  String get autoHideCategoryBarDescription =>
+      'Hides the category bar when scrolling content down';
+
+  @override
+  String get autoHideCategoryBarEnabled => 'Category bar will hide on scroll';
+
+  @override
+  String get autoHideCategoryBarDisabled => 'Category bar always visible';
+
+  @override
   String get language => 'Language';
 
   @override

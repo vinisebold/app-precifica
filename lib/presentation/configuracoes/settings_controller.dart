@@ -160,6 +160,16 @@ class SettingsController extends Notifier<SettingsState> {
     return repository.getModoCompacto();
   }
 
+  Future<void> setAutoHideCategoryBar(bool valor) async {
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setAutoHideCategoryBar(valor);
+  }
+
+  bool getAutoHideCategoryBar() {
+    final repository = ref.read(settingsRepositoryProvider);
+    return repository.getAutoHideCategoryBar();
+  }
+
   Future<void> setLanguage(String languageCode) async {
     final repository = ref.read(settingsRepositoryProvider);
     await repository.setLanguage(languageCode);

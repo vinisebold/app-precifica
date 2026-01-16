@@ -40,6 +40,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get compactModeDisabled => 'Modo compacto desativado';
 
   @override
+  String get autoHideCategoryBar => 'Ocultar Barra ao Rolar';
+
+  @override
+  String get autoHideCategoryBarDescription =>
+      'Esconde a barra de categorias ao rolar o conteúdo para baixo';
+
+  @override
+  String get autoHideCategoryBarEnabled =>
+      'Barra de categorias será ocultada ao rolar';
+
+  @override
+  String get autoHideCategoryBarDisabled =>
+      'Barra de categorias sempre visível';
+
+  @override
   String get language => 'Idioma';
 
   @override

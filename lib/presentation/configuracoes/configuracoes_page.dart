@@ -5,6 +5,7 @@ import '../../app/core/l10n/app_localizations.dart';
 import 'template_list_page.dart';
 import 'settings_controller.dart';
 import '../shared/providers/modo_compacto_provider.dart';
+import '../shared/providers/auto_hide_category_bar_provider.dart';
 import '../shared/providers/locale_provider.dart';
 import '../shared/showcase/tutorial_controller.dart';
 import '../../app/core/snackbar/app_snackbar.dart';
@@ -20,6 +21,7 @@ class ConfiguracoesPage extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final modoCompacto = ref.watch(modoCompactoProvider);
+    final autoHideCategoryBar = ref.watch(autoHideCategoryBarProvider);
     final settingsState = ref.watch(settingsControllerProvider);
     final settingsNotifier = ref.read(settingsControllerProvider.notifier);
     final localeNotifier = ref.read(localeProvider.notifier);
@@ -71,21 +73,42 @@ class ConfiguracoesPage extends ConsumerWidget {
           const SizedBox(height: 24),
           _SectionHeader(label: l10n.visualization),
           _SurfaceCard(
-            child: _SwitchSettingTile(
-              icon: Icons.compress,
-              title: l10n.compactMode,
-              subtitle: l10n.compactModeDescription,
-              value: modoCompacto,
-              onChanged: (valor) async {
-                await ref.read(modoCompactoProvider.notifier).toggle(valor);
+            child: Column(
+              children: [
+                _SwitchSettingTile(
+                  icon: Icons.compress,
+                  title: l10n.compactMode,
+                  subtitle: l10n.compactModeDescription,
+                  value: modoCompacto,
+                  onChanged: (valor) async {
+                    await ref.read(modoCompactoProvider.notifier).toggle(valor);
 
-                if (!context.mounted) return;
+                    if (!context.mounted) return;
 
-                AppSnackbar.show(
-                  context,
-                  valor ? l10n.compactModeEnabled : l10n.compactModeDisabled,
-                );
-              },
+                    AppSnackbar.show(
+                      context,
+                      valor ? l10n.compactModeEnabled : l10n.compactModeDisabled,
+                    );
+                  },
+                ),
+                const Divider(height: 1, indent: 20, endIndent: 20),
+                _SwitchSettingTile(
+                  icon: Icons.visibility_off_outlined,
+                  title: l10n.autoHideCategoryBar,
+                  subtitle: l10n.autoHideCategoryBarDescription,
+                  value: autoHideCategoryBar,
+                  onChanged: (valor) async {
+                    await ref.read(autoHideCategoryBarProvider.notifier).toggle(valor);
+
+                    if (!context.mounted) return;
+
+                    AppSnackbar.show(
+                      context,
+                      valor ? l10n.autoHideCategoryBarEnabled : l10n.autoHideCategoryBarDisabled,
+                    );
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),

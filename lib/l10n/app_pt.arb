@@ -40,6 +40,22 @@
   "@compactModeDisabled": {
     "description": "Compact mode disabled message"
   },
+  "autoHideCategoryBar": "Ocultar Barra ao Rolar",
+  "@autoHideCategoryBar": {
+    "description": "Auto-hide category bar option"
+  },
+  "autoHideCategoryBarDescription": "Esconde a barra de categorias ao rolar o conteúdo para baixo",
+  "@autoHideCategoryBarDescription": {
+    "description": "Auto-hide category bar description"
+  },
+  "autoHideCategoryBarEnabled": "Barra de categorias será ocultada ao rolar",
+  "@autoHideCategoryBarEnabled": {
+    "description": "Auto-hide category bar enabled message"
+  },
+  "autoHideCategoryBarDisabled": "Barra de categorias sempre visível",
+  "@autoHideCategoryBarDisabled": {
+    "description": "Auto-hide category bar disabled message"
+  },
   "language": "Idioma",
   "@language": {
     "description": "Language section header"

@@ -64,6 +64,10 @@ class AppLocalizations {
       'compactModeDescription': 'Reduz espaçamentos para telas menores e muitos produtos',
       'compactModeEnabled': 'Modo compacto ativado',
       'compactModeDisabled': 'Modo compacto desativado',
+      'autoHideCategoryBar': 'Ocultar Barra ao Rolar',
+      'autoHideCategoryBarDescription': 'Esconde a barra de categorias ao rolar o conteúdo para baixo',
+      'autoHideCategoryBarEnabled': 'Barra de categorias será ocultada ao rolar',
+      'autoHideCategoryBarDisabled': 'Barra de categorias sempre visível',
       'language': 'Idioma',
       'appLanguage': 'Idioma do Aplicativo',
       'appLanguageDescription': 'Selecione o idioma da interface',
@@ -277,6 +281,10 @@ class AppLocalizations {
       'compactModeDescription': 'Reduces spacing for smaller screens and many products',
       'compactModeEnabled': 'Compact mode enabled',
       'compactModeDisabled': 'Compact mode disabled',
+      'autoHideCategoryBar': 'Auto-Hide Category Bar',
+      'autoHideCategoryBarDescription': 'Hides the category bar when scrolling content down',
+      'autoHideCategoryBarEnabled': 'Category bar will hide on scroll',
+      'autoHideCategoryBarDisabled': 'Category bar always visible',
       'language': 'Language',
       'appLanguage': 'App Language',
       'appLanguageDescription': 'Select the interface language',
@@ -490,6 +498,10 @@ class AppLocalizations {
       'compactModeDescription': 'Reduce el espaciado para pantallas más pequeñas y muchos productos',
       'compactModeEnabled': 'Modo compacto activado',
       'compactModeDisabled': 'Modo compacto desactivado',
+      'autoHideCategoryBar': 'Ocultar Barra al Desplazar',
+      'autoHideCategoryBarDescription': 'Oculta la barra de categorías al desplazar el contenido hacia abajo',
+      'autoHideCategoryBarEnabled': 'La barra de categorías se ocultará al desplazar',
+      'autoHideCategoryBarDisabled': 'Barra de categorías siempre visible',
       'language': 'Idioma',
       'appLanguage': 'Idioma de la Aplicación',
       'appLanguageDescription': 'Seleccione el idioma de la interfaz',
@@ -708,6 +720,10 @@ class AppLocalizations {
   String get compactModeDescription => _translate('compactModeDescription');
   String get compactModeEnabled => _translate('compactModeEnabled');
   String get compactModeDisabled => _translate('compactModeDisabled');
+  String get autoHideCategoryBar => _translate('autoHideCategoryBar');
+  String get autoHideCategoryBarDescription => _translate('autoHideCategoryBarDescription');
+  String get autoHideCategoryBarEnabled => _translate('autoHideCategoryBarEnabled');
+  String get autoHideCategoryBarDisabled => _translate('autoHideCategoryBarDisabled');
   String get language => _translate('language');
   String get appLanguage => _translate('appLanguage');
   String get appLanguageDescription => _translate('appLanguageDescription');

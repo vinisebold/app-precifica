@@ -27,6 +27,7 @@ import '../shared/showcase/tutorial_keys.dart';
 import '../shared/showcase/tutorial_config.dart';
 import '../shared/showcase/tutorial_overlay.dart';
 import '../shared/showcase/tutorial_widgets.dart';
+import '../shared/providers/auto_hide_category_bar_provider.dart';
 
 class GestaoPage extends ConsumerStatefulWidget {
   const GestaoPage({super.key});
@@ -55,6 +56,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
   Timer? _swipeSpotlightClearTimer;
   bool _hasShownCompletionScreen = false;
   bool _isAddProductFabVisible = true;
+  bool _isCategoryNavBarVisible = true;
 
   @override
   void initState() {
@@ -910,8 +912,12 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
         tutorialState.currentStep == TutorialStep.awaitingFirstProduct;
     final targetVisibility = forceVisible ? true : shouldShowFab;
 
-    if (_isAddProductFabVisible == targetVisibility) return;
-    setState(() => _isAddProductFabVisible = targetVisibility);
+    if (_isAddProductFabVisible == targetVisibility &&
+        _isCategoryNavBarVisible == targetVisibility) return;
+    setState(() {
+      _isAddProductFabVisible = targetVisibility;
+      _isCategoryNavBarVisible = targetVisibility;
+    });
   }
 
   bool _handlePageViewScrollNotification(ScrollNotification notification) {
@@ -1105,6 +1111,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
     final gestaoState = ref.watch(gestaoControllerProvider);
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
     final l10n = AppLocalizations.of(context)!;
+    final autoHideCategoryBar = ref.watch(autoHideCategoryBarProvider);
 
     return Stack(
       children: [
@@ -1321,31 +1328,39 @@ class _GestaoPageState extends ConsumerState<GestaoPage> {
               ),
             ),
           ),
-          bottomNavigationBar: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: buildTutorialShowcase(
-                context: context,
-                key: TutorialKeys.categoryNavBar,
-                title: TutorialConfig.step4Title(context),
-                description: TutorialConfig.step4Description(context),
-                targetShapeBorder: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28.0),
-                ),
-                overlayColor: Colors.transparent,
-                disableDefaultTargetGestures: true,
-                disposeOnTap: false,
-                child: CategoriaNavBar(
-                  onCategoriaDoubleTap: (categoria) {
-                    _mostrarDialogoEditarNome(
-                      context,
-                      ref,
-                      titulo: AppLocalizations.of(context)?.editCategory ?? 'Editar Categoria',
-                      valorAtual: categoria.nome,
-                      onSalvar: (novoNome) => gestaoNotifier
-                          .atualizarNomeCategoria(categoria.id, novoNome),
-                    );
-                  },
+          bottomNavigationBar: ClipRect(
+            child: AnimatedAlign(
+              alignment: Alignment.topCenter,
+              heightFactor: (!autoHideCategoryBar || _isCategoryNavBarVisible) ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: buildTutorialShowcase(
+                    context: context,
+                    key: TutorialKeys.categoryNavBar,
+                    title: TutorialConfig.step4Title(context),
+                    description: TutorialConfig.step4Description(context),
+                    targetShapeBorder: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28.0),
+                    ),
+                    overlayColor: Colors.transparent,
+                    disableDefaultTargetGestures: true,
+                    disposeOnTap: false,
+                    child: CategoriaNavBar(
+                      onCategoriaDoubleTap: (categoria) {
+                        _mostrarDialogoEditarNome(
+                          context,
+                          ref,
+                          titulo: AppLocalizations.of(context)?.editCategory ?? 'Editar Categoria',
+                          valorAtual: categoria.nome,
+                          onSalvar: (novoNome) => gestaoNotifier
+                              .atualizarNomeCategoria(categoria.id, novoNome),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
             ),

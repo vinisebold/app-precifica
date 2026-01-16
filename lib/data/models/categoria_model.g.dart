@@ -28,14 +28,14 @@ class CategoriaModelAdapter extends TypeAdapter<CategoriaModel> {
   void write(BinaryWriter writer, CategoriaModel obj) {
     writer
       ..writeByte(4)
+      ..writeByte(3)
+      ..write(obj.produtoIds)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.nome)
       ..writeByte(2)
-      ..write(obj.ordem)
-      ..writeByte(3)
-      ..write(obj.produtoIds);
+      ..write(obj.ordem);
   }
 
   @override

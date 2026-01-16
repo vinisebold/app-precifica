@@ -7,26 +7,33 @@ part 'categoria_model.g.dart';
 class CategoriaModel extends Categoria {
   @HiveField(0)
   @override
-  final String id;
+  String get id => super.id;
 
   @HiveField(1)
   @override
-  String nome;
+  String get nome => super.nome;
+
+  @HiveField(1)
+  @override
+  set nome(String value) => super.nome = value;
 
   @HiveField(2)
   @override
-  int ordem;
+  int get ordem => super.ordem;
+
+  @HiveField(2)
+  @override
+  set ordem(int value) => super.ordem = value;
 
   @HiveField(3, defaultValue: [])
   List<String> produtoIds;
 
   CategoriaModel({
-    required this.id,
-    required this.nome,
-    required this.ordem,
+    required super.id,
+    required super.nome,
+    required super.ordem,
     List<String>? produtoIds,
-  })  : produtoIds = List<String>.from(produtoIds ?? const []),
-        super(id: id, nome: nome, ordem: ordem);
+  })  : produtoIds = List<String>.from(produtoIds ?? const []);
 
   factory CategoriaModel.fromEntity(Categoria categoria) {
     return CategoriaModel(

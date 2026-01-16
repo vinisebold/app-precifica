@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:precifica/domain/entities/produto.dart';
@@ -29,13 +28,11 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
   late List<FocusNode> _focusNodes;
   late List<Produto> _produtos;
   final ScrollController _scrollController = ScrollController();
-  bool _isRestoringScroll = false;
   bool _isFabCurrentlyVisible = true;
 
   // Scroll threshold: distância mínima de rolagem (em pixels) antes de acionar
   // a mudança de visibilidade do FAB. Evita que o FAB fique piscando
   // durante pequenos movimentos de scroll.
-  static const double _scrollThreshold = 24.0;
   double _lastScrollOffset = 0.0;
 
   @override
@@ -100,7 +97,6 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
   Future<void> _restoreScrollPosition() async {
     if (!mounted || !_scrollController.hasClients) return;
     
-    _isRestoringScroll = true;
     final savedPosition = await ref.read(gestaoControllerProvider.notifier)
         .getScrollPosition(widget.categoriaId);
     
@@ -115,7 +111,6 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
         _scrollController.jumpTo(targetPosition);
       }
     }
-    _isRestoringScroll = false;
   }
 
   @override

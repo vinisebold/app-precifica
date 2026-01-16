@@ -7,97 +7,137 @@ part 'report_template_model.g.dart';
 class ReportTemplateModel extends ReportTemplate {
   @HiveField(0)
   @override
-  final String id;
+  String get id => super.id;
 
   @HiveField(1)
   @override
-  String nome;
+  String get nome => super.nome;
+
+  @HiveField(1)
+  @override
+  set nome(String value) => super.nome = value;
 
   @HiveField(2)
   @override
-  String titulo;
+  String get titulo => super.titulo;
+
+  @HiveField(2)
+  @override
+  set titulo(String value) => super.titulo = value;
 
   @HiveField(3)
   @override
-  bool mostrarData;
+  bool get mostrarData => super.mostrarData;
+
+  @HiveField(3)
+  @override
+  set mostrarData(bool value) => super.mostrarData = value;
 
   @HiveField(4)
   @override
-  bool mostrarDiaSemana;
+  bool get mostrarDiaSemana => super.mostrarDiaSemana;
+
+  @HiveField(4)
+  @override
+  set mostrarDiaSemana(bool value) => super.mostrarDiaSemana = value;
 
   @HiveField(5)
   @override
-  String mensagemRodape;
+  String get mensagemRodape => super.mensagemRodape;
+
+  @HiveField(5)
+  @override
+  set mensagemRodape(String value) => super.mensagemRodape = value;
 
   @HiveField(6)
   @override
-  bool agruparPorCategoria;
+  bool get agruparPorCategoria => super.agruparPorCategoria;
+
+  @HiveField(6)
+  @override
+  set agruparPorCategoria(bool value) => super.agruparPorCategoria = value;
 
   @HiveField(7)
   @override
-  CategoryFormatting formatoCategoria;
+  CategoryFormatting get formatoCategoria => super.formatoCategoria;
+
+  @HiveField(7)
+  @override
+  set formatoCategoria(CategoryFormatting value) => super.formatoCategoria = value;
 
   @HiveField(8)
   @override
-  String emojiCategoria;
+  String get emojiCategoria => super.emojiCategoria;
+
+  @HiveField(8)
+  @override
+  set emojiCategoria(String value) => super.emojiCategoria = value;
 
   @HiveField(9)
   @override
-  ProductFilter filtroProdutos;
+  ProductFilter get filtroProdutos => super.filtroProdutos;
+
+  @HiveField(9)
+  @override
+  set filtroProdutos(ProductFilter value) => super.filtroProdutos = value;
 
   @HiveField(10)
   @override
-  ProductNameFormatting formatoNomeProduto;
+  ProductNameFormatting get formatoNomeProduto => super.formatoNomeProduto;
+
+  @HiveField(10)
+  @override
+  set formatoNomeProduto(ProductNameFormatting value) => super.formatoNomeProduto = value;
 
   @HiveField(11)
   @override
-  bool ocultarPrecos;
+  bool get ocultarPrecos => super.ocultarPrecos;
+
+  @HiveField(11)
+  @override
+  set ocultarPrecos(bool value) => super.ocultarPrecos = value;
 
   @HiveField(12)
   @override
-  String textoPrecoZero;
+  String get textoPrecoZero => super.textoPrecoZero;
+
+  @HiveField(12)
+  @override
+  set textoPrecoZero(String value) => super.textoPrecoZero = value;
 
   @HiveField(13)
   @override
-  bool mostrarCifraoPreco;
+  bool get mostrarCifraoPreco => super.mostrarCifraoPreco;
+
+  @HiveField(13)
+  @override
+  set mostrarCifraoPreco(bool value) => super.mostrarCifraoPreco = value;
 
   @HiveField(14)
   @override
-  bool isPadrao;
+  bool get isPadrao => super.isPadrao;
+
+  @HiveField(14)
+  @override
+  set isPadrao(bool value) => super.isPadrao = value;
 
   ReportTemplateModel({
-    required this.id,
-    required this.nome,
-    required this.titulo,
-    required this.mostrarData,
-    required this.mostrarDiaSemana,
-    required this.mensagemRodape,
-    required this.agruparPorCategoria,
-    required this.formatoCategoria,
-    required this.emojiCategoria,
-    required this.filtroProdutos,
-    required this.formatoNomeProduto,
-    required this.ocultarPrecos,
-    required this.textoPrecoZero,
-    required this.mostrarCifraoPreco,
-    required this.isPadrao,
-  }) : super(
-          id: id,
-          nome: nome,
-          titulo: titulo,
-          mostrarData: mostrarData,
-          mostrarDiaSemana: mostrarDiaSemana,
-          mensagemRodape: mensagemRodape,
-          agruparPorCategoria: agruparPorCategoria,
-          formatoCategoria: formatoCategoria,
-          emojiCategoria: emojiCategoria,
-          filtroProdutos: filtroProdutos,
-          formatoNomeProduto: formatoNomeProduto,
-          ocultarPrecos: ocultarPrecos,
-          textoPrecoZero: textoPrecoZero,
-          mostrarCifraoPreco: mostrarCifraoPreco,
-          isPadrao: isPadrao,
-        );
+    required super.id,
+    required super.nome,
+    required super.titulo,
+    required super.mostrarData,
+    required super.mostrarDiaSemana,
+    required super.mensagemRodape,
+    required super.agruparPorCategoria,
+    required super.formatoCategoria,
+    required super.emojiCategoria,
+    required super.filtroProdutos,
+    required super.formatoNomeProduto,
+    required super.ocultarPrecos,
+    required super.textoPrecoZero,
+    required super.mostrarCifraoPreco,
+    required super.isPadrao,
+  });
 
   factory ReportTemplateModel.fromEntity(ReportTemplate template) {
     return ReportTemplateModel(

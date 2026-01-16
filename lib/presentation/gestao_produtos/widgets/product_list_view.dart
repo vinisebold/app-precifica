@@ -11,6 +11,7 @@ class ProductListView extends ConsumerStatefulWidget {
   final Function(Produto) onProdutoTap;
   final String categoriaId;
   final ValueChanged<bool>? onFabVisibilityRequest;
+  final bool forceBarVisible;
 
   const ProductListView({
     super.key,
@@ -18,17 +19,23 @@ class ProductListView extends ConsumerStatefulWidget {
     required this.onProdutoTap,
     required this.categoriaId,
     this.onFabVisibilityRequest,
+    this.forceBarVisible = false,
   });
 
   @override
   ConsumerState<ProductListView> createState() => _ProductListViewState();
 }
 
-class _ProductListViewState extends ConsumerState<ProductListView> {
+class _ProductListViewState extends ConsumerState<ProductListView>
+    with AutomaticKeepAliveClientMixin {
   late List<FocusNode> _focusNodes;
   late List<Produto> _produtos;
   final ScrollController _scrollController = ScrollController();
   bool _isFabCurrentlyVisible = true;
+  bool _isRestoringScroll = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   // Scroll threshold: distância mínima de rolagem (em pixels) antes de acionar
   // a mudança de visibilidade do FAB. Evita que o FAB fique piscando
@@ -58,6 +65,9 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
 
   void _onScroll() {
     if (!_scrollController.hasClients) return;
+
+    // Ignora eventos de scroll durante restauração da posição
+    if (_isRestoringScroll) return;
 
     final offset = _scrollController.offset;
     final delta = offset - _lastScrollOffset;
@@ -101,6 +111,9 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
         .getScrollPosition(widget.categoriaId);
     
     if (mounted && _scrollController.hasClients && savedPosition > 0) {
+      // Marca que estamos restaurando para ignorar eventos de scroll
+      _isRestoringScroll = true;
+
       // Aguarda um frame para garantir que a lista foi renderizada
       await Future.delayed(const Duration(milliseconds: 100));
       
@@ -109,7 +122,15 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
         final targetPosition = savedPosition > maxScroll ? maxScroll : savedPosition;
         
         _scrollController.jumpTo(targetPosition);
+
+        // Sincroniza o _lastScrollOffset para a nova posição
+        _lastScrollOffset = targetPosition;
+        _accumulatedScroll = 0.0;
       }
+
+      // Aguarda um pouco para garantir que o scroll terminou
+      await Future.delayed(const Duration(milliseconds: 50));
+      _isRestoringScroll = false;
     }
   }
 
@@ -119,11 +140,17 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
   final newProdutos = ref.read(gestaoControllerProvider.select((state) =>
     state.produtosPorCategoria[widget.categoriaId] ?? const <Produto>[]));
 
-    // Se mudou de categoria, reseta o estado de scroll e restaura a posição
+    // Se o pai forçou a barra visível (ex: swipe horizontal), sincroniza o estado interno
+    if (widget.forceBarVisible && !oldWidget.forceBarVisible) {
+      _accumulatedScroll = 0.0;
+      _isFabCurrentlyVisible = true;
+    }
+
+    // Se mudou de categoria, reseta o estado de scroll acumulado
     if (oldWidget.categoriaId != widget.categoriaId) {
       // Reseta o estado de scroll acumulado para evitar comportamentos inesperados
       _accumulatedScroll = 0.0;
-      _lastScrollOffset = 0.0;
+      _lastScrollOffset = _scrollController.hasClients ? _scrollController.offset : 0.0;
 
       // Garante que a barra/FAB fiquem visíveis ao trocar de categoria
       if (!_isFabCurrentlyVisible) {
@@ -131,7 +158,8 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
         widget.onFabVisibilityRequest?.call(true);
       }
 
-      _restoreScrollPosition();
+      // Não restaura scroll aqui - o scroll é mantido pelo AutomaticKeepAlive
+      // ou restaurado no initState quando o widget é criado
     }
 
     // Apenas recria os FocusNodes se o número de produtos mudar
@@ -177,6 +205,8 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Necessário para AutomaticKeepAliveClientMixin
+
   final produtos = ref.watch(gestaoControllerProvider.select((state) =>
     state.produtosPorCategoria[widget.categoriaId] ?? const <Produto>[]));
 
@@ -233,6 +263,7 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
       padding: EdgeInsets.symmetric(vertical: verticalPadding),
       child: ListView.separated(
         controller: _scrollController,
+        physics: const ClampingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(0, 0, 0, bottomSpacer),
         itemCount: produtos.length,
         itemBuilder: (context, index) {

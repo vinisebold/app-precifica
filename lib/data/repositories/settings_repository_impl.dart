@@ -8,6 +8,7 @@ class SettingsRepositoryImpl implements ISettingsRepository {
   static const _preferencesBox = 'preferences_box';
   static const _keyNaoPerguntarTemplate = 'nao_perguntar_template';
   static const _keyModoCompacto = 'modo_compacto';
+  static const _keyAutoHideCategoryBar = 'auto_hide_category_bar';
   static const _keyTemplateSelecionado = 'template_selecionado';
   static const _keyLanguage = 'app_language';
 
@@ -116,6 +117,18 @@ class SettingsRepositoryImpl implements ISettingsRepository {
   bool getModoCompacto() {
     final box = Hive.box(_preferencesBox);
     return box.get(_keyModoCompacto, defaultValue: false) as bool;
+  }
+
+  @override
+  Future<void> setAutoHideCategoryBar(bool valor) async {
+    final box = Hive.box(_preferencesBox);
+    await box.put(_keyAutoHideCategoryBar, valor);
+  }
+
+  @override
+  bool getAutoHideCategoryBar() {
+    final box = Hive.box(_preferencesBox);
+    return box.get(_keyAutoHideCategoryBar, defaultValue: true) as bool;
   }
 
   @override

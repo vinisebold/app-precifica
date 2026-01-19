@@ -8,6 +8,7 @@ class GestaoState {
   final Map<String, List<Produto>> produtosPorCategoria;
   final String? categoriaSelecionadaId;
   final String? errorMessage;
+  final Set<String> produtosSelecionados;
   final bool isReordering;
   final bool isLoading;
   final Produto? ultimoProdutoDeletado;
@@ -22,6 +23,7 @@ class GestaoState {
     this.produtosPorCategoria = const {},
     this.categoriaSelecionadaId,
     this.errorMessage,
+    this.produtosSelecionados = const <String>{},
     this.isReordering = false,
     this.isLoading = false,
     this.ultimoProdutoDeletado,
@@ -37,6 +39,7 @@ class GestaoState {
     Map<String, List<Produto>>? produtosPorCategoria,
     String? categoriaSelecionadaId,
     String? errorMessage,
+    Set<String>? produtosSelecionados,
     bool? isReordering,
     bool? isLoading,
     Produto? ultimoProdutoDeletado,
@@ -51,12 +54,14 @@ class GestaoState {
     return GestaoState(
       categorias: categorias ?? this.categorias,
       produtos: produtos ?? this.produtos,
-    produtosPorCategoria:
-      produtosPorCategoria ?? this.produtosPorCategoria,
+      produtosPorCategoria:
+          produtosPorCategoria ?? this.produtosPorCategoria,
       categoriaSelecionadaId:
           categoriaSelecionadaId ?? this.categoriaSelecionadaId,
       errorMessage:
           clearErrorMessage ? null : errorMessage ?? this.errorMessage,
+      produtosSelecionados:
+          produtosSelecionados ?? this.produtosSelecionados,
       isReordering: isReordering ?? this.isReordering,
       isLoading: isLoading ?? this.isLoading,
       ultimoProdutoDeletado: clearUltimoProdutoDeletado

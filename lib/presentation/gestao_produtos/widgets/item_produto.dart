@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:precifica/domain/entities/produto.dart';
 import 'package:precifica/app/core/l10n/app_localizations.dart';
-
 import '../gestao_controller.dart';
+
 import '../../shared/providers/modo_compacto_provider.dart';
 
 import 'package:precifica/app/core/utils/currency_formatter.dart';
@@ -16,17 +16,23 @@ class ItemProduto extends ConsumerStatefulWidget {
   final Produto produto;
   final VoidCallback onDoubleTap;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
   final FocusNode focusNode;
   final VoidCallback onSubmitted;
   final TextInputAction textInputAction;
+  final bool isSelected;
+  final bool isSelectionMode;
 
   const ItemProduto({
     required this.produto,
     required this.onDoubleTap,
     required this.onTap,
+    required this.onLongPress,
     required this.focusNode,
     required this.onSubmitted,
     required this.textInputAction,
+    required this.isSelected,
+    required this.isSelectionMode,
     super.key,
   });
 
@@ -37,8 +43,6 @@ class ItemProduto extends ConsumerStatefulWidget {
 class _ItemProdutoState extends ConsumerState<ItemProduto> {
   late final InputCursorFinalController _precoController;
   Timer? _debounce;
-  OverlayEntry? _overlayEntry;
-  bool _isDragging = false;
   bool _showPopAnimation = false;
   bool _showPressAnimation = false;
 
@@ -61,115 +65,42 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
   void dispose() {
     _precoController.dispose();
     _debounce?.cancel();
-    _removeOverlay();
     super.dispose();
   }
 
-  void _removeOverlay() {
-    if (_overlayEntry != null && _overlayEntry!.mounted) {
-      _overlayEntry!.remove();
-    }
-    _overlayEntry = null;
-  }
+  void _triggerSelectionAnimation() {
+    if (!mounted) return;
 
-  void _startDrag() {
-    if (mounted) {
+    setState(() {
+      _showPressAnimation = true;
+    });
+    HapticFeedback.lightImpact();
+
+    Future.delayed(const Duration(milliseconds: 140), () {
+      if (!mounted) return;
       setState(() {
-        _isDragging = true;
-        _showPressAnimation = true;
-      });
-      HapticFeedback.lightImpact();
-      ref.read(gestaoControllerProvider.notifier).setDraggingProduto(true);
-      
-      // Reseta a animação de pressão após completar
-      Future.delayed(const Duration(milliseconds: 250), () {
-        if (mounted) {
-          setState(() => _showPressAnimation = false);
-        }
-      });
-    }
-  }
-
-  void _endDrag(DraggableDetails details) {
-    if (!details.wasAccepted) {
-      // Não usar animateBack com overlay customizado
-      // Deixar Flutter gerenciar
-      _finalizeDrag();
-    } else {
-      _finalizeDrag();
-    }
-  }
-
-  void _cancelDrag(Velocity velocity, Offset offset) {
-    // Não usar animateBack com overlay customizado
-    // Deixar Flutter gerenciar
-    _finalizeDrag();
-  }
-
-  void _finalizeDrag() {
-    if (mounted) {
-      // Ativa a animação de pop no item original
-      setState(() {
-        _isDragging = false;
+        _showPressAnimation = false;
         _showPopAnimation = true;
       });
-      
-      ref.read(gestaoControllerProvider.notifier).setDraggingProduto(false);
-      
-      // Reseta a animação de pop após completar
-      Future.delayed(const Duration(milliseconds: 250), () {
+
+      Future.delayed(const Duration(milliseconds: 220), () {
         if (mounted) {
           setState(() => _showPopAnimation = false);
         }
       });
+    });
+  }
+
+  void _handleLongPress() {
+    _triggerSelectionAnimation();
+    widget.onLongPress();
+  }
+
+  void _handleTap() {
+    if (widget.isSelectionMode) {
+      _triggerSelectionAnimation();
     }
-  }
-
-  // MÉTODO DESABILITADO - estava causando problemas de overlay travado e scroll
-  // O Flutter gerencia o feedback automaticamente sem precisar de overlay customizado
-  /*
-  void _animateBack(Offset dragEndOffset) {
-    _finalizeDrag();
-  }
-  */
-
-  Widget _buildDraggableFeedback() {
-    final colorScheme = Theme.of(context).colorScheme;
-    final modoCompacto = ref.read(modoCompactoProvider);
-    
-    final double verticalPadding = modoCompacto ? 4.0 : 8.0;
-    final double horizontalPadding = modoCompacto ? 8.0 : 12.0;
-    final double fontSize = modoCompacto ? 14.0 : 16.0;
-    final double inputWidth = modoCompacto ? 100.0 : 120.0;
-
-    return _FadeInFeedback(
-      child: Material(
-        elevation: 4.0,
-        borderRadius: BorderRadius.circular(12.0),
-        child: Container(
-          width: MediaQuery.of(context).size.width - 16,
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          child: ListTile(
-            dense: modoCompacto,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: horizontalPadding,
-              vertical: verticalPadding * 0.5,
-            ),
-            title: Text(
-              widget.produto.nome,
-              style: TextStyle(fontSize: fontSize),
-            ),
-            trailing: SizedBox(
-              width: inputWidth,
-              // Espaço vazio para manter o layout, mas sem mostrar o preço
-            ),
-          ),
-        ),
-      ),
-    );
+    widget.onTap();
   }
 
   @override
@@ -251,15 +182,42 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
       ),
     );
 
+    final borderColor = widget.isSelected
+        ? colorScheme.primary.withValues(alpha: 0.55)
+        : Colors.transparent;
+
+    final decoratedContent = AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOut,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(modoCompacto ? 10.0 : 12.0),
+        border: Border.all(
+          color: borderColor,
+          width: widget.isSelected ? 2.0 : 0.0,
+        ),
+        boxShadow: widget.isSelected
+            ? [
+                BoxShadow(
+                  color: colorScheme.primary.withValues(alpha: 0.14),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ]
+            : const [],
+      ),
+      child: itemContent,
+    );
+
     // O GestureDetector para onTap (reativar) agora envolve tudo.
     return Semantics(
       label: productSemanticLabel,
-      hint: isAtivo 
-          ? '${l10n.doubleTapToEditHint}. ${l10n.dragToReorderHint}'
-          : l10n.toggleProductStatusHint,
+      hint: widget.isSelectionMode
+          ? 'Toque para selecionar ou desmarcar.'
+          : '${l10n.doubleTapToEditHint}. ${l10n.toggleProductStatusHint}',
       enabled: true,
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: _handleTap,
+        onLongPress: _handleLongPress,
         behavior: HitTestBehavior.translucent,
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 300),
@@ -270,72 +228,15 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
                 ? 1.03 
                 : (_showPressAnimation ? 0.97 : 1.0),
             curve: Curves.easeOutBack,
-            child: Opacity(
-              opacity: _isDragging ? 0.0 : 1.0,
-              child: IgnorePointer(
-                ignoring: !isAtivo,
-                child: LongPressDraggable<Produto>(
-                  data: widget.produto,
-                  hapticFeedbackOnStart: false,
-                  onDragStarted: _startDrag,
-                  onDragEnd: _endDrag,
-                  onDraggableCanceled: _cancelDrag,
-                  feedback: _buildDraggableFeedback(),
-                  childWhenDragging: Opacity(
-                    opacity: 0.3,
-                    child: itemContent,
-                  ),
-                  child: GestureDetector(
-                    onDoubleTap: widget.onDoubleTap,
-                    child: itemContent,
-                  ),
-                ),
+            child: IgnorePointer(
+              ignoring: !isAtivo || widget.isSelectionMode,
+              child: GestureDetector(
+                onDoubleTap: widget.onDoubleTap,
+                child: decoratedContent,
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _FadeInFeedback extends StatefulWidget {
-  final Widget child;
-
-  const _FadeInFeedback({required this.child});
-
-  @override
-  State<_FadeInFeedback> createState() => _FadeInFeedbackState();
-}
-
-class _FadeInFeedbackState extends State<_FadeInFeedback> {
-  double _opacity = 0.0;
-  double _scale = 0.95;
-
-  @override
-  void initState() {
-    super.initState();
-    // Inicia o fade in e scale após o primeiro frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _opacity = 1.0;
-          _scale = 1.0;
-        });
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedScale(
-      duration: const Duration(milliseconds: 200),
-      scale: _scale,
-      curve: Curves.easeOutBack,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 150),
-        opacity: _opacity,
-        child: widget.child,
       ),
     );
   }

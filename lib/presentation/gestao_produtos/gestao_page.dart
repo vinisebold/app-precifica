@@ -390,6 +390,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage>
     return AppBar(
       elevation: 0,
       backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 0,
       automaticallyImplyLeading: false,
       leadingWidth: 58,
       titleSpacing: 0,

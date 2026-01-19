@@ -206,9 +206,13 @@ class _ProductListViewState extends ConsumerState<ProductListView>
   @override
   Widget build(BuildContext context) {
     super.build(context); // Necessário para AutomaticKeepAliveClientMixin
-
-  final produtos = ref.watch(gestaoControllerProvider.select((state) =>
-    state.produtosPorCategoria[widget.categoriaId] ?? const <Produto>[]));
+    final produtos = ref.watch(gestaoControllerProvider.select((state) =>
+        state.produtosPorCategoria[widget.categoriaId] ?? const <Produto>[]));
+    final produtosSelecionados = ref.watch(
+      gestaoControllerProvider.select((state) => state.produtosSelecionados),
+    );
+    final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
+    final isSelectionMode = produtosSelecionados.isNotEmpty;
 
     _ensureFocusNodesCount(produtos);
 
@@ -269,12 +273,24 @@ class _ProductListViewState extends ConsumerState<ProductListView>
         itemBuilder: (context, index) {
           final produto = produtos[index];
           final isLastItem = index == produtos.length - 1;
+          final isSelected = produtosSelecionados.contains(produto.id);
 
           return ItemProduto(
             produto: produto,
             focusNode: _focusNodes[index],
             onDoubleTap: () => widget.onProdutoDoubleTap(produto),
-            onTap: () => widget.onProdutoTap(produto),
+            onTap: () {
+              if (isSelectionMode) {
+                gestaoNotifier.alternarSelecaoProduto(produto.id);
+              } else {
+                widget.onProdutoTap(produto);
+              }
+            },
+            onLongPress: () {
+              gestaoNotifier.alternarSelecaoProduto(produto.id);
+            },
+            isSelected: isSelected,
+            isSelectionMode: isSelectionMode,
             textInputAction:
             isLastItem ? TextInputAction.done : TextInputAction.next,
             onSubmitted: () {

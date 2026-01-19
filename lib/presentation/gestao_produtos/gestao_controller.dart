@@ -142,6 +142,7 @@ class GestaoController extends Notifier<GestaoState> {
           produtos: produtos,
           produtosPorCategoria: produtosPorCategoria,
           categoriaSelecionadaId: categoriaSelecionadaId,
+          produtosSelecionados: const <String>{},
           perfisSalvos: perfis,
           perfilAtual: nomePerfilCarregado,
           clearPerfilAtual: shouldClearPerfilAtual,
@@ -152,6 +153,7 @@ class GestaoController extends Notifier<GestaoState> {
           categorias: [],
           produtos: [],
           produtosPorCategoria: const {},
+          produtosSelecionados: const <String>{},
           categoriaSelecionadaId: null,
           perfisSalvos: perfis,
           perfilAtual: nomePerfilCarregado,
@@ -338,6 +340,7 @@ class GestaoController extends Notifier<GestaoState> {
     state = state.copyWith(
       categoriaSelecionadaId: categoriaId,
       clearUltimoProdutoDeletado: true,
+      produtosSelecionados: const <String>{},
       produtos: produtosExistentes,
       produtosPorCategoria: produtosPorCategoria,
     );
@@ -354,9 +357,11 @@ class GestaoController extends Notifier<GestaoState> {
       final produtosPorCategoria =
           Map<String, List<Produto>>.from(state.produtosPorCategoria)
             ..[categoriaId] = List<Produto>.from(produtos);
+      final selecaoSanitizada = _sanitizeSelecaoAtual(produtos);
       state = state.copyWith(
         produtos: produtos,
         produtosPorCategoria: produtosPorCategoria,
+        produtosSelecionados: selecaoSanitizada,
       );
     } catch (e) {
       state = state.copyWith(errorMessage: 'Falha ao recarregar produtos.');
@@ -400,6 +405,55 @@ class GestaoController extends Notifier<GestaoState> {
     }
   }
 
+  Set<String> _sanitizeSelecaoAtual(List<Produto> produtosAtuais) {
+    if (state.produtosSelecionados.isEmpty) return const <String>{};
+    final idsDisponiveis = produtosAtuais.map((p) => p.id).toSet();
+    return state.produtosSelecionados.intersection(idsDisponiveis);
+  }
+
+  void alternarSelecaoProduto(String produtoId) {
+    final produtosIdsCategoriaAtual = state.produtos.map((p) => p.id).toSet();
+    if (!produtosIdsCategoriaAtual.contains(produtoId)) return;
+
+    final selecionados = Set<String>.from(state.produtosSelecionados);
+    if (!selecionados.add(produtoId)) {
+      selecionados.remove(produtoId);
+    }
+
+    state = state.copyWith(produtosSelecionados: selecionados);
+  }
+
+  void limparSelecaoProdutos() {
+    if (state.produtosSelecionados.isEmpty) return;
+    state = state.copyWith(produtosSelecionados: const <String>{});
+  }
+
+  void selecionarTodosProdutosDaCategoriaAtual() {
+    final todosIds = state.produtos.map((p) => p.id).toSet();
+    state = state.copyWith(produtosSelecionados: todosIds);
+  }
+
+  Future<void> deletarProdutosSelecionados() async {
+    final ids = List<String>.from(state.produtosSelecionados);
+    if (ids.isEmpty) return;
+
+    state = state.copyWith(isLoading: true);
+    try {
+      for (final id in ids) {
+        await deletarProduto(id);
+      }
+    } catch (_) {
+      state = state.copyWith(
+        errorMessage: 'Falha ao deletar produtos selecionados.',
+      );
+    } finally {
+      state = state.copyWith(
+        produtosSelecionados: const <String>{},
+        isLoading: false,
+      );
+    }
+  }
+
   Future<void> criarCategoria(String nome) async {
     state = state.copyWith(isLoading: true);
     try {
@@ -420,6 +474,7 @@ class GestaoController extends Notifier<GestaoState> {
         categorias: categoriasAtualizadas,
         categoriaSelecionadaId: categoriaSelecionadaId,
         produtos: produtosAtualizados,
+        produtosSelecionados: const <String>{},
         isLoading: false,
       );
     } catch (e) {
@@ -448,6 +503,7 @@ class GestaoController extends Notifier<GestaoState> {
           categorias: categoriasAtualizadas,
           categoriaSelecionadaId: novaCategoriaId,
           produtos: novosProdutos,
+          produtosSelecionados: const <String>{},
           isLoading: false,
         );
       } else {
@@ -455,6 +511,7 @@ class GestaoController extends Notifier<GestaoState> {
             categorias: [],
             produtos: [],
             categoriaSelecionadaId: null,
+            produtosSelecionados: const <String>{},
             isLoading: false);
       }
     } catch (e) {
@@ -537,9 +594,12 @@ class GestaoController extends Notifier<GestaoState> {
       final produtosPorCategoria =
           Map<String, List<Produto>>.from(state.produtosPorCategoria)
             ..[categoriaDoProdutoDeletado] = List<Produto>.from(produtosAtuais);
+      final selecaoAtualizada =
+          Set<String>.from(state.produtosSelecionados)..remove(produtoId);
       state = state.copyWith(
         produtos: produtosAtuais,
         produtosPorCategoria: produtosPorCategoria,
+        produtosSelecionados: selecaoAtualizada,
         ultimoProdutoDeletado: produtoParaDeletar,
         idCategoriaProdutoDeletado: categoriaDoProdutoDeletado,
       );

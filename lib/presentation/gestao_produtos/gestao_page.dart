@@ -176,7 +176,8 @@ class _GestaoPageState extends ConsumerState<GestaoPage>
             },
           ),
           onDrawerChanged: (isOpened) => _handleDrawerChanged(isOpened),
-          appBar: _buildAppBar(context, gestaoState, l10n, textTheme),
+            appBar:
+              _buildAppBar(context, gestaoState, gestaoNotifier, l10n, textTheme),
           body: _buildBody(
               context, gestaoState, gestaoNotifier, isSwipeShowcaseActive),
           bottomNavigationBar: _buildBottomNavigationBar(
@@ -385,8 +386,24 @@ class _GestaoPageState extends ConsumerState<GestaoPage>
     );
   }
 
-  AppBar _buildAppBar(BuildContext context, GestaoState gestaoState,
-      AppLocalizations l10n, TextTheme textTheme) {
+  AppBar _buildAppBar(
+      BuildContext context,
+      GestaoState gestaoState,
+      GestaoController gestaoNotifier,
+      AppLocalizations l10n,
+      TextTheme textTheme) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    if (gestaoState.produtosSelecionados.isNotEmpty) {
+      return _buildSelectionAppBar(
+        context,
+        gestaoState,
+        gestaoNotifier,
+        colorScheme,
+        textTheme,
+      );
+    }
+
     return AppBar(
       elevation: 0,
       backgroundColor: Colors.transparent,
@@ -472,6 +489,89 @@ class _GestaoPageState extends ConsumerState<GestaoPage>
               minHeight: 48,
             ),
           ),
+        ),
+        const SizedBox(width: 6),
+      ],
+    );
+  }
+
+  AppBar _buildSelectionAppBar(
+    BuildContext context,
+    GestaoState gestaoState,
+    GestaoController gestaoNotifier,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) {
+    final selectedCount = gestaoState.produtosSelecionados.length;
+    final selectionLabel =
+        '$selectedCount selecionado${selectedCount == 1 ? '' : 's'}';
+
+    return AppBar(
+      elevation: 0,
+      backgroundColor: colorScheme.surfaceContainerLowest,
+      surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 0,
+      automaticallyImplyLeading: false,
+      leadingWidth: 64,
+      titleSpacing: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.close),
+        tooltip: 'Cancelar seleção',
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          gestaoNotifier.limparSelecaoProdutos();
+        },
+        splashRadius: 24,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(
+          minWidth: 48,
+          minHeight: 48,
+        ),
+      ),
+      title: Text(
+        selectionLabel,
+        style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.delete_outline),
+          tooltip: 'Deletar selecionados',
+          onPressed: selectedCount == 0
+              ? null
+              : () {
+                  HapticFeedback.lightImpact();
+                  gestaoNotifier.deletarProdutosSelecionados();
+                },
+          splashRadius: 24,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(
+            minWidth: 48,
+            minHeight: 48,
+          ),
+        ),
+        PopupMenuButton<String>(
+          tooltip: 'Mais opções',
+          icon: const Icon(Icons.more_vert),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          onSelected: (value) {
+            if (value == 'select_all') {
+              HapticFeedback.selectionClick();
+              gestaoNotifier.selecionarTodosProdutosDaCategoriaAtual();
+            } else if (value == 'clear') {
+              HapticFeedback.selectionClick();
+              gestaoNotifier.limparSelecaoProdutos();
+            }
+          },
+          itemBuilder: (context) => const [
+            PopupMenuItem(
+              value: 'select_all',
+              child: Text('Selecionar todos'),
+            ),
+            PopupMenuItem(
+              value: 'clear',
+              child: Text('Limpar seleção'),
+            ),
+          ],
         ),
         const SizedBox(width: 6),
       ],

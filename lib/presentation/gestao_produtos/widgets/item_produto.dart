@@ -144,41 +144,44 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
       ),
       trailing: SizedBox(
         width: inputWidth,
-        child: TextField(
-          controller: _precoController,
-          focusNode: widget.focusNode,
-          textAlign: TextAlign.right,
-          onSubmitted: (_) => widget.onSubmitted(),
-          textInputAction: widget.textInputAction,
-          onChanged: (novoPrecoFormatado) {
-            if (_debounce?.isActive ?? false) _debounce!.cancel();
-            _debounce = Timer(const Duration(milliseconds: 500), () {
-              gestaoNotifier.atualizarPreco(
-                  widget.produto.id, novoPrecoFormatado);
-            });
-          },
-          style: TextStyle(fontSize: fontSize),
-          decoration: InputDecoration(
-            prefixText: 'R\$ ',
-            prefixStyle: TextStyle(fontSize: fontSize),
-            filled: true,
-            fillColor: colorScheme.surfaceContainerLow,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(modoCompacto ? 8.0 : 12.0),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: modoCompacto ? 6.0 : 8.0,
-              vertical: modoCompacto ? 6.0 : 8.0,
-            ),
-            isDense: modoCompacto,
-          ),
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            MoedaFormatter(),
-          ],
-        ),
+        child: widget.isSelected
+            ? const SizedBox.shrink()
+            : TextField(
+                controller: _precoController,
+                focusNode: widget.focusNode,
+                textAlign: TextAlign.right,
+                onSubmitted: (_) => widget.onSubmitted(),
+                textInputAction: widget.textInputAction,
+                onChanged: (novoPrecoFormatado) {
+                  if (_debounce?.isActive ?? false) _debounce!.cancel();
+                  _debounce = Timer(const Duration(milliseconds: 500), () {
+                    gestaoNotifier.atualizarPreco(
+                        widget.produto.id, novoPrecoFormatado);
+                  });
+                },
+                style: TextStyle(fontSize: fontSize),
+                decoration: InputDecoration(
+                  prefixText: 'R\$',
+                  prefixStyle: TextStyle(fontSize: fontSize),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerLow,
+                  border: OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius.circular(modoCompacto ? 8.0 : 12.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: modoCompacto ? 6.0 : 8.0,
+                    vertical: modoCompacto ? 6.0 : 8.0,
+                  ),
+                  isDense: modoCompacto,
+                ),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  MoedaFormatter(),
+                ],
+              ),
       ),
     );
 

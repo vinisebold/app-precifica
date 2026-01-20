@@ -583,9 +583,9 @@ class _GestaoPageState extends ConsumerState<GestaoPage>
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+      margin: const EdgeInsets.fromLTRB(4, 0, 4, 8),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLowest,
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16.0),
       ),
       child: ClipRRect(

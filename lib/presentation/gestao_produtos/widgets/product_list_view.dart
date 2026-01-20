@@ -258,24 +258,32 @@ class _ProductListViewState extends ConsumerState<ProductListView>
     }
 
     final modoCompacto = ref.watch(modoCompactoProvider);
-    final dividerHeight = modoCompacto ? 8.0 : 14.0;
 
-    final verticalPadding = modoCompacto ? 4.0 : 8.0;
-    final bottomSpacer = modoCompacto ? 92.0 : 112.0;
+    // M3 segmented gaps: use spacing between filled items instead of dividers
+    final double itemGap = modoCompacto ? 1.0 : 2.0;
+    final double horizontalPadding = modoCompacto ? 8.0 : 12.0;
+    final double verticalPadding = modoCompacto ? 4.0 : 8.0;
+    final double bottomSpacer = modoCompacto ? 92.0 : 112.0;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: verticalPadding),
-      child: ListView.separated(
-        controller: _scrollController,
-        physics: const ClampingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(0, 0, 0, bottomSpacer),
-        itemCount: produtos.length,
-        itemBuilder: (context, index) {
-          final produto = produtos[index];
-          final isLastItem = index == produtos.length - 1;
-          final isSelected = produtosSelecionados.contains(produto.id);
+    return ListView.builder(
+      controller: _scrollController,
+      physics: const ClampingScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        verticalPadding,
+        horizontalPadding,
+        bottomSpacer,
+      ),
+      itemCount: produtos.length,
+      itemBuilder: (context, index) {
+        final produto = produtos[index];
+        final isFirstItem = index == 0;
+        final isLastItem = index == produtos.length - 1;
+        final isSelected = produtosSelecionados.contains(produto.id);
 
-          return ItemProduto(
+        return Padding(
+          padding: EdgeInsets.only(bottom: isLastItem ? 0 : itemGap),
+          child: ItemProduto(
             produto: produto,
             focusNode: _focusNodes[index],
             onDoubleTap: () => widget.onProdutoDoubleTap(produto),
@@ -291,8 +299,10 @@ class _ProductListViewState extends ConsumerState<ProductListView>
             },
             isSelected: isSelected,
             isSelectionMode: isSelectionMode,
+            isFirst: isFirstItem,
+            isLast: isLastItem,
             textInputAction:
-            isLastItem ? TextInputAction.done : TextInputAction.next,
+                isLastItem ? TextInputAction.done : TextInputAction.next,
             onSubmitted: () {
               if (!isLastItem) {
                 FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
@@ -300,15 +310,9 @@ class _ProductListViewState extends ConsumerState<ProductListView>
                 FocusScope.of(context).unfocus();
               }
             },
-          );
-        },
-        separatorBuilder: (context, index) => Divider(
-          height: dividerHeight,
-          thickness: 1,
-          indent: 16,
-          endIndent: 16,
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

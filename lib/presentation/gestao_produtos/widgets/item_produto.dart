@@ -22,6 +22,8 @@ class ItemProduto extends ConsumerStatefulWidget {
   final TextInputAction textInputAction;
   final bool isSelected;
   final bool isSelectionMode;
+  final bool isFirst;
+  final bool isLast;
 
   const ItemProduto({
     required this.produto,
@@ -33,6 +35,8 @@ class ItemProduto extends ConsumerStatefulWidget {
     required this.textInputAction,
     required this.isSelected,
     required this.isSelectionMode,
+    this.isFirst = false,
+    this.isLast = false,
     super.key,
   });
 
@@ -112,10 +116,24 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     final l10n = AppLocalizations.of(context)!;
 
     // Define os valores de padding e altura baseado no modo compacto
-    final double verticalPadding = modoCompacto ? 4.0 : 8.0;
-    final double horizontalPadding = modoCompacto ? 8.0 : 12.0;
+    final double verticalPadding = modoCompacto ? 10.0 : 14.0;
+    final double horizontalPadding = modoCompacto ? 12.0 : 16.0;
     final double fontSize = modoCompacto ? 14.0 : 16.0;
     final double inputWidth = modoCompacto ? 100.0 : 120.0;
+
+    // M3 grouped style: cantos externos arredondados, internos retos
+    final double outerRadius = modoCompacto ? 14.0 : 18.0;
+    final double innerRadius = modoCompacto ? 4.0 : 6.0;
+
+    final topRadius = widget.isFirst ? outerRadius : innerRadius;
+    final bottomRadius = widget.isLast ? outerRadius : innerRadius;
+
+    final borderRadiusGeometry = BorderRadius.only(
+      topLeft: Radius.circular(topRadius),
+      topRight: Radius.circular(topRadius),
+      bottomLeft: Radius.circular(bottomRadius),
+      bottomRight: Radius.circular(bottomRadius),
+    );
     
     // Formata o preço para acessibilidade
     final formattedPrice = 'R\$ ${_precoController.text}';
@@ -126,74 +144,107 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
       statusLabel,
     );
 
-    // A construção do conteúdo do item (ListTile)
-    final itemContent = ListTile(
-      dense: modoCompacto,
-      contentPadding: EdgeInsets.symmetric(
+    // M3 filled list item: container com cor de fundo adaptada ao tema
+    // Tema claro: cor mais clara (surfaceContainerLowest)
+    // Tema escuro: cor mais escura (surface)
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    final fillColor = widget.isSelected
+        ? (isDarkTheme 
+            ? colorScheme.surface.withValues(alpha: 0.9)
+            : colorScheme.surfaceContainerLowest.withValues(alpha: 0.95))
+        : (isDarkTheme 
+            ? colorScheme.surface
+            : colorScheme.surfaceContainerLowest);
+
+    final borderColor = widget.isSelected
+        ? colorScheme.primary.withValues(alpha: 0.65)
+        : Colors.transparent;
+
+    // Conteúdo do item em layout Row para maior controle
+    final itemContent = Container(
+      padding: EdgeInsets.symmetric(
         horizontal: horizontalPadding,
-        vertical: verticalPadding * 0.5,
+        vertical: verticalPadding,
       ),
-      title: Text(
-        widget.produto.nome,
-        style: TextStyle(
-          decoration:
-          isAtivo ? TextDecoration.none : TextDecoration.lineThrough,
-          color: isAtivo ? null : colorScheme.outline,
-          fontSize: fontSize,
-        ),
-      ),
-      trailing: SizedBox(
-        width: inputWidth,
-        child: widget.isSelected
-            ? const SizedBox.shrink()
-            : TextField(
-                controller: _precoController,
-                focusNode: widget.focusNode,
-                textAlign: TextAlign.right,
-                onSubmitted: (_) => widget.onSubmitted(),
-                textInputAction: widget.textInputAction,
-                onChanged: (novoPrecoFormatado) {
-                  if (_debounce?.isActive ?? false) _debounce!.cancel();
-                  _debounce = Timer(const Duration(milliseconds: 500), () {
-                    gestaoNotifier.atualizarPreco(
-                        widget.produto.id, novoPrecoFormatado);
-                  });
-                },
-                style: TextStyle(fontSize: fontSize),
-                decoration: InputDecoration(
-                  prefixText: 'R\$',
-                  prefixStyle: TextStyle(fontSize: fontSize),
-                  filled: true,
-                  fillColor: colorScheme.surfaceContainerLow,
-                  border: OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(modoCompacto ? 8.0 : 12.0),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: modoCompacto ? 6.0 : 8.0,
-                    vertical: modoCompacto ? 6.0 : 8.0,
-                  ),
-                  isDense: modoCompacto,
-                ),
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  MoedaFormatter(),
-                ],
+      child: Row(
+        children: [
+          // Texto do produto (expandido)
+          Expanded(
+            child: Text(
+              widget.produto.nome,
+              style: TextStyle(
+                decoration:
+                    isAtivo ? TextDecoration.none : TextDecoration.lineThrough,
+                color: colorScheme.onSurface,
+                fontSize: fontSize,
+                fontWeight: FontWeight.w500,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Campo de preço ou espaço vazio quando selecionado
+          SizedBox(
+            width: inputWidth,
+            child: widget.isSelected
+                ? const SizedBox.shrink()
+                : TextField(
+                    controller: _precoController,
+                    focusNode: widget.focusNode,
+                    textAlign: TextAlign.right,
+                    onSubmitted: (_) => widget.onSubmitted(),
+                    textInputAction: widget.textInputAction,
+                    onChanged: (novoPrecoFormatado) {
+                      if (_debounce?.isActive ?? false) _debounce!.cancel();
+                      _debounce = Timer(const Duration(milliseconds: 500), () {
+                        gestaoNotifier.atualizarPreco(
+                            widget.produto.id, novoPrecoFormatado);
+                      });
+                    },
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                    decoration: InputDecoration(
+                      prefixText: 'R\$ ',
+                      prefixStyle: TextStyle(
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                      filled: true,
+                      fillColor: colorScheme.surfaceContainerHigh,
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(modoCompacto ? 10.0 : 12.0),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: modoCompacto ? 8.0 : 10.0,
+                        vertical: modoCompacto ? 8.0 : 10.0,
+                      ),
+                      isDense: modoCompacto,
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      MoedaFormatter(),
+                    ],
+                  ),
+          ),
+        ],
       ),
     );
 
-    final borderColor = widget.isSelected
-        ? colorScheme.primary.withValues(alpha: 0.55)
-        : Colors.transparent;
-
+    // Container com estilo M3: filled + grouped shape
     final decoratedContent = AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeInOut,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(modoCompacto ? 10.0 : 12.0),
+        color: fillColor,
+        borderRadius: borderRadiusGeometry,
         border: Border.all(
           color: borderColor,
           width: widget.isSelected ? 2.0 : 0.0,
@@ -201,9 +252,9 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
         boxShadow: widget.isSelected
             ? [
                 BoxShadow(
-                  color: colorScheme.primary.withValues(alpha: 0.14),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
+                  color: colorScheme.primary.withValues(alpha: 0.18),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
               ]
             : const [],

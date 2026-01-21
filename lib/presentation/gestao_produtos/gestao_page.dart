@@ -587,7 +587,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage>
     const double horizontalListPadding = 8.0; // mesmo valor do padding/margin horizontal da lista
     const double containerRadius = 24.0; // valor maior para harmonizar com o padding
     return Container(
-      margin: EdgeInsets.fromLTRB(horizontalListPadding, 0, horizontalListPadding, 8),
+      margin: const EdgeInsets.fromLTRB(horizontalListPadding, 0, horizontalListPadding, 8),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(containerRadius),

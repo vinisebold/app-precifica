@@ -262,7 +262,6 @@ class _ProductListViewState extends ConsumerState<ProductListView>
 
     // M3 segmented gaps: use spacing between filled items instead of dividers
     final double itemGap = modoCompacto ? 1.0 : 2.0;
-    final double horizontalMargin = modoCompacto ? 6.0 : 10.0;
     final double verticalPadding = modoCompacto ? 4.0 : 8.0;
     final double bottomSpacer = modoCompacto ? 92.0 : 112.0;
 

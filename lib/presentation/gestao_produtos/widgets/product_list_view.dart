@@ -45,16 +45,16 @@ class _ProductListViewState extends ConsumerState<ProductListView>
   @override
   void initState() {
     super.initState();
-  _produtos = ref.read(gestaoControllerProvider.select((state) =>
-    state.produtosPorCategoria[widget.categoriaId] ?? const <Produto>[]));
+    _produtos = ref.read(gestaoControllerProvider.select((state) =>
+        state.produtosPorCategoria[widget.categoriaId] ?? const <Produto>[]));
     _focusNodes = List.generate(_produtos.length, (index) => FocusNode());
-    
+
     // Adiciona listener para salvar a posição de rolagem
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.onFabVisibilityRequest?.call(true);
     });
-    
+
     // Restaura a posição de rolagem após o build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _restoreScrollPosition();
@@ -96,8 +96,6 @@ class _ProductListViewState extends ConsumerState<ProductListView>
     _lastScrollOffset = offset;
   }
 
-
-
   void _notifyFabVisibility(bool visible) {
     if (_isFabCurrentlyVisible == visible) return;
     _isFabCurrentlyVisible = visible;
@@ -106,21 +104,23 @@ class _ProductListViewState extends ConsumerState<ProductListView>
 
   Future<void> _restoreScrollPosition() async {
     if (!mounted || !_scrollController.hasClients) return;
-    
-    final savedPosition = await ref.read(gestaoControllerProvider.notifier)
+
+    final savedPosition = await ref
+        .read(gestaoControllerProvider.notifier)
         .getScrollPosition(widget.categoriaId);
-    
+
     if (mounted && _scrollController.hasClients && savedPosition > 0) {
       // Marca que estamos restaurando para ignorar eventos de scroll
       _isRestoringScroll = true;
 
       // Aguarda um frame para garantir que a lista foi renderizada
       await Future.delayed(const Duration(milliseconds: 100));
-      
+
       if (mounted && _scrollController.hasClients) {
         final maxScroll = _scrollController.position.maxScrollExtent;
-        final targetPosition = savedPosition > maxScroll ? maxScroll : savedPosition;
-        
+        final targetPosition =
+            savedPosition > maxScroll ? maxScroll : savedPosition;
+
         _scrollController.jumpTo(targetPosition);
 
         // Sincroniza o _lastScrollOffset para a nova posição
@@ -137,8 +137,8 @@ class _ProductListViewState extends ConsumerState<ProductListView>
   @override
   void didUpdateWidget(covariant ProductListView oldWidget) {
     super.didUpdateWidget(oldWidget);
-  final newProdutos = ref.read(gestaoControllerProvider.select((state) =>
-    state.produtosPorCategoria[widget.categoriaId] ?? const <Produto>[]));
+    final newProdutos = ref.read(gestaoControllerProvider.select((state) =>
+        state.produtosPorCategoria[widget.categoriaId] ?? const <Produto>[]));
 
     // Se o pai forçou a barra visível (ex: swipe horizontal), sincroniza o estado interno
     if (widget.forceBarVisible && !oldWidget.forceBarVisible) {
@@ -150,7 +150,8 @@ class _ProductListViewState extends ConsumerState<ProductListView>
     if (oldWidget.categoriaId != widget.categoriaId) {
       // Reseta o estado de scroll acumulado para evitar comportamentos inesperados
       _accumulatedScroll = 0.0;
-      _lastScrollOffset = _scrollController.hasClients ? _scrollController.offset : 0.0;
+      _lastScrollOffset =
+          _scrollController.hasClients ? _scrollController.offset : 0.0;
 
       // Garante que a barra/FAB fiquem visíveis ao trocar de categoria
       if (!_isFabCurrentlyVisible) {
@@ -261,7 +262,7 @@ class _ProductListViewState extends ConsumerState<ProductListView>
 
     // M3 segmented gaps: use spacing between filled items instead of dividers
     final double itemGap = modoCompacto ? 1.0 : 2.0;
-    final double horizontalPadding = modoCompacto ? 8.0 : 12.0;
+    final double horizontalMargin = modoCompacto ? 6.0 : 10.0;
     final double verticalPadding = modoCompacto ? 4.0 : 8.0;
     final double bottomSpacer = modoCompacto ? 92.0 : 112.0;
 
@@ -269,9 +270,9 @@ class _ProductListViewState extends ConsumerState<ProductListView>
       controller: _scrollController,
       physics: const ClampingScrollPhysics(),
       padding: EdgeInsets.fromLTRB(
-        horizontalPadding,
+        0,
         verticalPadding,
-        horizontalPadding,
+        0,
         bottomSpacer,
       ),
       itemCount: produtos.length,
@@ -281,38 +282,38 @@ class _ProductListViewState extends ConsumerState<ProductListView>
         final isLastItem = index == produtos.length - 1;
         final isSelected = produtosSelecionados.contains(produto.id);
 
-        return Padding(
-          padding: EdgeInsets.only(bottom: isLastItem ? 0 : itemGap),
-          child: ItemProduto(
-            produto: produto,
-            focusNode: _focusNodes[index],
-            onDoubleTap: () => widget.onProdutoDoubleTap(produto),
-            onTap: () {
-              if (isSelectionMode) {
-                gestaoNotifier.alternarSelecaoProduto(produto.id);
-              } else {
-                widget.onProdutoTap(produto);
-              }
-            },
-            onLongPress: () {
-              gestaoNotifier.alternarSelecaoProduto(produto.id);
-            },
-            isSelected: isSelected,
-            isSelectionMode: isSelectionMode,
-            isFirst: isFirstItem,
-            isLast: isLastItem,
-            textInputAction:
-                isLastItem ? TextInputAction.done : TextInputAction.next,
-            onSubmitted: () {
-              if (!isLastItem) {
-                FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
-              } else {
-                FocusScope.of(context).unfocus();
-              }
-            },
-          ),
+            return Padding(
+              padding: EdgeInsets.only(bottom: isLastItem ? 0 : itemGap),
+              child: ItemProduto(
+                produto: produto,
+                focusNode: _focusNodes[index],
+                onDoubleTap: () => widget.onProdutoDoubleTap(produto),
+                onTap: () {
+                  if (isSelectionMode) {
+                    gestaoNotifier.alternarSelecaoProduto(produto.id);
+                  } else {
+                    widget.onProdutoTap(produto);
+                  }
+                },
+                onLongPress: () {
+                  gestaoNotifier.alternarSelecaoProduto(produto.id);
+                },
+                isSelected: isSelected,
+                isSelectionMode: isSelectionMode,
+                isFirst: isFirstItem,
+                isLast: isLastItem,
+                textInputAction:
+                    isLastItem ? TextInputAction.done : TextInputAction.next,
+                onSubmitted: () {
+                  if (!isLastItem) {
+                    FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
+                  } else {
+                    FocusScope.of(context).unfocus();
+                  }
+                },
+              ),
+            );
+          },
         );
-      },
-    );
   }
 }

@@ -582,21 +582,25 @@ class _GestaoPageState extends ConsumerState<GestaoPage>
       GestaoController gestaoNotifier, bool isSwipeShowcaseActive) {
     final colorScheme = Theme.of(context).colorScheme;
 
+    // O padding horizontal da lista deve ser refletido no borderRadius do container,
+    // para que o inner radius dos itens acompanhe o padding.
+    const double horizontalListPadding = 8.0; // mesmo valor do padding/margin horizontal da lista
+    const double containerRadius = 24.0; // valor maior para harmonizar com o padding
     return Container(
-      margin: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+      margin: EdgeInsets.fromLTRB(horizontalListPadding, 0, horizontalListPadding, 8),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(containerRadius),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(containerRadius),
         child: Stack(
           children: [
             if (gestaoState.categorias.isNotEmpty)
               Showcase.withWidget(
                 key: TutorialKeys.categorySwipeArea,
                 targetShapeBorder: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18.0),
+                  borderRadius: BorderRadius.circular(containerRadius),
                 ),
                 targetBorderRadius: BorderRadius.circular(18.0),
                 targetPadding: const EdgeInsets.symmetric(
@@ -628,23 +632,26 @@ class _GestaoPageState extends ConsumerState<GestaoPage>
                             });
                           }
                         },
-                        itemBuilder: (context, index) => ProductListView(
-                          onFabVisibilityRequest: _handleFabVisibilityRequest,
-                          categoriaId: gestaoState.categorias[index].id,
-                          forceBarVisible: _isCategoryNavBarVisible,
-                          onProdutoDoubleTap: (produto) =>
-                              GestaoDialogs.mostrarDialogoEditarNome(
-                            context,
-                            ref,
-                            titulo: AppLocalizations.of(context)?.editProduct ??
-                                'Editar Produto',
-                            valorAtual: produto.nome,
-                            onSalvar: (novoNome) => gestaoNotifier
-                                .atualizarNomeProduto(produto.id, novoNome),
+                        itemBuilder: (context, index) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 1.0),
+                          child: ProductListView(
+                            onFabVisibilityRequest: _handleFabVisibilityRequest,
+                            categoriaId: gestaoState.categorias[index].id,
+                            forceBarVisible: _isCategoryNavBarVisible,
+                            onProdutoDoubleTap: (produto) =>
+                                GestaoDialogs.mostrarDialogoEditarNome(
+                              context,
+                              ref,
+                              titulo: AppLocalizations.of(context)?.editProduct ??
+                                  'Editar Produto',
+                              valorAtual: produto.nome,
+                              onSalvar: (novoNome) => gestaoNotifier
+                                  .atualizarNomeProduto(produto.id, novoNome),
+                            ),
+                            onProdutoTap: (produto) =>
+                                gestaoNotifier.atualizarStatusProduto(
+                                    produto.id, !produto.isAtivo),
                           ),
-                          onProdutoTap: (produto) =>
-                              gestaoNotifier.atualizarStatusProduto(
-                                  produto.id, !produto.isAtivo),
                         ),
                       ),
                     ),

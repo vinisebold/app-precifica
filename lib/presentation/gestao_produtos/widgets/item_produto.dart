@@ -103,9 +103,9 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     final double inputWidth = modoCompacto ? 100.0 : 120.0;
 
     // M3 grouped style: cantos externos arredondados, internos retos
-    // Quando selecionado: todos os cantos arredondados
+    // Quando há padding horizontal, todos os cantos devem ser arredondados
     final double outerRadius = modoCompacto ? 14.0 : 18.0;
-    final double innerRadius = modoCompacto ? 4.0 : 6.0;
+    final double innerRadius = horizontalPadding > 0 ? outerRadius : (modoCompacto ? 4.0 : 6.0);
 
     final BorderRadius borderRadius;
     if (widget.isSelected) {
@@ -148,7 +148,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
         : baseColor;
 
     // Conteúdo do item em layout Row para maior controle
-    final itemContent = Container(
+    final itemContent = Padding(
       padding: EdgeInsets.symmetric(
         horizontal: horizontalPadding,
         vertical: verticalPadding,
@@ -229,25 +229,28 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
 
     // Container com estilo M3: filled + grouped shape + ripple effect
     final rippleColor = colorScheme.surfaceContainer;
-    final decoratedContent = AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      decoration: BoxDecoration(
-        color: fillColor,
-        borderRadius: borderRadius,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _handleTap,
-          onLongPress: _handleLongPress,
-          onDoubleTap: widget.onDoubleTap,
+    final decoratedContent = SizedBox(
+      width: double.infinity,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
+          color: fillColor,
           borderRadius: borderRadius,
-          splashFactory: InkSparkle.splashFactory,
-          splashColor: rippleColor,
-          highlightColor: rippleColor,
-          hoverColor: rippleColor,
-          child: itemContent,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _handleTap,
+            onLongPress: _handleLongPress,
+            onDoubleTap: widget.onDoubleTap,
+            borderRadius: borderRadius,
+            splashFactory: InkSparkle.splashFactory,
+            splashColor: rippleColor,
+            highlightColor: rippleColor,
+            hoverColor: rippleColor,
+            child: itemContent,
+          ),
         ),
       ),
     );

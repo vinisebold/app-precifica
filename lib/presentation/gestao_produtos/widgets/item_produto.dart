@@ -47,8 +47,6 @@ class ItemProduto extends ConsumerStatefulWidget {
 class _ItemProdutoState extends ConsumerState<ItemProduto> {
   late final InputCursorFinalController _precoController;
   Timer? _debounce;
-  bool _showPopAnimation = false;
-  bool _showPressAnimation = false;
 
   @override
   void initState() {
@@ -75,24 +73,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
   void _triggerSelectionAnimation() {
     if (!mounted) return;
 
-    setState(() {
-      _showPressAnimation = true;
-    });
     HapticFeedback.lightImpact();
-
-    Future.delayed(const Duration(milliseconds: 140), () {
-      if (!mounted) return;
-      setState(() {
-        _showPressAnimation = false;
-        _showPopAnimation = true;
-      });
-
-      Future.delayed(const Duration(milliseconds: 220), () {
-        if (mounted) {
-          setState(() => _showPopAnimation = false);
-        }
-      });
-    });
   }
 
   void _handleLongPress() {
@@ -122,18 +103,25 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     final double inputWidth = modoCompacto ? 100.0 : 120.0;
 
     // M3 grouped style: cantos externos arredondados, internos retos
+    // Quando selecionado: todos os cantos arredondados
     final double outerRadius = modoCompacto ? 14.0 : 18.0;
     final double innerRadius = modoCompacto ? 4.0 : 6.0;
 
-    final topRadius = widget.isFirst ? outerRadius : innerRadius;
-    final bottomRadius = widget.isLast ? outerRadius : innerRadius;
-
-    final borderRadiusGeometry = BorderRadius.only(
-      topLeft: Radius.circular(topRadius),
-      topRight: Radius.circular(topRadius),
-      bottomLeft: Radius.circular(bottomRadius),
-      bottomRight: Radius.circular(bottomRadius),
-    );
+    final BorderRadius borderRadius;
+    if (widget.isSelected) {
+      // Item selecionado: todos os cantos arredondados
+      borderRadius = BorderRadius.circular(outerRadius);
+    } else {
+      // Item não selecionado: lógica de grupo (first/last)
+      final topRadius = widget.isFirst ? outerRadius : innerRadius;
+      final bottomRadius = widget.isLast ? outerRadius : innerRadius;
+      borderRadius = BorderRadius.only(
+        topLeft: Radius.circular(topRadius),
+        topRight: Radius.circular(topRadius),
+        bottomLeft: Radius.circular(bottomRadius),
+        bottomRight: Radius.circular(bottomRadius),
+      );
+    }
     
     // Formata o preço para acessibilidade
     final formattedPrice = 'R\$ ${_precoController.text}';
@@ -147,18 +135,17 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     // M3 filled list item: container com cor de fundo adaptada ao tema
     // Tema claro: cor mais clara (surfaceContainerLowest)
     // Tema escuro: cor mais escura (surface)
+    // Quando selecionado: background um pouco mais claro
     final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDarkTheme 
+        ? colorScheme.surface
+        : colorScheme.surfaceContainerLowest;
+    
     final fillColor = widget.isSelected
-        ? (isDarkTheme 
-            ? colorScheme.surface.withValues(alpha: 0.9)
-            : colorScheme.surfaceContainerLowest.withValues(alpha: 0.95))
-        : (isDarkTheme 
-            ? colorScheme.surface
-            : colorScheme.surfaceContainerLowest);
-
-    final borderColor = widget.isSelected
-        ? colorScheme.primary.withValues(alpha: 0.65)
-        : Colors.transparent;
+        ? (isDarkTheme
+            ? colorScheme.surfaceContainerHigh
+            : colorScheme.surfaceContainer)
+        : baseColor;
 
     // Conteúdo do item em layout Row para maior controle
     final itemContent = Container(
@@ -184,11 +171,13 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
             ),
           ),
           const SizedBox(width: 12),
-          // Campo de preço ou espaço vazio quando selecionado
+          // Campo de preço ou espaço reservado quando selecionado
           SizedBox(
             width: inputWidth,
             child: widget.isSelected
-                ? const SizedBox.shrink()
+                ? SizedBox(
+                    height: modoCompacto ? 40.0 : 48.0,
+                  )
                 : TextField(
                     controller: _precoController,
                     focusNode: widget.focusNode,
@@ -238,58 +227,44 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
       ),
     );
 
-    // Container com estilo M3: filled + grouped shape
+    // Container com estilo M3: filled + grouped shape + ripple effect
+    final rippleColor = colorScheme.surfaceContainer;
     final decoratedContent = AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
+      duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       decoration: BoxDecoration(
         color: fillColor,
-        borderRadius: borderRadiusGeometry,
-        border: Border.all(
-          color: borderColor,
-          width: widget.isSelected ? 2.0 : 0.0,
-        ),
-        boxShadow: widget.isSelected
-            ? [
-                BoxShadow(
-                  color: colorScheme.primary.withValues(alpha: 0.18),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : const [],
+        borderRadius: borderRadius,
       ),
-      child: itemContent,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _handleTap,
+          onLongPress: _handleLongPress,
+          onDoubleTap: widget.onDoubleTap,
+          borderRadius: borderRadius,
+          splashFactory: InkSparkle.splashFactory,
+          splashColor: rippleColor,
+          highlightColor: rippleColor,
+          hoverColor: rippleColor,
+          child: itemContent,
+        ),
+      ),
     );
 
-    // O GestureDetector para onTap (reativar) agora envolve tudo.
+    // O Semantics envolve tudo
     return Semantics(
       label: productSemanticLabel,
       hint: widget.isSelectionMode
           ? 'Toque para selecionar ou desmarcar.'
           : '${l10n.doubleTapToEditHint}. ${l10n.toggleProductStatusHint}',
       enabled: true,
-      child: GestureDetector(
-        onTap: _handleTap,
-        onLongPress: _handleLongPress,
-        behavior: HitTestBehavior.translucent,
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 300),
-          opacity: isAtivo ? 1.0 : 0.4,
-          child: AnimatedScale(
-            duration: const Duration(milliseconds: 250),
-            scale: _showPopAnimation 
-                ? 1.03 
-                : (_showPressAnimation ? 0.97 : 1.0),
-            curve: Curves.easeOutBack,
-            child: IgnorePointer(
-              ignoring: !isAtivo || widget.isSelectionMode,
-              child: GestureDetector(
-                onDoubleTap: widget.onDoubleTap,
-                child: decoratedContent,
-              ),
-            ),
-          ),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: isAtivo ? 1.0 : 0.4,
+        child: IgnorePointer(
+          ignoring: !isAtivo || widget.isSelectionMode,
+          child: decoratedContent,
         ),
       ),
     );

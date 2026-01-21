@@ -262,10 +262,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 300),
         opacity: isAtivo ? 1.0 : 0.4,
-        child: IgnorePointer(
-          ignoring: !isAtivo || widget.isSelectionMode,
-          child: decoratedContent,
-        ),
+        child: decoratedContent,
       ),
     );
   }

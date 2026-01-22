@@ -102,26 +102,19 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     final double fontSize = modoCompacto ? 14.0 : 16.0;
     final double inputWidth = modoCompacto ? 100.0 : 120.0;
 
-    // M3 grouped style: cantos externos arredondados, internos retos
-    // Quando há padding horizontal, todos os cantos devem ser arredondados
-    final double outerRadius = modoCompacto ? 14.0 : 18.0;
-    final double innerRadius = horizontalPadding > 0 ? outerRadius : (modoCompacto ? 4.0 : 6.0);
+    // M3 grouped style: cantos externos arredondados, internos levemente arredondados
+    // Quando selecionado, todas as bordas ficam com radius maior
+    final double outerRadius = modoCompacto ? 16.0 : 22.0;
+    final double innerRadius = modoCompacto ? 4.0 : 6.0; // Cantos internos agora levemente arredondados
 
-    final BorderRadius borderRadius;
-    if (widget.isSelected) {
-      // Item selecionado: todos os cantos arredondados
-      borderRadius = BorderRadius.circular(outerRadius);
-    } else {
-      // Item não selecionado: lógica de grupo (first/last)
-      final topRadius = widget.isFirst ? outerRadius : innerRadius;
-      final bottomRadius = widget.isLast ? outerRadius : innerRadius;
-      borderRadius = BorderRadius.only(
-        topLeft: Radius.circular(topRadius),
-        topRight: Radius.circular(topRadius),
-        bottomLeft: Radius.circular(bottomRadius),
-        bottomRight: Radius.circular(bottomRadius),
-      );
-    }
+    final BorderRadius borderRadius = widget.isSelected
+      ? BorderRadius.all(Radius.circular(outerRadius))
+      : BorderRadius.only(
+        topLeft: widget.isFirst ? Radius.circular(outerRadius) : Radius.circular(innerRadius),
+        topRight: widget.isFirst ? Radius.circular(outerRadius) : Radius.circular(innerRadius),
+        bottomLeft: widget.isLast ? Radius.circular(outerRadius) : Radius.circular(innerRadius),
+        bottomRight: widget.isLast ? Radius.circular(outerRadius) : Radius.circular(innerRadius),
+        );
     
     // Formata o preço para acessibilidade
     final formattedPrice = 'R\$ ${_precoController.text}';
@@ -232,7 +225,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     final decoratedContent = SizedBox(
       width: double.infinity,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
           color: fillColor,
@@ -263,7 +256,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
           : '${l10n.doubleTapToEditHint}. ${l10n.toggleProductStatusHint}',
       enabled: true,
       child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 250),
         opacity: isAtivo ? 1.0 : 0.4,
         child: decoratedContent,
       ),

@@ -215,6 +215,11 @@ class _ProductListViewState extends ConsumerState<ProductListView>
     final gestaoNotifier = ref.read(gestaoControllerProvider.notifier);
     final isSelectionMode = produtosSelecionados.isNotEmpty;
 
+    // Notifica a página para ocultar/mostrar barra e FAB ao entrar/sair do modo seleção
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onFabVisibilityRequest?.call(!isSelectionMode);
+    });
+
     _ensureFocusNodesCount(produtos);
 
     // Garante que temos a quantidade correta de FocusNodes

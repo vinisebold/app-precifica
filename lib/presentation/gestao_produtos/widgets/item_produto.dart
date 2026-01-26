@@ -228,6 +228,9 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeInOut,
+        // O Clip.antiAlias aqui é o "mestre". Ele corta tudo o que está dentro,
+        // incluindo o Sparkle, seguindo a animação da borda em tempo real.
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: fillColor,
           borderRadius: borderRadius,
@@ -237,10 +240,9 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
           child: InkWell(
             onTap: _handleTap,
             onLongPress: _handleLongPress,
-            // SOLUÇÃO DA RESPONSIVIDADE:
-            // Se isSelectionMode for true, passamos null. Isso remove o delay de 300ms do Flutter.
             onDoubleTap: widget.isSelectionMode ? null : widget.onDoubleTap,
-            borderRadius: borderRadius,
+            // REMOVEMOS o borderRadius daqui!
+            borderRadius: null,
             splashFactory: InkSparkle.splashFactory,
             splashColor: rippleColor,
             highlightColor: rippleColor,

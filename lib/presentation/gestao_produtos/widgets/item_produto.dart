@@ -107,14 +107,15 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     final double outerRadius = modoCompacto ? 16.0 : 22.0;
     final double innerRadius = modoCompacto ? 4.0 : 6.0; // Cantos internos agora levemente arredondados
 
-    final BorderRadius borderRadius = widget.isSelected
-      ? BorderRadius.all(Radius.circular(outerRadius))
-      : BorderRadius.only(
-        topLeft: widget.isFirst ? Radius.circular(outerRadius) : Radius.circular(innerRadius),
-        topRight: widget.isFirst ? Radius.circular(outerRadius) : Radius.circular(innerRadius),
-        bottomLeft: widget.isLast ? Radius.circular(outerRadius) : Radius.circular(innerRadius),
-        bottomRight: widget.isLast ? Radius.circular(outerRadius) : Radius.circular(innerRadius),
-        );
+    // SOLUÇÃO PARA O GLITCH DA BORDA:
+    // Usamos BorderRadius.only em ambos os estados para que o Flutter 
+    // saiba interpolar os valores sem "se perder" e ficar quadrado no meio.
+    final BorderRadius borderRadius = BorderRadius.only(
+      topLeft: Radius.circular(widget.isSelected || widget.isFirst ? outerRadius : innerRadius),
+      topRight: Radius.circular(widget.isSelected || widget.isFirst ? outerRadius : innerRadius),
+      bottomLeft: Radius.circular(widget.isSelected || widget.isLast ? outerRadius : innerRadius),
+      bottomRight: Radius.circular(widget.isSelected || widget.isLast ? outerRadius : innerRadius),
+    );
     
     // Formata o preço para acessibilidade
     final formattedPrice = 'R\$ ${_precoController.text}';
@@ -225,7 +226,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
     final decoratedContent = SizedBox(
       width: double.infinity,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
+        duration: const Duration(milliseconds: 100),
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
           color: fillColor,
@@ -236,7 +237,9 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
           child: InkWell(
             onTap: _handleTap,
             onLongPress: _handleLongPress,
-            onDoubleTap: widget.onDoubleTap,
+            // SOLUÇÃO DA RESPONSIVIDADE:
+            // Se isSelectionMode for true, passamos null. Isso remove o delay de 300ms do Flutter.
+            onDoubleTap: widget.isSelectionMode ? null : widget.onDoubleTap,
             borderRadius: borderRadius,
             splashFactory: InkSparkle.splashFactory,
             splashColor: rippleColor,
@@ -256,7 +259,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
           : '${l10n.doubleTapToEditHint}. ${l10n.toggleProductStatusHint}',
       enabled: true,
       child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 250),
+        duration: const Duration(milliseconds: 100),
         opacity: isAtivo ? 1.0 : 0.4,
         child: decoratedContent,
       ),

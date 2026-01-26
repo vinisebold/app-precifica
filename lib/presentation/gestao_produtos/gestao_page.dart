@@ -112,6 +112,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage>
         tutorialState.currentStep == TutorialStep.awaitingFirstProduct;
     final targetVisibility = forceVisible ? true : shouldShowFab;
 
+    // Garante que ambos (FAB e barra) sigam juntos
     if (_isAddProductFabVisible == targetVisibility &&
         _isCategoryNavBarVisible == targetVisibility) {
       return;

@@ -254,6 +254,8 @@ class _GerenciarPerfisBottomSheetState
                                 title: Text(nomePerfil),
                                 leading: Radio<String>(
                                   value: nomePerfil,
+                                  groupValue: perfilSelecionado,
+                                  onChanged: _selectProfile,
                                 ),
                                 onTap: () => _selectProfile(nomePerfil),
                               );

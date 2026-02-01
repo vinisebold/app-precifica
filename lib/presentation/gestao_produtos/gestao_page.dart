@@ -618,7 +618,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage>
     // O padding horizontal da lista deve ser refletido no borderRadius do container,
     // para que o inner radius dos itens acompanhe o padding.
     const double horizontalListPadding = 8.0; // mesmo valor do padding/margin horizontal da lista
-    const double containerRadius = 24.0; // valor maior para harmonizar com o padding
+    const double containerRadius = 16.0; // valor maior para harmonizar com o padding
     return Container(
       margin: const EdgeInsets.fromLTRB(horizontalListPadding, 0, horizontalListPadding, 8),
       decoration: BoxDecoration(
@@ -635,7 +635,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage>
                 targetShapeBorder: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(containerRadius),
                 ),
-                targetBorderRadius: BorderRadius.circular(18.0),
+                targetBorderRadius: BorderRadius.circular(12.0),
                 targetPadding: const EdgeInsets.symmetric(
                   horizontal: 0,
                   vertical: 0,

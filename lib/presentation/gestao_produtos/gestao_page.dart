@@ -56,8 +56,32 @@ class _GestaoPageState extends ConsumerState<GestaoPage>
   void initState() {
     super.initState();
 
-    // Registra o ShowcaseView
-    ShowcaseView.register();
+    // Registra o ShowcaseView com floating action widget para o botão skip
+    ShowcaseView.register(
+      globalFloatingActionWidget: (showcaseContext) {
+        final tutorialState = ref.read(tutorialControllerProvider);
+        
+        if (tutorialState.isActive &&
+            tutorialState.currentStep == TutorialStep.awaitingFirstCategory) {
+          return FloatingActionWidget(
+            bottom: 24,
+            left: 16,
+            child: SkipTutorialButton(
+              onSkip: () async {
+                await ref.read(tutorialControllerProvider.notifier).skipTutorial();
+              },
+            ),
+          );
+        }
+        
+        // Retornar um widget vazio quando não deve mostrar
+        return FloatingActionWidget(
+          bottom: 24,
+          left: 16,
+          child: SizedBox.shrink(),
+        );
+      },
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -371,6 +395,14 @@ class _GestaoPageState extends ConsumerState<GestaoPage>
         if (newState.isActive &&
             previousState?.currentStep != newState.currentStep) {
           showTutorialStep(newState.currentStep);
+          
+          // Reinserir o botão skip sempre que o tutorial muda de passo
+          // para garantir que fica acima do showcase
+          if (newState.currentStep == TutorialStep.awaitingFirstCategory) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() {});
+            });
+          }
         }
 
         if (newState.isActive &&

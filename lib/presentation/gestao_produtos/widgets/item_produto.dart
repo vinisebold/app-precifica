@@ -151,17 +151,20 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
         children: [
           // Texto do produto (expandido)
           Expanded(
-            child: Text(
-              widget.produto.nome,
-              style: TextStyle(
-                decoration:
-                    isAtivo ? TextDecoration.none : TextDecoration.lineThrough,
-                color: colorScheme.onSurface,
-                fontSize: fontSize,
-                fontWeight: FontWeight.w500,
+            child: IgnorePointer(
+              child: Text(
+                widget.produto.nome,
+                style: TextStyle(
+                  decoration: isAtivo
+                      ? TextDecoration.none
+                      : TextDecoration.lineThrough,
+                  color: colorScheme.onSurface,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(width: 12),
@@ -176,6 +179,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
                     controller: _precoController,
                     focusNode: widget.focusNode,
                     textAlign: TextAlign.right,
+                    onTap: () {},
                     onSubmitted: (_) => widget.onSubmitted(),
                     textInputAction: widget.textInputAction,
                     onChanged: (novoPrecoFormatado) {
@@ -199,6 +203,8 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
                       ),
                       filled: true,
                       fillColor: colorScheme.surfaceContainerHigh,
+                      hoverColor: Colors.transparent,
+                      focusColor: Colors.transparent,
                       border: OutlineInputBorder(
                         borderRadius:
                             BorderRadius.circular(modoCompacto ? 8.0 : 10.0),
@@ -235,20 +241,28 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
           color: fillColor,
           borderRadius: borderRadius,
         ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: _handleTap,
-            onLongPress: _handleLongPress,
-            onDoubleTap: widget.isSelectionMode ? null : widget.onDoubleTap,
-            // REMOVEMOS o borderRadius daqui!
-            borderRadius: null,
-            splashFactory: InkSparkle.splashFactory,
-            splashColor: rippleColor,
-            highlightColor: rippleColor,
-            hoverColor: rippleColor,
-            child: itemContent,
-          ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _handleTap,
+                  onLongPress: _handleLongPress,
+                  onDoubleTap:
+                      widget.isSelectionMode ? null : widget.onDoubleTap,
+                  // REMOVEMOS o borderRadius daqui!
+                  borderRadius: null,
+                  splashFactory: InkSparkle.splashFactory,
+                  splashColor: rippleColor,
+                  highlightColor: rippleColor,
+                  hoverColor: rippleColor,
+                  child: Container(),
+                ),
+              ),
+            ),
+            itemContent,
+          ],
         ),
       ),
     );

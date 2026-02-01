@@ -104,8 +104,8 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
 
     // M3 grouped style: cantos externos arredondados, internos levemente arredondados
     // Quando selecionado, todas as bordas ficam com radius maior
-    final double outerRadius = modoCompacto ? 16.0 : 22.0;
-    final double innerRadius = modoCompacto ? 4.0 : 6.0; // Cantos internos agora levemente arredondados
+    final double outerRadius = modoCompacto ? 12.0 : 16.0;
+    final double innerRadius = modoCompacto ? 3.0 : 4.0; // Cantos internos agora levemente arredondados
 
     // SOLUÇÃO PARA O GLITCH DA BORDA:
     // Usamos BorderRadius.only em ambos os estados para que o Flutter 
@@ -201,7 +201,7 @@ class _ItemProdutoState extends ConsumerState<ItemProduto> {
                       fillColor: colorScheme.surfaceContainerHigh,
                       border: OutlineInputBorder(
                         borderRadius:
-                            BorderRadius.circular(modoCompacto ? 10.0 : 12.0),
+                            BorderRadius.circular(modoCompacto ? 8.0 : 10.0),
                         borderSide: BorderSide.none,
                       ),
                       contentPadding: EdgeInsets.symmetric(

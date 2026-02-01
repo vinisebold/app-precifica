@@ -167,3 +167,69 @@ Widget buildTutorialShowcase({
     child: child,
   );
 }
+
+/// Botão flutuante sutil para pular o tutorial.
+/// Usa o globalFloatingActionWidget do ShowcaseView para ficar garantidamente acima.
+class SkipTutorialButton extends StatelessWidget {
+  final VoidCallback onSkip;
+
+  const SkipTutorialButton({
+    required this.onSkip,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Material(
+      color: Colors.transparent,
+      child: Semantics(
+        label: TutorialConfig.buttonSkip(context),
+        button: true,
+        enabled: true,
+        onTap: onSkip,
+        child: GestureDetector(
+          onTap: onSkip,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHigh.withValues(
+                alpha: isDark ? 0.7 : 0.8,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+                width: 0.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.skip_next,
+                  size: 14,
+                  color: colorScheme.onSurfaceVariant.withValues(
+                    alpha: isDark ? 0.7 : 0.6,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  TutorialConfig.buttonSkip(context),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant.withValues(
+                      alpha: isDark ? 0.7 : 0.6,
+                    ),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

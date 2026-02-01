@@ -254,8 +254,6 @@ class _GerenciarPerfisBottomSheetState
                                 title: Text(nomePerfil),
                                 leading: Radio<String>(
                                   value: nomePerfil,
-                                  groupValue: perfilSelecionado,
-                                  onChanged: _selectProfile,
                                 ),
                                 onTap: () => _selectProfile(nomePerfil),
                               );
@@ -441,14 +439,3 @@ class RadioGroup<T> extends InheritedWidget {
   }
 }
 
-/// Extensão para Radio que obtém valores do RadioGroup.
-extension RadioExtension<T> on Radio<T> {
-  Widget build(BuildContext context) {
-    final group = RadioGroup.of<T>(context);
-    return Radio<T>(
-      value: value,
-      groupValue: group?.groupValue,
-      onChanged: group?.onChanged,
-    );
-  }
-}

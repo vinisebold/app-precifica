@@ -75,7 +75,7 @@ class _GestaoPageState extends ConsumerState<GestaoPage>
         }
         
         // Retornar um widget vazio quando não deve mostrar
-        return FloatingActionWidget(
+        return const FloatingActionWidget(
           bottom: 24,
           left: 16,
           child: SizedBox.shrink(),

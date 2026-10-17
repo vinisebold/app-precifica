@@ -6,7 +6,7 @@
 
 <br clear="left"/>
 
-## ✨ Principais Funcionalidades
+## Principais Funcionalidades
 
 | Funcionalidade | Descrição |
 |----------------|-----------|
@@ -18,7 +18,7 @@
 | **Relatórios** | Gere listas de preços formatadas para compartilhar via WhatsApp ou e-mail |
 | **Modelos de Relatório** | Personalize título, formatação e filtros dos seus relatórios |
 
-## 📸 Capturas de Tela
+## Capturas de Tela
 
 <table>
   <tr>
@@ -41,7 +41,7 @@
   </tr>
 </table>
 
-## 🚀 Começando
+## Começando
 
 ### Para Usuários
 
@@ -123,7 +123,7 @@ Adicione sua chave como secret no repositório (`GEMINI_API_KEY`) e use:
 3. Personalize título, formatação e filtros
 4. Compartilhe via WhatsApp, email ou outra plataforma
 
-## 📄 Licença
+## Licença
 
 ```
 Copyright 2024-2025 Os Contribuidores do Precifica
